@@ -1,0 +1,15 @@
+[afsio]
+debug = 0
+
+[afs2fs]
+debug = 0
+img.dir = "example-root"
+
+[kload]
+dll = afsio.dll
+dll = afs2fs.dll
+dll = speeder.dll
+
+[speeder]
+count.factor = 1.0
+

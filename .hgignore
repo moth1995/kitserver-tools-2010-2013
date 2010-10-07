@@ -1,0 +1,11 @@
+syntax: glob
+
+*.obj
+*.res
+*.exe
+*.RES
+*.dll
+*~
+*.lib
+*.exp
+output/*

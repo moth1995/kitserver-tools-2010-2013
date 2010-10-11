@@ -10,7 +10,11 @@
 #define THISMOD &k_afsio
 
 #define MODID 123
-#define NAMELONG L"AFSIO Module 10.0.1.0"
+#ifdef DEBUG
+#define NAMELONG L"AFSIO Module 10.0.2.0 (DEBUG)"
+#else
+#define NAMELONG L"AFSIO Module 10.0.2.0"
+#endif
 #define NAMESHORT L"AFSIO"
 #define DEFAULT_DEBUG 0
 
@@ -47,6 +51,21 @@ struct NEXT_LIKELY_READ
     DWORD fileId;
 };
 
+class WstringHolder
+{
+public:
+    WstringHolder(const char* lpFileName) : _us(NULL)
+    {
+        _us = Utf8::utf8ToUnicode((BYTE*)lpFileName);
+    }
+    ~WstringHolder()
+    {
+        Utf8::free(_us);
+    }
+    wchar_t* c_str() { return _us; }
+    wchar_t* _us;
+};
+
 // VARIABLES
 HINSTANCE hInst = NULL;
 KMOD k_afsio = {MODID, NAMELONG, NAMESHORT, DEFAULT_DEBUG};
@@ -59,6 +78,8 @@ hash_map<DWORD,FILE_STRUCT> g_event_map;
 hash_map<HANDLE,DWORD> _afsHandles;
 
 DWORD _afsSizes[MAX_AFSID+1];
+bool _allHooked(false);
+bool _initialized(false);
 
 template <typename T1,typename T2> 
 void replace(hash_map<T1,T2>& hm, T1 key, T2 value)
@@ -185,17 +206,17 @@ KEXPORT DWORD GetFileIdByOffset(DWORD afsId, DWORD offset)
     if (!afsInfo)
         return 0xffffffff; // afs bin-sizes table not available
 
-    DWORD fileId = 0;
-    DWORD offsetSoFar = 0;
-    for (; fileId<afsInfo->numItems; fileId++) {
-        DWORD pages = (afsInfo->sizes[fileId]+0x7ff)>>0x0b;
+    DWORD fileId = 0xffffffff;
+    DWORD offsetSoFar = afsInfo->startingOffset;
+    for (DWORD i=0; i<afsInfo->numItems; i++) {
+        DWORD pages = (afsInfo->sizes[i]+0x7ff)>>0x0b;
+        if (pages)  // account for 0-size bins
+            fileId = i;
         offsetSoFar += pages*0x800;
         if (offsetSoFar > offset)
-            return fileId-1;
+            return fileId;
     }
-    if (fileId == afsInfo->numItems)
-        return 0xffffffff;
-    return fileId;
+    return 0xffffffff;
 }
 
 KEXPORT DWORD GetOffsetByFileId(DWORD afsId, DWORD fileId)
@@ -206,8 +227,8 @@ KEXPORT DWORD GetOffsetByFileId(DWORD afsId, DWORD fileId)
         return 0xffffffff;
     }
 
-    DWORD offset = 0;
-    for (DWORD i=0; i<=fileId; i++) {
+    DWORD offset = afsInfo->startingOffset;
+    for (DWORD i=0; i<fileId; i++) {
         DWORD pages = (afsInfo->sizes[i]+0x7ff)>>0x0b;
         offset += pages*0x800;
     }
@@ -235,7 +256,7 @@ KEXPORT bool GetProbableInfoForHandle(DWORD afsId,
     TRACE(L"GetProbableInfoForHandle: fileId=%d", fileId);
     if (fileId != -1) {
         localOffset = offset - GetOffsetByFileId(afsId, fileId);
-        TRACE(L"GetProbableInfoForHandle: localOffset=%d", localOffset);
+        TRACE(L"GetProbableInfoForHandle: localOffset=%08x", localOffset);
     }
     return false;
 }
@@ -257,12 +278,15 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
         D3DPRESENT_PARAMETERS *pPresentationParameters, 
         IDirect3DDevice9** ppReturnedDeviceInterface) 
 {
+    if (_initialized) {
+        return D3D_OK;
+    }
     ZeroMemory(_afsSizes, sizeof(_afsSizes));
 
     getConfig("afsio", "debug", DT_DWORD, 1, afsioConfig);
     LOG(L"debug = %d", k_afsio.debug);
 
-	unhookFunction(hk_D3D_CreateDevice, initModule);
+	//unhookFunction(hk_D3D_CreateDevice, initModule);
 
     HookCallPoint(code[C_AT_GET_SIZE1], afsioAtGetBinSizeCallPoint1, 6, 2);
     HookCallPoint(code[C_AT_GET_SIZE2], afsioAtGetBinSizeCallPoint2, 6, 2);
@@ -291,6 +315,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
 	TRACE(L"Hooking done.");
 
     //__asm { int 3 }          // uncomment this for debugging as needed
+    _initialized = true;
     return D3D_OK;
 }
 
@@ -356,9 +381,27 @@ KEXPORT HANDLE WINAPI Override_CreateFileA(
         }
     }
 
-    wchar_t* us = Utf8::utf8ToUnicode((BYTE*)lpFileName);
-    TRACE(L"CreateFile: {%s} --> %04x", us, (DWORD)handle);
-    Utf8::free(us);
+    TRACE(L"CreateFileA: {%s} --> %04x",
+            WstringHolder(lpFileName).c_str(), 
+            (DWORD)handle);
+
+    // api-hooks
+    if (!_allHooked) {
+        _allHooked = true;
+        SDLLHook Kernel32Hook = 
+        {
+            "KERNEL32.DLL",
+            false, NULL,		// Default hook disabled, NULL function pointer.
+            {
+                { "CloseHandle", Override_CloseHandle },
+                { "ReadFile", Override_ReadFile },
+                { NULL, NULL }
+            }
+        };
+        HookAPICalls( &Kernel32Hook );
+        LOG(L"All api functions hooked");
+    }
+
     return handle;
 }
 
@@ -424,7 +467,25 @@ KEXPORT HANDLE WINAPI Override_CreateFileW(
         }
     }
 
-    TRACE(L"CreateFile: {%s} --> %04x", lpFileName, (DWORD)handle);
+    TRACE(L"CreateFileW: {%s} --> %04x", lpFileName, (DWORD)handle);
+
+    // api-hooks
+    if (!_allHooked) {
+        _allHooked = true;
+        SDLLHook Kernel32Hook = 
+        {
+            "KERNEL32.DLL",
+            false, NULL,		// Default hook disabled, NULL function pointer.
+            {
+                { "CloseHandle", Override_CloseHandle },
+                { "ReadFile", Override_ReadFile },
+                { NULL, NULL }
+            }
+        };
+        HookAPICalls( &Kernel32Hook );
+        LOG(L"All api functions hooked");
+    }
+
     return handle;
 }
 

@@ -325,7 +325,9 @@ void InitializeFileNameCache()
     } // for roots
 
     // print cache
-    for (hash_map<wstring,int>::iterator it = g_maxItems.begin(); it != g_maxItems.end(); it++)
+    for (hash_map<wstring,int>::iterator it = g_maxItems.begin(); 
+            it != g_maxItems.end(); 
+            it++)
         LOG(L"filename cache: {%s} : %d slots", it->first.c_str(), it->second);
 
     LOG(L"DONE initializing filename cache.");
@@ -334,7 +336,8 @@ void InitializeFileNameCache()
 /*******************/
 /* DLL Entry Point */
 /*******************/
-EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
+EXTERN_C BOOL WINAPI DllMain(
+        HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
 	if (dwReason == DLL_PROCESS_ATTACH)
 	{
@@ -407,7 +410,8 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
 
     getConfig("afs2fs", "debug", DT_DWORD, 1, afsConfig);
     getConfig("afs2fs", "filename.length", DT_DWORD, 2, afsConfig);
-    getConfig("afs2fs", "img.dir", DT_STRING, C_ALL, (PROCESSCONFIG)afsConfigImgDir);
+    getConfig("afs2fs", "img.dir", DT_STRING, C_ALL, 
+            (PROCESSCONFIG)afsConfigImgDir);
 
 	unhookFunction(hk_D3D_CreateDevice, initModule);
 
@@ -439,17 +443,21 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
             DWORD protection = 0;
             DWORD newProtection = PAGE_READWRITE;
             int numSongs = data[NUM_SONGS];
-            if (VirtualProtect(bptr, numSongs*sizeof(SONG_STRUCT), newProtection, &protection)) 
+            if (VirtualProtect(
+                    bptr, numSongs*sizeof(SONG_STRUCT), 
+                    newProtection, &protection)) 
             {
                 SONG_STRUCT* ss = (SONG_STRUCT*)data[SONGS_INFO_TABLE];
                 for (int i=0; i<numSongs; i++)
                 {
-                    hash_map<WORD,SONG_STRUCT>::iterator it = _songs->_songMap.find(ss[i].binId);
+                    hash_map<WORD,SONG_STRUCT>::iterator it;
+                    it = _songs->_songMap.find(ss[i].binId);
                     if (it != _songs->_songMap.end())
                     {
                         ss[i].title = it->second.title;
                         ss[i].author = it->second.author;
-                        LOG(L"Set title/artist info for song with binId=%d",ss[i].binId);
+                        LOG(L"Set title/artist info for song with binId=%d",
+                                ss[i].binId);
                     }
                 }
             }
@@ -475,8 +483,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
  */
 bool OpenFileIfExists(const wchar_t* filename, HANDLE& handle, DWORD& size)
 {
-    if (k_afs.debug)
-        LOG(L"OpenFileIfExists:: %s", filename);
+    TRACE(L"OpenFileIfExists:: %s", filename);
     handle = CreateFile(filename,           // file to open
                        GENERIC_READ,          // open for reading
                        FILE_SHARE_READ,       // share for reading
@@ -488,8 +495,7 @@ bool OpenFileIfExists(const wchar_t* filename, HANDLE& handle, DWORD& size)
     if (handle != INVALID_HANDLE_VALUE)
     {
         size = GetFileSize(handle,NULL);
-        if (k_afs.debug)
-            LOG(L"OpenFileIfExists: handle = %08x", (DWORD)handle);
+        TRACE(L"OpenFileIfExists: handle = %08x", (DWORD)handle);
         return true;
     }
     return false;
@@ -505,8 +511,7 @@ bool afsGetFileInfo(DWORD afsId, DWORD binId, HANDLE& hfile, DWORD& fsize)
                 sizeof(filename)/sizeof(wchar_t)))
         return false; // quick return
 
-    if (k_afs.debug)
-        LOG(L"file = {%s}",filename);
+    TRACE(L"file = {%s}",filename);
     return OpenFileIfExists(filename, hfile, fsize);
 }
 

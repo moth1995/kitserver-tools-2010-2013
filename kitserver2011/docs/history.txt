@@ -1,0 +1,20 @@
+Kitserver 2011 HISTORY notes
+============================
+
+
+2010-10-11
+----------
+v10.0.2
+- fixed a couple of bugs in afsio.dll
+- new way to troubleshoot: "trace" versions of modules
+
+
+2010-10-06
+----------
+v10.0.1
+- fixes to work with different versions of exe
+
+v10.0.0
+- first release. afs2fs and speeder only
+
+

@@ -29,6 +29,7 @@ typedef struct _AFS_INFO
     BYTE unknown3;
     BYTE entryIsDword;
     char filename[0x108];
+    DWORD startingOffset;
     union 
     {
         WORD wordSizes[1];

@@ -2,6 +2,12 @@ Kitserver 2011 HISTORY notes
 ============================
 
 
+2010-10-18
+----------
+v10.0.3
+- fixed problems with looping chants
+
+
 2010-10-11
 ----------
 v10.0.2

@@ -11,9 +11,9 @@
 
 #define MODID 123
 #ifdef DEBUG
-#define NAMELONG L"AFSIO Module 10.0.2.0 (DEBUG)"
+#define NAMELONG L"AFSIO Module 10.0.3.0 (DEBUG)"
 #else
-#define NAMELONG L"AFSIO Module 10.0.2.0"
+#define NAMELONG L"AFSIO Module 10.0.3.0"
 #endif
 #define NAMESHORT L"AFSIO"
 #define DEFAULT_DEBUG 0
@@ -28,7 +28,6 @@
 #include "pngdib.h"
 #include "utf8.h"
 #include "names.h"
-#include "apihijack.h"
 
 #define lang(s) getTransl("afsio",s)
 
@@ -37,60 +36,22 @@
 #include <hash_map>
 #include <wchar.h>
 
-//#define CREATE_FLAGS FILE_FLAG_SEQUENTIAL_SCAN | FILE_FLAG_NO_BUFFERING
-#define CREATE_FLAGS 0
+#define SWAPBYTES(dw) \
+    ((dw<<24 & 0xff000000) | (dw<<8  & 0x00ff0000) | \
+    (dw>>8  & 0x0000ff00) | (dw>>24 & 0x000000ff))
 
 #define MAX_RELPATH 0x108
 #define MAX_AFSID 31
-
-struct NEXT_LIKELY_READ
-{
-    DWORD afsId;
-    DWORD offset;
-    DWORD localOffset;
-    DWORD fileId;
-};
-
-class WstringHolder
-{
-public:
-    WstringHolder(const char* lpFileName) : _us(NULL)
-    {
-        _us = Utf8::utf8ToUnicode((BYTE*)lpFileName);
-    }
-    ~WstringHolder()
-    {
-        Utf8::free(_us);
-    }
-    wchar_t* c_str() { return _us; }
-    wchar_t* _us;
-};
 
 // VARIABLES
 HINSTANCE hInst = NULL;
 KMOD k_afsio = {MODID, NAMELONG, NAMESHORT, DEFAULT_DEBUG};
 
 // GLOBALS
-hash_map<HANDLE,struct NEXT_LIKELY_READ> _next_likely_reads;
 hash_map<DWORD,FILE_STRUCT> g_file_map;
 hash_map<DWORD,DWORD> g_offset_map;
 hash_map<DWORD,FILE_STRUCT> g_event_map;
-hash_map<HANDLE,DWORD> _afsHandles;
-
-DWORD _afsSizes[MAX_AFSID+1];
-bool _allHooked(false);
 bool _initialized(false);
-
-template <typename T1,typename T2> 
-void replace(hash_map<T1,T2>& hm, T1 key, T2 value)
-{
-    pair<hash_map<T1,T2>::iterator,bool> result = hm.insert(
-            pair<T1,T2>(key, value));
-    if (!result.second) {
-        hm.erase(result.first);
-        hm.insert(pair<T1,T2>(key, value));
-    }
-}
 
 // FUNCTIONS
 HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
@@ -98,40 +59,34 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     D3DPRESENT_PARAMETERS *pPresentationParameters, 
     IDirect3DDevice9** ppReturnedDeviceInterface);
 
+void afsioAtGetBufferSizeCallPoint();
 void afsioAtGetBinSizeCallPoint1();
 void afsioAtGetBinSizeCallPoint2();
-void afsioAtGetBufferSizeCallPoint();
-void afsioAtGetImgSizeCallPoint();
+void afsioAfterGetOffsetPagesCallPoint();
+void afsioAfterCreateEventCallPoint();
+void afsioAtGetImgSize1CallPoint();
 void afsioAtGetImgSize2CallPoint();
-KEXPORT DWORD afsioAtGetBinSize(DWORD base, DWORD fileId, DWORD orgSize);
-KEXPORT DWORD afsioAtGetBufferSize(DWORD afsId, DWORD fileId, DWORD orgSize);
-DWORD GetBinSize(DWORD afsId, DWORD fileId, DWORD orgSize);
+void afsioBeforeReadCallPoint();
+void afsioAfsReadFileCallPoint();
+void afsioAtCloseHandleCallPoint();
 
-KEXPORT HANDLE WINAPI Override_CreateFileA(
-  LPCSTR lpFileName,
-  DWORD dwDesiredAccess,
-  DWORD dwShareMode,
-  LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-  DWORD dwCreationDisposition,
-  DWORD dwFlagsAndAttributes,
-  HANDLE hTemplateFile);
+KEXPORT DWORD GetAfsIdByBase(DWORD base);
+DWORD GetBinSize(DWORD afsId, DWORD binId, DWORD orgSize);
 
-KEXPORT HANDLE WINAPI Override_CreateFileW(
-  LPCWSTR lpFileName,
-  DWORD dwDesiredAccess,
-  DWORD dwShareMode,
-  LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-  DWORD dwCreationDisposition,
-  DWORD dwFlagsAndAttributes,
-  HANDLE hTemplateFile);
+KEXPORT DWORD afsioAtGetBinSize(DWORD base, DWORD binId, DWORD orgSize);
+KEXPORT DWORD afsioAtGetBufferSize(DWORD afsId, DWORD binId, DWORD orgSize);
+KEXPORT void afsioAfterGetOffsetPages(
+        DWORD offsetPages, DWORD afsId, DWORD binId);
+KEXPORT void afsioAfterCreateEvent(
+        DWORD eventId, READ_EVENT_STRUCT* res, char* pathName);
+KEXPORT void afsioBeforeRead(READ_STRUCT* rs);
+KEXPORT void afsioAtCloseHandle(DWORD eventId);
+KEXPORT BOOL AfsReadFile(
+        HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
+        LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped,
+        FILE_READ_STRUCT* pfrs);
 
-KEXPORT BOOL WINAPI Override_CloseHandle(
-  HANDLE hObject);
 void afsioConfig(char* pName, const void* pValue, DWORD a);
-
-KEXPORT BOOL STDMETHODCALLTYPE Override_ReadFile(
-  HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-  LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped);
 
 // callbacks chain
 static list<CLBK_GET_FILE_INFO> g_afsio_callbacks;
@@ -140,8 +95,7 @@ static list<CLBK_GET_FILE_INFO> g_afsio_callbacks;
 /*******************/
 /* DLL Entry Point */
 /*******************/
-EXTERN_C BOOL WINAPI DllMain(
-        HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
+EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
 	if (dwReason == DLL_PROCESS_ATTACH)
 	{
@@ -190,417 +144,38 @@ void afsioConfig(char* pName, const void* pValue, DWORD a)
 	return;
 }
 
-KEXPORT DWORD GetAfsIdByBase(DWORD base)
-{
-    DWORD* binSizesTable = (DWORD*)data[BIN_SIZES_TABLE];
-    for (DWORD i=0; i<MAX_AFSID+1; i++)
-        if (binSizesTable[i]==base)
-            return i;
-    return 0xffffffff;
-}
-
-KEXPORT DWORD GetFileIdByOffset(DWORD afsId, DWORD offset)
-{
-    DWORD* binSizesTable = (DWORD*)data[BIN_SIZES_TABLE];
-    AFS_INFO* afsInfo = (AFS_INFO*)binSizesTable[afsId];
-    if (!afsInfo)
-        return 0xffffffff; // afs bin-sizes table not available
-
-    DWORD fileId = 0xffffffff;
-    DWORD offsetSoFar = afsInfo->startingOffset;
-    for (DWORD i=0; i<afsInfo->numItems; i++) {
-        DWORD pages = (afsInfo->sizes[i]+0x7ff)>>0x0b;
-        if (pages)  // account for 0-size bins
-            fileId = i;
-        offsetSoFar += pages*0x800;
-        if (offsetSoFar > offset)
-            return fileId;
-    }
-    return 0xffffffff;
-}
-
-KEXPORT DWORD GetOffsetByFileId(DWORD afsId, DWORD fileId)
-{
-    DWORD* binSizesTable = (DWORD*)data[BIN_SIZES_TABLE];
-    AFS_INFO* afsInfo = (AFS_INFO*)binSizesTable[afsId];
-    if (!afsInfo) {
-        return 0xffffffff;
-    }
-
-    DWORD offset = afsInfo->startingOffset;
-    for (DWORD i=0; i<fileId; i++) {
-        DWORD pages = (afsInfo->sizes[i]+0x7ff)>>0x0b;
-        offset += pages*0x800;
-    }
-    return offset;
-}
-
-KEXPORT bool GetProbableInfoForHandle(DWORD afsId, 
-        HANDLE hFile, DWORD offset, DWORD& localOffset, DWORD& fileId)
-{
-    hash_map<HANDLE,struct NEXT_LIKELY_READ>::iterator nit;
-    nit = _next_likely_reads.find(hFile);
-    if (nit != _next_likely_reads.end()) {
-        if (nit->second.afsId == afsId && nit->second.offset == offset) {
-            fileId = nit->second.fileId;
-            localOffset = nit->second.localOffset;
-            TRACE(
-                L"Probable fileId: %d (afsId:%d, offset:0x%08x, hFile:0x%08x)",
-                fileId, afsId, offset, hFile);
-            _next_likely_reads.erase(nit);
-            return true;
-        }
-        _next_likely_reads.erase(nit);
-    }
-    fileId = GetFileIdByOffset(afsId, offset);
-    TRACE(L"GetProbableInfoForHandle: fileId=%d", fileId);
-    if (fileId != -1) {
-        localOffset = offset - GetOffsetByFileId(afsId, fileId);
-        TRACE(L"GetProbableInfoForHandle: localOffset=%08x", localOffset);
-    }
-    return false;
-}
-
-KEXPORT void SetNextProbableInfoForHandle(DWORD afsId, 
-        DWORD offset, DWORD localOffset, DWORD fileId, HANDLE hFile)
-{
-    struct NEXT_LIKELY_READ nlr;
-    nlr.afsId = afsId;
-    nlr.offset = offset;
-    nlr.localOffset = localOffset;
-    nlr.fileId = fileId;
-    _next_likely_reads.insert(
-        pair<HANDLE,struct NEXT_LIKELY_READ>(hFile, nlr));
-}
-
 HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
-        D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags,
-        D3DPRESENT_PARAMETERS *pPresentationParameters, 
-        IDirect3DDevice9** ppReturnedDeviceInterface) 
+    D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags,
+    D3DPRESENT_PARAMETERS *pPresentationParameters, 
+    IDirect3DDevice9** ppReturnedDeviceInterface) 
 {
     if (_initialized) {
         return D3D_OK;
     }
-    ZeroMemory(_afsSizes, sizeof(_afsSizes));
 
     getConfig("afsio", "debug", DT_DWORD, 1, afsioConfig);
     LOG(L"debug = %d", k_afsio.debug);
 
-	//unhookFunction(hk_D3D_CreateDevice, initModule);
+	unhookFunction(hk_D3D_CreateDevice, initModule);
 
     HookCallPoint(code[C_AT_GET_SIZE1], afsioAtGetBinSizeCallPoint1, 6, 2);
     HookCallPoint(code[C_AT_GET_SIZE2], afsioAtGetBinSizeCallPoint2, 6, 2);
-    HookCallPoint(code[C_AT_GET_BUFFER_SIZE], 
+    HookCallPoint(code[C_AT_GET_BUFFERSIZE], 
             afsioAtGetBufferSizeCallPoint, 6, 1);
-    HookCallPoint(code[C_AT_GET_IMG_SIZE], 
-            afsioAtGetImgSizeCallPoint, 6, 0);
-    HookCallPoint(code[C_AT_GET_IMG_SIZE2], 
-            afsioAtGetImgSize2CallPoint, 3, 1);
-
-    // api-hooks
-    SDLLHook Kernel32Hook = 
-    {
-        "KERNEL32.DLL",
-        false, NULL,		// Default hook disabled, NULL function pointer.
-        {
-            { "CreateFileA", Override_CreateFileA },
-            { "CreateFileW", Override_CreateFileW },
-            { "CloseHandle", Override_CloseHandle },
-            { "ReadFile", Override_ReadFile },
-            { NULL, NULL }
-        }
-    };
-    HookAPICalls( &Kernel32Hook );
-
+    HookCallPoint(code[C_AFTER_CREATE_EVENT], 
+            afsioAfterCreateEventCallPoint, 6, 3);
+    HookCallPoint(code[C_AT_GET_IMG_SIZE1], afsioAtGetImgSize1CallPoint, 6, 0);
+    HookCallPoint(code[C_AT_GET_IMG_SIZE2], afsioAtGetImgSize2CallPoint, 3, 1);
+    HookCallPoint(code[C_AT_CLOSE_HANDLE], afsioAtCloseHandleCallPoint, 6, 3);
+    HookCallPoint(code[C_AFTER_GET_OFFSET_PAGES], 
+            afsioAfterGetOffsetPagesCallPoint, 6, 1);
+    HookCallPoint(code[C_BEFORE_READ], afsioBeforeReadCallPoint, 6, 1);
+    
 	TRACE(L"Hooking done.");
 
     //__asm { int 3 }          // uncomment this for debugging as needed
     _initialized = true;
     return D3D_OK;
-}
-
-KEXPORT HANDLE WINAPI Override_CreateFileA(
-  __in      LPCSTR lpFileName,
-  __in      DWORD dwDesiredAccess,
-  __in      DWORD dwShareMode,
-  __in_opt  LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-  __in      DWORD dwCreationDisposition,
-  __in      DWORD dwFlagsAndAttributes,
-  __in_opt  HANDLE hTemplateFile)
-{
-    HANDLE handle = INVALID_HANDLE_VALUE;
-
-    /*
-    if (_strnicmp(lpFileName+strlen(lpFileName)-3,"OPT",3)==0)
-    {
-        //LOG("CreateFileA: OPTION FILE");
-        PFNCREATEOPTION NextCall=NULL;
-        for (int i=0;i<(l_CreateOption.num);i++)
-        if (l_CreateOption.addr[i]!=0) {
-            NextCall=(PFNCREATEOPTION)l_CreateOption.addr[i];
-            HANDLE newHandle = NextCall(dwDesiredAccess, 
-                                        dwShareMode,
-                                        lpSecurityAttributes,
-                                        dwCreationDisposition,
-                                        dwFlagsAndAttributes,
-                                        hTemplateFile);
-            if (newHandle != INVALID_HANDLE_VALUE)
-            {
-                handle = newHandle;
-                break;
-            }
-        } // end-if
-    }
-    */
-
-    if (handle == INVALID_HANDLE_VALUE) {
-        handle = CreateFileA(lpFileName,
-                             dwDesiredAccess,
-                             dwShareMode,
-                             lpSecurityAttributes,
-                             dwCreationDisposition,
-                             dwFlagsAndAttributes,
-                             hTemplateFile);
-
-        const char* shortName = strrchr(lpFileName,'\\');
-        if (shortName && lpFileName!=shortName) shortName++;
-        size_t nameLen = strlen(shortName);
-        bool isImgFile = (nameLen>=4 && 
-                _strnicmp(shortName+nameLen-4,".img",4)==0);
-        if (isImgFile) {
-            DWORD afsId = 0xffffffff;
-            if (sscanf(shortName+2,"%02x",&afsId)==1) {
-                if (afsId < 0 || afsId > MAX_AFSID) {
-                    LOG(L"CreateFile: afsId=%02x out of range. Ignoring",
-                            afsId);
-                }
-                else {
-                    replace(_afsHandles, handle, afsId);
-                }
-            }
-        }
-    }
-
-    TRACE(L"CreateFileA: {%s} --> %04x",
-            WstringHolder(lpFileName).c_str(), 
-            (DWORD)handle);
-
-    // api-hooks
-    if (!_allHooked) {
-        _allHooked = true;
-        SDLLHook Kernel32Hook = 
-        {
-            "KERNEL32.DLL",
-            false, NULL,		// Default hook disabled, NULL function pointer.
-            {
-                { "CloseHandle", Override_CloseHandle },
-                { "ReadFile", Override_ReadFile },
-                { NULL, NULL }
-            }
-        };
-        HookAPICalls( &Kernel32Hook );
-        LOG(L"All api functions hooked");
-    }
-
-    return handle;
-}
-
-KEXPORT HANDLE WINAPI Override_CreateFileW(
-  __in      LPCWSTR lpFileName,
-  __in      DWORD dwDesiredAccess,
-  __in      DWORD dwShareMode,
-  __in_opt  LPSECURITY_ATTRIBUTES lpSecurityAttributes,
-  __in      DWORD dwCreationDisposition,
-  __in      DWORD dwFlagsAndAttributes,
-  __in_opt  HANDLE hTemplateFile)
-{
-    HANDLE handle = INVALID_HANDLE_VALUE;
-
-    /*
-    if (_wcsnicmp(lpFileName+wcslen(lpFileName)-3,L"OPT",3)==0)
-    {
-        //LOG("CreateFileW: OPTION FILE");
-        PFNCREATEOPTION NextCall=NULL;
-        for (int i=0;i<(l_CreateOption.num);i++)
-        if (l_CreateOption.addr[i]!=0) {
-            NextCall=(PFNCREATEOPTION)l_CreateOption.addr[i];
-            HANDLE newHandle = NextCall(dwDesiredAccess, 
-                                        dwShareMode,
-                                        lpSecurityAttributes,
-                                        dwCreationDisposition,
-                                        dwFlagsAndAttributes,
-                                        hTemplateFile);
-            if (newHandle != INVALID_HANDLE_VALUE)
-            {
-                handle = newHandle;
-                break;
-            }
-        } // end-if
-    }
-    */
-
-    if (handle == INVALID_HANDLE_VALUE) {
-        handle = CreateFileW(lpFileName,
-                             dwDesiredAccess,
-                             dwShareMode,
-                             lpSecurityAttributes,
-                             dwCreationDisposition,
-                             dwFlagsAndAttributes,
-                             hTemplateFile);
-
-        const wchar_t* shortName = wcsrchr(lpFileName,L'\\');
-        if (shortName && lpFileName!=shortName) shortName++;
-        size_t nameLen = wcslen(shortName);
-        bool isImgFile = (nameLen>=4 && 
-                _wcsnicmp(shortName+nameLen-4,L".img",4)==0);
-        if (isImgFile) {
-            DWORD afsId = 0xffffffff;
-            if (swscanf(shortName+2,L"%02x",&afsId)==1) {
-                if (afsId < 0 || afsId > MAX_AFSID) {
-                    LOG(L"CreateFile: afsId=%02x out of range. Ignoring",
-                            afsId);
-                }
-                else {
-                    replace(_afsHandles, handle, afsId);
-                }
-            }
-        }
-    }
-
-    TRACE(L"CreateFileW: {%s} --> %04x", lpFileName, (DWORD)handle);
-
-    // api-hooks
-    if (!_allHooked) {
-        _allHooked = true;
-        SDLLHook Kernel32Hook = 
-        {
-            "KERNEL32.DLL",
-            false, NULL,		// Default hook disabled, NULL function pointer.
-            {
-                { "CloseHandle", Override_CloseHandle },
-                { "ReadFile", Override_ReadFile },
-                { NULL, NULL }
-            }
-        };
-        HookAPICalls( &Kernel32Hook );
-        LOG(L"All api functions hooked");
-    }
-
-    return handle;
-}
-
-KEXPORT BOOL WINAPI Override_CloseHandle(
-  __in HANDLE hObject)
-{
-    BOOL result = CloseHandle(hObject);
-
-    _afsHandles.erase(hObject);
-
-    TRACE(L"CloseHandle: {%04x}", hObject);
-    return result;
-}
-
-DWORD GetImgFileSize(DWORD afsId, HANDLE handle)
-{
-    if (afsId<0 || afsId>MAX_AFSID)
-        return 0;
-    if (!_afsSizes[afsId]) {
-        _afsSizes[afsId] = GetFileSize(handle,NULL);
-    }
-    return _afsSizes[afsId];
-}
-
-KEXPORT BOOL STDMETHODCALLTYPE Override_ReadFile(
-        HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
-        LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
-{
-    // determine current offset
-    DWORD offset = SetFilePointer(hFile, 0, NULL, FILE_CURRENT);
-
-    // original read
-    TRACE(L"ReadFile: hFile=%04x, buffer=%p, offset=%08x, nb=%08x, %d",
-            hFile, lpBuffer, offset, nNumberOfBytesToRead, lpOverlapped);
-
-    // look up the handle
-    hash_map<HANDLE,DWORD>::iterator hit = _afsHandles.find(hFile);
-    if (hit != _afsHandles.end()) {
-        DWORD afsId = hit->second;
-        TRACE(L"Reading afsId=%02x", afsId);
-        DWORD fileId=-1, localOffset=-1;
-        GetProbableInfoForHandle(afsId, hFile, offset, localOffset, fileId);
-        if (fileId == -1) {
-            // read afs data
-            return ReadFile(hFile, lpBuffer, nNumberOfBytesToRead,
-                    lpNumberOfBytesRead, lpOverlapped); 
-        }
-
-        TRACE(L"Reading afsId=%02x, fileId=%d", afsId, fileId);
-
-        // execute callbacks
-        HANDLE myFile = INVALID_HANDLE_VALUE;
-        DWORD fsize = 0;
-        for (list<CLBK_GET_FILE_INFO>::iterator it = g_afsio_callbacks.begin();
-                it != g_afsio_callbacks.end(); 
-                it++) {
-            if ((*it)(afsId, fileId, myFile, fsize))
-                break;  // first successful callback stops chain processing
-        }
-
-        if (fsize>0) {
-            SetFilePointer(myFile, localOffset, NULL, FILE_BEGIN);
-            DWORD bytesRead = 0;
-            DWORD bytesToRead = nNumberOfBytesToRead;
-            if (fsize < localOffset + bytesToRead) {
-                bytesToRead = fsize - localOffset;
-            }
-            TRACE(L"localOffset=%08x, bytesToRead=%08x",
-                    localOffset, bytesToRead);
-            ReadFile(
-                    myFile, lpBuffer, bytesToRead, &bytesRead, lpOverlapped);
-            CloseHandle(myFile);
-            if (lpNumberOfBytesRead) {
-                *lpNumberOfBytesRead = nNumberOfBytesToRead;
-            }
-
-            // just advance the file pointer, we don't need to transfer data
-            SetFilePointer(hFile, nNumberOfBytesToRead, NULL, FILE_CURRENT);
-
-            // zero-out remaining bytes
-            if (nNumberOfBytesToRead > bytesRead) {
-                ZeroMemory(
-                        (BYTE*)lpBuffer+bytesRead, 
-                        nNumberOfBytesToRead-bytesRead);
-            }
-
-            DWORD nextOffset = offset + bytesRead;
-            // check for end of AFS-file
-            if (offset+*lpNumberOfBytesRead >= GetImgFileSize(afsId, hFile)) {
-                TRACE(L"Reached THE END of AFS-file!");
-                if (fsize > localOffset + bytesRead) {
-                    // more data still to read: push the file pointer back
-                    // for the AFS-handle
-                    SetFilePointer(hFile, -0x12000, NULL, FILE_CURRENT);
-                    nextOffset -= 0x12000;
-                }
-            }
-
-            // set next likely read
-            if (fsize > localOffset + bytesRead) {
-                SetNextProbableInfoForHandle(
-                    //afsId, nextOffset, localOffset+bytesRead,
-                    afsId, offset+bytesRead, localOffset+bytesRead,
-                    fileId, hFile);
-            }
-            return TRUE;
-        } 
-        else {
-            //TRACE(L"No replacement file found.");
-        }
-    }
-
-    // read afs data
-    return ReadFile(hFile, lpBuffer, nNumberOfBytesToRead,
-            lpNumberOfBytesRead, lpOverlapped); 
 }
 
 void afsioAtGetBinSizeCallPoint1()
@@ -660,93 +235,6 @@ void afsioAtGetBinSizeCallPoint2()
     }
 }
 
-KEXPORT DWORD afsioAtGetBinSize(DWORD base, DWORD fileId, DWORD orgSize)
-{
-    TRACE(L"afsioAtGetBinSize:: base=%p, fileId=%d, orgSize=%08x", 
-            base, fileId, orgSize);
-    DWORD result = orgSize;
-    DWORD afsId = GetAfsIdByBase(base);
-    if (afsId == 0xffffffff) {
-        return orgSize;
-    }
-
-    return GetBinSize(afsId, fileId, orgSize);
-}
-
-KEXPORT DWORD afsioAtGetBufferSize(DWORD afsId, DWORD fileId, DWORD orgSize)
-{
-    TRACE(L"afsioAtGetBufferSize:: afsId=%02x, fileId=%d, orgSize=%08x", 
-            afsId, fileId, orgSize);
-    DWORD result = orgSize;
-    HANDLE hfile = INVALID_HANDLE_VALUE;
-    DWORD fsize = 0;
-
-    return GetBinSize(afsId, fileId, orgSize);
-}
-
-DWORD GetBinSize(DWORD afsId, DWORD fileId, DWORD orgSize)
-{
-    DWORD result = orgSize;
-    HANDLE hfile = INVALID_HANDLE_VALUE;
-    DWORD fsize = 0;
-
-    // execute callbacks
-    for (list<CLBK_GET_FILE_INFO>::iterator it = g_afsio_callbacks.begin();
-            it != g_afsio_callbacks.end(); 
-            it++)
-    {
-        if ((*it)(afsId, fileId, hfile, fsize))
-            break;  // first successful callback stops chain processing
-    }
-
-    if (fsize>0) {
-        TRACE(L"GetBinSize:: fsize=%08x", fsize);
-        result = fsize;
-    }
-
-    return result;
-}
-
-DWORD GetAfsIdByPathName(char* pathName)
-{
-    AFS_INFO** ppBST = (AFS_INFO**)data[BIN_SIZES_TABLE];
-    for (DWORD afsId=0; afsId<=MAX_AFSID; afsId++)
-    {
-        if (ppBST[afsId]==0) continue;
-        if (strncmp(ppBST[afsId]->filename,pathName,MAX_RELPATH)==0)
-            return afsId;
-    }
-    return 0xffffffff;
-}
-
-KEXPORT bool afsioExtendSlots(int afsId, int num_slots)
-{
-    // extend BIN-sizes table
-    AFS_INFO** tabArray = (AFS_INFO**)data[BIN_SIZES_TABLE];
-    if (!tabArray)
-        return false;
-    AFS_INFO* table = tabArray[afsId];
-    if (!table)
-        return false;
-
-    // check if already enough slots
-    if (num_slots <= table->numItems)
-        return true;
-
-    int newSize = sizeof(DWORD)*(num_slots)+0x120;
-    AFS_INFO* newTable = (AFS_INFO*)HeapAlloc(
-            GetProcessHeap(), HEAP_ZERO_MEMORY, newSize);
-    memcpy(newTable, table, table->structSize);
-    for (int i=table->numItems; i<num_slots; i++)
-        newTable->sizes[i] = 0x800; // back-fill with 1 page defaults
-
-    newTable->structSize = newSize;
-    newTable->numItems = num_slots;
-    newTable->numItems2 = num_slots;
-    tabArray[afsId] = newTable; // point to new structure
-    return true;
-}
-
 void afsioAtGetBufferSizeCallPoint()
 {
     __asm {
@@ -777,7 +265,215 @@ void afsioAtGetBufferSizeCallPoint()
     }
 }
 
-void afsioAtGetImgSizeCallPoint()
+KEXPORT DWORD afsioAtGetBufferSize(DWORD afsId, DWORD fileId, DWORD orgSize)
+{
+    TRACE(L"afsioAtGetBufferSize:: afsId=%02x, fileId=%d, orgSize=%08x", 
+            afsId, fileId, orgSize);
+
+    return GetBinSize(afsId, fileId, orgSize);
+}
+
+KEXPORT DWORD afsioAtGetBinSize(DWORD base, DWORD fileId, DWORD orgSize)
+{
+    TRACE(L"afsioAtGetBinSize:: base=%p, fileId=%d, orgSize=%08x", 
+            base, fileId, orgSize);
+    DWORD afsId = GetAfsIdByBase(base);
+    if (afsId == 0xffffffff) {
+        return orgSize;
+    }
+
+    return GetBinSize(afsId, fileId, orgSize);
+}
+
+DWORD GetBinSize(DWORD afsId, DWORD fileId, DWORD orgSize)
+{
+    DWORD result = orgSize;
+    HANDLE hfile = NULL;
+    DWORD fsize = 0;
+
+    // execute callbacks
+    for (list<CLBK_GET_FILE_INFO>::iterator it = g_afsio_callbacks.begin();
+            it != g_afsio_callbacks.end(); 
+            it++)
+    {
+        if ((*it)(afsId, fileId, hfile, fsize))
+            break;  // first successful callback stops chain processing
+    }
+
+    if (hfile && fsize)
+    {
+        DWORD binKey = (afsId << 16) + fileId;
+
+        // make new entry
+        FILE_STRUCT fs;
+        fs.hfile = hfile;
+        fs.fsize = fsize;
+        fs.offset = 0;
+        fs.binKey = binKey;
+
+        pair<hash_map<DWORD,FILE_STRUCT>::iterator,bool> ires =
+            g_file_map.insert(pair<DWORD,FILE_STRUCT>(binKey,fs));
+        if (!ires.second)
+        {
+            // replace existing entry
+            TRACE(L"GetBinSize:: NOTICE: updating existing entry: Handles: (new)%04x vs (old)%04x", (DWORD)hfile, (DWORD)ires.first->second.hfile);
+            // update existing entry (close old file handle, if different)
+            if (hfile != ires.first->second.hfile)
+                CloseHandle(ires.first->second.hfile);
+            ires.first->second.hfile = hfile;
+            ires.first->second.fsize = fsize;
+            ires.first->second.offset = 0;
+        }
+
+        // modify buffer size
+        result = fsize;
+        TRACE(L"GetBinSize:: afsId=%d, binId=%d, orgSize=%0x, newSize=%0x", 
+                afsId, fileId, orgSize, result);
+    }
+    return result;
+}
+
+DWORD GetAfsIdByPathName(char* pathName)
+{
+    AFS_INFO** ppBST = (AFS_INFO**)data[BIN_SIZES_TABLE];
+    for (DWORD afsId=0; afsId<=MAX_AFSID; afsId++)
+    {
+        if (ppBST[afsId]==0) continue;
+        if (strncmp(ppBST[afsId]->filename,pathName,MAX_RELPATH)==0)
+            return afsId;
+    }
+    return 0xffffffff;
+}
+
+KEXPORT DWORD GetAfsIdByBase(DWORD base)
+{
+    DWORD* binSizesTable = (DWORD*)data[BIN_SIZES_TABLE];
+    for (DWORD i=0; i<MAX_AFSID+1; i++)
+        if (binSizesTable[i]==base)
+            return i;
+    return 0xffffffff;
+}
+
+void afsioAfterGetOffsetPagesCallPoint()
+{
+    __asm {
+        // IMPORTANT: when saving flags, use pusfd/popfd for stack alignment
+        pushfd 
+        push ebp
+        push eax
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        mov ecx, [esp+0x24+0x08]
+        push edi // binId
+        push ecx // afsId
+        push ebp // offset pages
+        call afsioAfterGetOffsetPages
+        add esp,0x0c     // pop parameters
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        pop eax
+        pop ebp
+        popfd
+        mov ecx, dword ptr ds:[esi+0x114]
+        retn
+    }
+}
+
+KEXPORT void afsioAfterGetOffsetPages(
+        DWORD offsetPages, DWORD afsId, DWORD binId)
+{
+    TRACE(L"afsAfterGetOffsetPages:: offsetPages=%08x, afsId=%d, binId=%d",
+            offsetPages, afsId, binId);
+
+    DWORD binKey = ((offsetPages << 0x0b)&0xfffff800) + afsId;
+    g_offset_map[binKey] = binId;  // update existing entry, or insert new
+}
+
+void afsioAfterCreateEventCallPoint()
+{
+    __asm {
+        // IMPORTANT: when saving flags, use pusfd/popfd for stack alignment
+        pushfd 
+        push ebp
+        push eax
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        mov edx, [esp+0x24+0x0c]
+        mov ecx, [esp+0x24+0x38]
+        push edx  // relative img-file pathname
+        push ecx  // pointer to READ_EVENT_STRUCT
+        push eax  // event id
+        call afsioAfterCreateEvent
+        add esp,0x0c     // pop parameters
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        pop eax
+        pop ebp
+        popfd
+        cmp eax,ebx                       // execute replaced code
+        mov dword ptr ds:[esi+0x27c],eax  // ...
+        retn
+    }
+}
+
+KEXPORT void afsioAfterCreateEvent(DWORD eventId, READ_EVENT_STRUCT* res, char* pathName)
+{
+    // The task here is to link the eventId with afsId/binId 
+    // of the file that is going to be read later.
+    //
+#ifndef MYDLL_RELEASE_BUILD
+    wchar_t* path = Utf8::utf8ToUnicode((BYTE*)pathName);
+    TRACE(L"afsAfterCreateEvent:: eventId=%08x, pathName=%s",eventId,path);
+    Utf8::free(path);
+#endif
+
+    DWORD afsId = GetAfsIdByPathName(pathName);
+    TRACE(L"afsAfterCreateEvent:: afsId=%02x, offsetPages=%08x",
+            afsId, res->offsetPages);
+    DWORD binKey = ((res->offsetPages << 0x0b)&0xfffff800) + afsId;
+    TRACE(L"afsAfterCreateEvent:: binKey=%08x",binKey);
+
+    hash_map<DWORD,DWORD>::iterator it = g_offset_map.find(binKey);
+    if (it != g_offset_map.end())
+    {
+        DWORD binId = it->second;
+
+        // lookup FILE_STRUCT
+        DWORD binKey1 = (afsId << 16) + binId;
+        TRACE(L"afsAfterCreateEvent:: looking for binKey1=%08x (afsId=%d, binId=%d)",
+                binKey1, afsId, binId);
+        hash_map<DWORD,FILE_STRUCT>::iterator fit = g_file_map.find(binKey1);
+        if (fit != g_file_map.end())
+        {
+            // remember offset for later usage
+            fit->second.offset = (res->offsetPages << 0x0b)&0xfffff800;
+
+            // Found: so we have a replacement file handle
+            // Now associate the eventId with that struct
+            g_event_map.insert(pair<DWORD,FILE_STRUCT>(eventId,fit->second));
+
+            TRACE(L"afsAfterCreateEvent:: eventId=%08x (afsId=%d, binId=%d)",
+                    eventId, afsId, binId);
+        }
+
+        // keep offset map small
+        g_offset_map.erase(it);
+    }
+}
+
+void afsioAtGetImgSize1CallPoint()
 {
     __asm {
         pushfd 
@@ -817,5 +513,248 @@ void afsioAtGetImgSize2CallPoint()
         mov ecx, dword ptr ds:[esi+0x24c]  // execute replaced code
         retn
     }
+}
+
+void afsioBeforeReadCallPoint()
+{
+    __asm {
+        // IMPORTANT: when saving flags, use pusfd/popfd for stack alignment
+        pushfd 
+        push ebp
+        push eax
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push esi  // pointer to READ_STRUCT
+        call afsioBeforeRead
+        add esp,4  // pop parameters
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        pop eax
+        pop ebp
+        popfd
+        sub esp,4                       // execute replaced code
+        mov ecx,[esp+4]                 // (note: need to swap the values
+        mov [esp],ecx                   // on top two slots on the stack)
+        mov ecx,dword ptr ds:[esi+0x34] // ...
+        mov [esp+4],ecx                 // ...
+        jmp eax                         // ...
+    }
+}
+
+void afsioAfsReadFileCallPoint()
+{
+    __asm {
+        // IMPORTANT: when saving flags, use pusfd/popfd for stack alignment
+        pushfd 
+        push ebp
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push esi  // pointer to FILE_READ_STRUCT
+        push 0    // lpOverlapped
+        push eax  // lpNumberOfBytesRead
+        push edi  // nNumberOfBytesToRead
+        push ebx  // buffer
+        push ecx  // hFile
+        call AfsReadFile
+        add esp,0x18  // pop parameters
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        pop ebp
+        popfd
+        push edx
+        mov edx,[esp+4]
+        mov [esp+0x18],edx
+        pop edx
+        add esp,0x14
+        retn
+    }
+}
+
+KEXPORT void afsioBeforeRead(READ_STRUCT* rs)
+{
+    TRACE(L"afsBeforeRead::(%08x) ...", (DWORD)rs->pfrs->eventId); 
+    if (rs->pfrs->eventId == 0)
+        return;
+
+    hash_map<DWORD,FILE_STRUCT>::iterator it = g_event_map.find(rs->pfrs->eventId);
+    if (it != g_event_map.end())
+    {
+        TRACE(L"afsBeforeRead::(%08x) WAS: hfile=%08x, offset=%08x", 
+                (DWORD)rs->pfrs->eventId, 
+                (DWORD)rs->pfrs->hfile, 
+                rs->pfrs->offset); 
+
+        FILE_STRUCT& fs = it->second;
+        rs->pfrs->hfile = fs.hfile;
+        rs->pfrs->offset -= fs.offset;
+        rs->pfrs->offset_again -= fs.offset;
+
+        TRACE(L"afsBeforeRead::(%08x) NOW: hfile=%08x, offset=%08x", 
+                (DWORD)rs->pfrs->eventId, 
+                (DWORD)rs->pfrs->hfile, 
+                rs->pfrs->offset); 
+        //if (fs.binKey == 0x00f07e2)
+        //{
+        //    _asm int 3;
+        //}
+    }
+}
+
+void afsioAtCloseHandleCallPoint()
+{
+    __asm {
+        // IMPORTANT: when saving flags, use pusfd/popfd for stack alignment
+        pushfd 
+        push ebp
+        push eax
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push eax // handle
+        call afsioAtCloseHandle
+        add esp,0x04     // pop parameters
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        pop eax
+        pop ebp
+        popfd
+        push edx                          // execute replaced code
+        mov edx,[esp+4]                   // (need to swap two numbers on
+        mov [esp+4],eax                   // top of the stack, before doing
+        mov [esp+8],edx                   // the call to CloseHandle)
+        pop edx                           // ...
+        call ebx                          // ...
+        mov dword ptr ds:[esi+0x27c],edi  // ...
+        retn
+    }
+}
+
+KEXPORT void afsioAtCloseHandle(DWORD eventId)
+{
+    // reading event is complete. Handle is being closed
+    // Do necessary house-keeping tasks, such as removing the eventId
+    // from the event map
+    TRACE(L"afsAtCloseHandle:: eventId=%08x",eventId);
+
+    hash_map<DWORD,FILE_STRUCT>::iterator it = g_event_map.find(eventId);
+    if (it != g_event_map.end())
+    {
+        FILE_STRUCT& fs = it->second;
+        HANDLE hfile = fs.hfile;
+
+        // delete entry in file_map
+        hash_map<DWORD,FILE_STRUCT>::iterator fit = g_file_map.find(fs.binKey);
+        if (fit != g_file_map.end())
+        {
+            TRACE(L"Finished read-event for afsId=0x%02x, binId=%d",
+                    (fs.binKey >> 16)&0xffff, fs.binKey&0xffff);
+            g_file_map.erase(fit);
+        }
+
+        // close file handle, and delete from event map
+        CloseHandle(hfile);
+        g_event_map.erase(it);
+
+    }
+}
+
+KEXPORT bool afsioExtendSlots(int afsId, int num_slots)
+{
+    // extend BIN-sizes table
+    AFS_INFO** tabArray = (AFS_INFO**)data[BIN_SIZES_TABLE];
+    if (!tabArray)
+        return false;
+    AFS_INFO* table = tabArray[afsId];
+    if (!table)
+        return false;
+
+    // check if already enough slots
+    if (num_slots <= table->numItems)
+        return true;
+
+    int newSize = sizeof(DWORD)*(num_slots)+0x120;
+    AFS_INFO* newTable = (AFS_INFO*)HeapAlloc(
+            GetProcessHeap(), HEAP_ZERO_MEMORY, newSize);
+    memcpy(newTable, table, table->structSize);
+    for (int i=table->numItems; i<num_slots; i++)
+        newTable->sizes[i] = 0x800; // back-fill with 1 page defaults
+
+    newTable->structSize = newSize;
+    newTable->numItems = num_slots;
+    newTable->numItems2 = num_slots;
+    newTable->entryIsDword = 1;
+    tabArray[afsId] = newTable; // point to new structure
+    return true;
+}
+
+/**
+ * Research function. Do not use yet.
+ * Hooking:
+ *  HookCallPoint(
+ *      code[C_AT_READFILE], 
+ *      afsioAfsReadFileCallPoint, 6, 1);
+ *
+ * code[C_AT_READFILE] = 0x4d0ba8 (for PES2011demo)
+ *
+ */
+KEXPORT BOOL AfsReadFile(
+        HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
+        LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped,
+        FILE_READ_STRUCT* pfrs)
+{
+    if (!pfrs) {
+        // quick return
+        return ReadFile(hFile, lpBuffer, nNumberOfBytesToRead,
+                lpNumberOfBytesRead, lpOverlapped); 
+    }
+
+    TRACE(L"AfsReadFile: hFile=%04x, buffer=%p, offset=%08x, nb=%08x, %d",
+            hFile, lpBuffer, pfrs->offset, nNumberOfBytesToRead, lpOverlapped);
+
+    if (pfrs->eventId != 0)
+    {
+        TRACE(L"eventId = %04x", pfrs->eventId);
+        hash_map<DWORD,FILE_STRUCT>::iterator it;
+        it = g_event_map.find(pfrs->eventId);
+        if (it != g_event_map.end())
+        {
+            TRACE(L"Event found!");
+            FILE_STRUCT& fs = it->second;
+            TRACE(L"AfsReadFile: fs.hfile=%04x, offset=%08x, nb=%08x",
+                    fs.hfile, pfrs->offset-fs.offset, 
+                    nNumberOfBytesToRead);
+
+            SetFilePointer(fs.hfile, pfrs->offset-fs.offset, NULL, FILE_BEGIN);
+            ReadFile(fs.hfile, lpBuffer, nNumberOfBytesToRead,
+                    lpNumberOfBytesRead, lpOverlapped); 
+
+            SetFilePointer(hFile, nNumberOfBytesToRead, NULL, FILE_CURRENT);
+            if (lpNumberOfBytesRead) {
+                *lpNumberOfBytesRead = nNumberOfBytesToRead;
+            }
+            return TRUE;
+        }
+    }
+
+    // read afs data
+    return ReadFile(hFile, lpBuffer, nNumberOfBytesToRead,
+            lpNumberOfBytesRead, lpOverlapped); 
 }
 

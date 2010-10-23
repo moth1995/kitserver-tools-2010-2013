@@ -11,9 +11,9 @@
 
 #define MODID 123
 #ifdef DEBUG
-#define NAMELONG L"AFSIO Module 10.0.3.0 (DEBUG)"
+#define NAMELONG L"AFSIO Module 10.0.4.0 (DEBUG)"
 #else
-#define NAMELONG L"AFSIO Module 10.0.3.0"
+#define NAMELONG L"AFSIO Module 10.0.4.0"
 #endif
 #define NAMESHORT L"AFSIO"
 #define DEFAULT_DEBUG 0
@@ -53,6 +53,12 @@ hash_map<DWORD,DWORD> g_offset_map;
 hash_map<DWORD,FILE_STRUCT> g_event_map;
 bool _initialized(false);
 
+static char _imgExt1[] = ".img";
+static char _imgExt2[] = ".IMG";
+const char* _imgExt1End = _imgExt1+strlen(_imgExt1)-1;
+const char* _imgExt2End = _imgExt2+strlen(_imgExt2)-1;
+const int _imgExt1Len = strlen(_imgExt1);
+
 // FUNCTIONS
 HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags,
@@ -71,7 +77,12 @@ void afsioAfsReadFileCallPoint();
 void afsioAtCloseHandleCallPoint();
 
 KEXPORT DWORD GetAfsIdByBase(DWORD base);
+KEXPORT DWORD GetAfsIdByReadEvent(READ_EVENT_STRUCT* res, const char* pathName);
+DWORD GetAfsIdByPathName(const char* pathName);
+DWORD GetAfsIdByPathNameOld(const char* pathName);
+DWORD GetAfsIdByPathNameFast(const char* pathName);
 DWORD GetBinSize(DWORD afsId, DWORD binId, DWORD orgSize);
+void compareSpeed(const char* pathName);
 
 KEXPORT DWORD afsioAtGetBinSize(DWORD base, DWORD binId, DWORD orgSize);
 KEXPORT DWORD afsioAtGetBufferSize(DWORD afsId, DWORD binId, DWORD orgSize);
@@ -333,7 +344,49 @@ DWORD GetBinSize(DWORD afsId, DWORD fileId, DWORD orgSize)
     return result;
 }
 
-DWORD GetAfsIdByPathName(char* pathName)
+void compareSpeed(const char* pathName)
+{
+    const int num_iterations = 2000000;
+    int start = GetTickCount();
+    for (int i=0; i<num_iterations; i++) {
+        GetAfsIdByPathName(pathName);
+    }
+    int total = GetTickCount() - start;
+    int startOld = GetTickCount();
+    for (int i=0; i<num_iterations; i++) {
+        GetAfsIdByPathNameOld(pathName);
+    }
+    int totalOld = GetTickCount() - startOld;
+    int startFast = GetTickCount();
+    for (int i=0; i<num_iterations; i++) {
+        GetAfsIdByPathNameFast(pathName);
+    }
+    int totalFast = GetTickCount() - startFast;
+
+    wchar_t* path = Utf8::utf8ToUnicode((BYTE*)pathName);
+    LOG(L"compareSpeed:: pathName={%s}", path);
+    LOG(L"compareSpeed:: total=%d, totalOld=%d, totalFast=%d", 
+            total, totalOld, totalFast);
+    Utf8::free(path);
+}
+
+DWORD GetAfsIdByPathName(const char* pathName)
+{
+    DWORD afsId = 0xffffffff;
+    const char* start = strrchr(pathName,'\\')+1;
+    const char* end = start+strlen(start);
+    if (strnicmp(end-4,".img",4)==0) {
+        if (sscanf(start+2,"%02x",&afsId)==1) {
+            if (afsId<0 || afsId>MAX_AFSID) {
+                LOG(L"GetAfsByPathName: afsId=%02x is out of range");
+                return 0xffffffff;
+            }
+        }
+    }
+    return afsId;
+}
+
+DWORD GetAfsIdByPathNameOld(const char* pathName)
 {
     AFS_INFO** ppBST = (AFS_INFO**)data[BIN_SIZES_TABLE];
     for (DWORD afsId=0; afsId<=MAX_AFSID; afsId++)
@@ -345,6 +398,49 @@ DWORD GetAfsIdByPathName(char* pathName)
     return 0xffffffff;
 }
 
+/**
+ * Optimized routine to determine
+ * Best case of GetAfsIdByPathNameOld is faster, but
+ * this method is more consistent in terms of speed.
+ */
+DWORD GetAfsIdByPathNameFast(const char* pathName)
+{
+    // quick exit check
+    if (!pathName || pathName[0]=='\0') {
+        return 0xffffffff;
+    }
+
+    DWORD afsId = 0xffffffff;
+    const char* p = pathName+strlen(pathName)-1;
+    const char* q1 = _imgExt1End;
+    const char* q2 = _imgExt2End;
+    int count = _imgExt1Len;
+    while (*p!='\\' && p!=pathName) {
+        // extension check
+        if (count>0) {
+            if (*p != *q1 && *p != *q2)
+                return 0xffffffff;
+            count--;
+            q1--;
+            q2--;
+        }
+        p--;
+    }
+
+    // parse afsId
+    if (p == pathName) {
+        return 0xffffffff;
+    }
+    if (sscanf(p+3,"%02x",&afsId)==1) {
+        if (afsId<0 || afsId>MAX_AFSID) {
+            LOG(L"GetAfsByPathNameFast: afsId=%02x is out of range");
+            return 0xffffffff;
+        }
+    }
+
+    return afsId;
+}
+
 KEXPORT DWORD GetAfsIdByBase(DWORD base)
 {
     DWORD* binSizesTable = (DWORD*)data[BIN_SIZES_TABLE];
@@ -352,6 +448,17 @@ KEXPORT DWORD GetAfsIdByBase(DWORD base)
         if (binSizesTable[i]==base)
             return i;
     return 0xffffffff;
+}
+
+KEXPORT DWORD GetAfsIdByReadEvent(READ_EVENT_STRUCT* res, const char* pathName)
+{
+    TRACE(L"GetAfsIdByReadEvent:: res->binSizesTableAddr = %p",
+            res->binSizesTableAddr);
+    DWORD* binSizesTable = (DWORD*)data[BIN_SIZES_TABLE];
+    for (DWORD i=0; i<MAX_AFSID+1; i++)
+        if (binSizesTable[i]==res->binSizesTableAddr-0x10)
+            return i;
+    return GetAfsIdByPathName(pathName);
 }
 
 void afsioAfterGetOffsetPagesCallPoint()
@@ -439,7 +546,10 @@ KEXPORT void afsioAfterCreateEvent(DWORD eventId, READ_EVENT_STRUCT* res, char* 
     Utf8::free(path);
 #endif
 
-    DWORD afsId = GetAfsIdByPathName(pathName);
+    //DWORD afsId = GetAfsIdByPathName(pathName);
+    //DWORD afsId = GetAfsIdByReadEvent(res, pathName);
+    DWORD afsId = GetAfsIdByPathNameFast(pathName);
+    TRACE(L"afsAfterCreateEvent:: res=%p", res);
     TRACE(L"afsAfterCreateEvent:: afsId=%02x, offsetPages=%08x",
             afsId, res->offsetPages);
     DWORD binKey = ((res->offsetPages << 0x0b)&0xfffff800) + afsId;
@@ -449,6 +559,18 @@ KEXPORT void afsioAfterCreateEvent(DWORD eventId, READ_EVENT_STRUCT* res, char* 
     if (it != g_offset_map.end())
     {
         DWORD binId = it->second;
+
+        /*
+        if (afsId==0x02 && binId==45) {
+            //__asm int 3;
+
+            //TEST: compare speed
+            compareSpeed(".\\img\\dt00_e.img");
+            compareSpeed(".\\img\\dt0e.img");
+            compareSpeed(".\\img\\dt00.img");
+            compareSpeed("c:\\documents and settings\\all users\\application data\\konami\\pro evolution soccer 2011\\download\\dt0f.img");
+        }
+        */
 
         // lookup FILE_STRUCT
         DWORD binKey1 = (afsId << 16) + binId;

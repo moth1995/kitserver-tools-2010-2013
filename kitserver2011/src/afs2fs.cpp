@@ -256,65 +256,77 @@ void InitializeFileNameCache()
                 TRACE(L"folderpattern = {%s}", folderpattern.c_str());
 
                 HANDLE hff1 = FindFirstFile(folderpattern.c_str(), &fData1);
-                if (hff1 != INVALID_HANDLE_VALUE) 
+                while (hff1 != INVALID_HANDLE_VALUE)
                 {
-                    while(true)
+                    // check if this is a file
+                    if (!(fData1.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) 
                     {
-                        // check if this is a file
-                        if (!(fData1.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) 
+                        int binId = -1;
+                        wchar_t* s = wcsrchr(fData1.cFileName,'_');
+                        if (s && swscanf(s+1,L"%d",&binId)==1)
                         {
-                            int binId = -1;
-                            wchar_t* s = wcsrchr(fData1.cFileName,'_');
-                            if (s && swscanf(s+1,L"%d",&binId)==1)
+                            TRACE(L"folder={%s}, bin={%d}",
+                                    folder.c_str(),binId);
+                            if (binId >= 0)
                             {
-                                TRACE(L"folder={%s}, bin={%d}",folder.c_str(),binId);
-                                if (binId >= 0)
+                                BYTE* entries = NULL;
+                                hash_map<string,BYTE*>::iterator cit;
+                                cit = _info_cache.find(key);
+                                if (cit != _info_cache.end()) 
+                                    entries = cit->second;
+                                else 
                                 {
-                                    BYTE* entries = NULL;
-                                    hash_map<string,BYTE*>::iterator cit = _info_cache.find(key);
-                                    if (cit != _info_cache.end()) entries = cit->second;
-                                    else 
-                                    {
-                                        entries = (BYTE*)HeapAlloc(
-                                                GetProcessHeap(),
-                                                HEAP_ZERO_MEMORY, 
-                                                (sizeof(wchar_t*) 
-                                                    + sizeof(wchar_t)*_config._fileNameLen)*GetNumItems(folder)
-                                                );
-                                        _info_cache.insert(pair<string,BYTE*>(key, entries));
-                                    }
+                                    entries = (BYTE*)HeapAlloc(
+                                        GetProcessHeap(),
+                                        HEAP_ZERO_MEMORY, 
+                                        (sizeof(wchar_t*) 
+                                            + sizeof(wchar_t) *
+                                            _config._fileNameLen) *
+                                            GetNumItems(folder)
+                                        );
+                                    _info_cache.insert(pair<string,BYTE*>(
+                                        key, entries));
+                                }
 
-                                    if (binId >= GetNumItems(folder))
-                                    {
-                                        // binID too large
-                                        LOG(L"ERROR: bin ID for filename \"%s\" is too large. Maximum bin ID for this folder is: %d", fData1.cFileName, GetNumItems(folder)-1);
-                                    }
-                                    else if (wcslen(fData1.cFileName) >= _config._fileNameLen)
-                                    {
-                                        // file name too long
-                                        LOG(L"ERROR: filename too long: \"%s\" (in folder: %s)", 
-                                                fData1.cFileName, folder.c_str());
-                                        LOG(L"ERROR: length = %d chars. Maximum allowed length: %d chars.", 
-                                                wcslen(fData1.cFileName), _config._fileNameLen-1);
-                                    }
-                                    else
-                                    {
-                                        INFO_CACHE_ENTRY_STRUCT* entry = (INFO_CACHE_ENTRY_STRUCT*)(entries 
-                                                + binId*(sizeof(wchar_t*) + sizeof(wchar_t)*_config._fileNameLen));
-                                        // put filename into cache
-                                        wcsncpy(entry->fileName, fData1.cFileName, _config._fileNameLen-1);
-                                        // put foldername into cache
-                                        entry->rootDir = lit->c_str();
-                                    }
+                                if (binId >= GetNumItems(folder))
+                                {
+                                    // binID too large
+                                    LOG(L"ERROR: bin ID for filename \"%s\" is too large. Maximum bin ID for this folder is: %d", 
+                                        fData1.cFileName, 
+                                        GetNumItems(folder)-1);
+                                }
+                                else if (wcslen(fData1.cFileName) >= 
+                                        _config._fileNameLen)
+                                {
+                                    // file name too long
+                                    LOG(L"ERROR: filename too long: \"%s\" (in folder: %s)", 
+                                        fData1.cFileName, folder.c_str());
+                                    LOG(L"ERROR: length = %d chars. Maximum allowed length: %d chars.", 
+                                        wcslen(fData1.cFileName), 
+                                        _config._fileNameLen-1);
+                                }
+                                else
+                                {
+                                    INFO_CACHE_ENTRY_STRUCT* entry = 
+                                        (INFO_CACHE_ENTRY_STRUCT*)(entries + 
+                                        binId*(sizeof(wchar_t*) + 
+                                        sizeof(wchar_t)*_config._fileNameLen));
+                                    // put filename into cache
+                                    wcsncpy(
+                                        entry->fileName, 
+                                        fData1.cFileName, 
+                                        _config._fileNameLen-1);
+                                    // put foldername into cache
+                                    entry->rootDir = lit->c_str();
                                 }
                             }
                         }
-
-                        // proceed to next file
-                        if (!FindNextFile(hff1, &fData1)) break;
                     }
-                    FindClose(hff1);
+
+                    // proceed to next file
+                    if (!FindNextFile(hff1, &fData1)) break;
                 }
+                FindClose(hff1);
             }
 
             // proceed to next file

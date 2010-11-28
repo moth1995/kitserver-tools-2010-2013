@@ -31,6 +31,7 @@ enum {
     gvPES2011demo,   // PES2011 PC DEMO
     gvPES2011,       // PES2011 PC 1.0 
     gvPES2011v101,   // PES2011 PC 1.01
+    gvPES2011v102,   // PES2011 PC 1.02
 };
 
 #endif

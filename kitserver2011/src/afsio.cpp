@@ -11,9 +11,9 @@
 
 #define MODID 123
 #ifdef DEBUG
-#define NAMELONG L"AFSIO Module 10.0.4.0 (DEBUG)"
+#define NAMELONG L"AFSIO Module 10.0.4.1 (DEBUG)"
 #else
-#define NAMELONG L"AFSIO Module 10.0.4.0"
+#define NAMELONG L"AFSIO Module 10.0.4.1"
 #endif
 #define NAMESHORT L"AFSIO"
 #define DEFAULT_DEBUG 0

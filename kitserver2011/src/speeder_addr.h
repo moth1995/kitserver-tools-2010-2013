@@ -3,6 +3,7 @@ BYTE allowedGames[] = {
     gvPES2011demo,
     gvPES2011,
     gvPES2011v101,
+    gvPES2011v102,
 };
 
 #define CODELEN 1
@@ -18,6 +19,8 @@ DWORD codeArray[][CODELEN] = {
     NOCODEADDR,
     // PES2011 v1.01
     NOCODEADDR,
+    // PES2011 v1.02
+    NOCODEADDR,
 };
 
 #define DATALEN 1 
@@ -32,6 +35,8 @@ DWORD dataArray[][DATALEN] = {
     // PES2011 
     NODATAADDR,
     // PES2011 v1.01
+    NODATAADDR,
+    // PES2011 v1.02
     NODATAADDR,
 };
 

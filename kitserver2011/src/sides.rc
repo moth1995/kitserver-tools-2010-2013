@@ -17,11 +17,11 @@ BEGIN
 	BEGIN
 		BLOCK "040904b0"
 		BEGIN
-			VALUE "FileDescription", "Speeder Module\0"
+			VALUE "FileDescription", "Sides Module\0"
 			VALUE "FileVersion", "10.0.4.0\0"
 			VALUE "LegalCopyright", "Copyright © 2005-2010 Juce\0"
-			VALUE "Comments", "Speeder Module.\r\n\
-Allows to slow the gameplay down.\0"
+			VALUE "Comments", "Sides Module.\r\n\
+Allows to freely select sides during non-exhibition matches.\0"
 		END
 	END
 	BLOCK "VarFileInfo"

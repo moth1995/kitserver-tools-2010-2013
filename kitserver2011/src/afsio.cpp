@@ -458,7 +458,8 @@ KEXPORT DWORD GetAfsIdByReadEvent(READ_EVENT_STRUCT* res, const char* pathName)
     for (DWORD i=0; i<MAX_AFSID+1; i++)
         if (binSizesTable[i]==res->binSizesTableAddr-0x10)
             return i;
-    return GetAfsIdByPathName(pathName);
+    //return GetAfsIdByPathName(pathName);
+    return GetAfsIdByPathNameFast(pathName);
 }
 
 void afsioAfterGetOffsetPagesCallPoint()

@@ -56,7 +56,7 @@ pngdib:
 
 #dlls: kload.dll kserv.dll lodmixer.dll kset.dll afsio.dll afs2fs.dll sched.dll fserv.dll rwdata.dll camera.dll time.dll speeder.dll stadium.dll bootserv.dll bserv.dll leagues.dll
 #apps: manager.exe config.exe zlibtool.exe
-dlls: kload.dll afsio.dll afs2fs.dll speeder.dll
+dlls: kload.dll afsio.dll afs2fs.dll speeder.dll sides.dll
 apps: manager.exe zlibtool.exe
 
 imageutil.obj: imageutil.cpp imageutil.h
@@ -86,6 +86,11 @@ speeder.lib: speeder.obj configs.obj apihijack.obj
 speeder.dll: speeder.lib speeder.res
 	$(LINK) $(LFLAGS) /out:speeder.dll /DLL speeder.obj configs.obj apihijack.obj speeder.res $(LIBS) $(D3DX9) kload.lib
 speeder.obj: speeder.cpp speeder.h speeder_addr.h speeder.rc
+
+sides.lib: sides.obj configs.obj
+sides.dll: sides.lib sides.res
+	$(LINK) $(LFLAGS) /out:sides.dll /DLL sides.obj configs.obj sides.res $(LIBS) $(D3DX9) kload.lib
+sides.obj: sides.cpp sides.h sides_addr.h sides.rc
 
 kload.lib: hook.obj kload.obj detect.obj imageutil.obj lang.obj log.obj configs.obj hooklib.obj hook.obj crc32.obj
 kload.dll: kload.lib kload.res

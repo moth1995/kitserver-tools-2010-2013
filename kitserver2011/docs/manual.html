@@ -54,7 +54,7 @@
 Version history: <a href="history.txt">history.txt</a><br />
 </div>
 <div>
-    October 18, 2010 - <b>Kitserver 10.0.3</b> 
+    November 28, 2010 - <b>Kitserver 10.0.4</b> 
 </div>
 <p class="note">
 Usually, the most up-to-date version of this documentation, and the translations to many languages, are located here: <a href="http://kitserver.ath.cx/docs/">http://kitserver.ath.cx/docs/</a>. Documentation for Kitservers 5-8 and Kitserver 2010 can also be found there.
@@ -85,9 +85,13 @@ If you are new to Kitserver, please make sure you read the
         <th><b>afs2fs.dll</b></th>
         <td>Manage AFS (.img) game content using files and folders: much easier and quicker to install/remove patches, without the need modify *.img files.</td>
     </tr>
-    <tr><td><a href="#speeder">Speeder module 10.0.1</a></td>
+    <tr><td><a href="#speeder">Speeder module 10.0.4</a></td>
         <th><b>speeder.dll</b></th>
         <td>Increase or decrease gameplay speed.</td>
+    </tr>
+    <tr><td><a href="#sides">Sides module 10.0.4</a></td>
+        <th><b>sides.dll</b></th>
+        <td>Allow free side selection during matches.</td>
     </tr>
 </table>
 </p>
@@ -243,6 +247,7 @@ img.dir = "c:\mypesfiles\root1"
 dll = afsio.dll
 dll = afs2fs.dll
 dll = speeder.dll
+dll = sides.dll
 
 </pre>
 
@@ -415,6 +420,24 @@ by using <b>count.factor</b> setting:
 <pre>
 [speeder]
 count.factor = 0.95
+</pre>
+</p>
+
+<a name="sides"><br /></a>
+<p><a class="backlink" href="#">Top</a></p>
+<h3>6. Sides module (sides.dll)</h3>
+
+<p>This module allows to change sides freely during non-exhibition matches.
+Useful, if you like to play tournaments with your friends, and want them to
+play for your opponents, instead of always playing against the CPU.</p>
+
+<p>By default, free selection of sides is disabled. To enable it, 
+edit the config.txt file, "sides" section, and set <b>free.select</b> option
+to 1, like shown here:
+
+<pre>
+[sides]
+free.select = 1
 </pre>
 </p>
 

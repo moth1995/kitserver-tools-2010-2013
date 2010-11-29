@@ -2,6 +2,13 @@ Kitserver 2011 HISTORY notes
 ============================
 
 
+2010-11-28
+----------
+v10.0.4
+- added 1.02 support
+- sides module (for free side selection)
+
+
 2010-10-18
 ----------
 v10.0.3

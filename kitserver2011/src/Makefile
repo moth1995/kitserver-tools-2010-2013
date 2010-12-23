@@ -56,7 +56,7 @@ pngdib:
 
 #dlls: kload.dll kserv.dll lodmixer.dll kset.dll afsio.dll afs2fs.dll sched.dll fserv.dll rwdata.dll camera.dll time.dll speeder.dll stadium.dll bootserv.dll bserv.dll leagues.dll
 #apps: manager.exe config.exe zlibtool.exe
-dlls: kload.dll afsio.dll afs2fs.dll speeder.dll sides.dll
+dlls: kload.dll afsio.dll afs2fs.dll speeder.dll sides.dll lodmixer.dll
 apps: manager.exe zlibtool.exe
 
 imageutil.obj: imageutil.cpp imageutil.h
@@ -91,6 +91,11 @@ sides.lib: sides.obj configs.obj
 sides.dll: sides.lib sides.res
 	$(LINK) $(LFLAGS) /out:sides.dll /DLL sides.obj configs.obj sides.res $(LIBS) $(D3DX9) kload.lib
 sides.obj: sides.cpp sides.h sides_addr.h sides.rc
+
+lodmixer.lib: lodmixer.obj configs.obj
+lodmixer.dll: lodmixer.lib lodmixer.res
+	$(LINK) $(LFLAGS) /out:lodmixer.dll /DLL lodmixer.obj configs.obj lodmixer.res $(LIBS) $(D3DX9) kload.lib
+lodmixer.obj: lodmixer.cpp lodmixer.h lodmixer_addr.h lodmixer.rc
 
 kload.lib: hook.obj kload.obj detect.obj imageutil.obj lang.obj log.obj configs.obj hooklib.obj hook.obj crc32.obj
 kload.dll: kload.lib kload.res

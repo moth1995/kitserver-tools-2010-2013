@@ -57,6 +57,17 @@ DWORD codeArray[][CODELEN] = {
         0, 0,
         0, 0, 
   },
+  // PES2011 v1.03
+  {
+		0x1072285,
+		0, 0, 
+		0, 0, 
+		0, 0, 
+        0, 0,
+        0, 0,
+        0, 0,
+        0, 0, 
+  },
 };
 
 #define DATALEN 12
@@ -102,6 +113,14 @@ DWORD dataArray[][DATALEN] = {
         0, 0, 0,
         0, 0,
     },
+    // PES2011 v1.03
+    {
+        0, 0,
+        0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0,
+    },
 };
 
 #define LTFPLEN 15
@@ -111,7 +130,11 @@ BYTE ltfpPatchArray[][LTFPLEN] = {
 	NOLTFPADDR
     // PES2011 
 	NOLTFPADDR
-    // PES2011 v1.0
+    // PES2011 v1.01
+	NOLTFPADDR
+    // PES2011 v1.02
+	NOLTFPADDR
+    // PES2011 v1.03
 	NOLTFPADDR
 };
 

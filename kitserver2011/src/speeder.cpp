@@ -49,6 +49,7 @@ public:
 };
 
 config_t _speeder_config;
+bool _change(false);
 
 // FUNCTIONS
 HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
@@ -121,8 +122,8 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
                 _speeder_config.count_factor);
 
     // patch code to enforce specified time
-    if (_speeder_config.count_factor >= MIN_COUNT)
-    {
+    if (_speeder_config.count_factor >= MIN_COUNT &&
+            fabs(_speeder_config.count_factor-1.0) > FLOAT_ZERO) {
        SDLLHook Kernel32Hook = 
        {
           "KERNEL32.DLL",
@@ -134,6 +135,17 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
           }
        };
        HookAPICalls( &Kernel32Hook );
+
+       LOG(L"speed adjustment enabled");
+
+       LARGE_INTEGER metric;
+       BOOL result = QueryPerformanceFrequency(&metric);
+       LOG(L"old metric(%d, %d), result=%d", 
+           metric.HighPart, metric.LowPart, result);
+       metric.HighPart /= _speeder_config.count_factor;
+       metric.LowPart /= _speeder_config.count_factor;
+       LOG(L"new metric(%d, %d)", 
+           metric.HighPart, metric.LowPart);
     }
 
 	TRACE(L"Initialization complete.");
@@ -145,12 +157,11 @@ KEXPORT BOOL WINAPI Override_QueryPerformanceFrequency(
 {
     LARGE_INTEGER metric;
     BOOL result = QueryPerformanceFrequency(&metric);
-    if (fabs(_speeder_config.count_factor-1.0)>FLOAT_ZERO)
-    {
-        metric.HighPart /= _speeder_config.count_factor;
-        metric.LowPart /= _speeder_config.count_factor;
-    }
+
+    metric.HighPart /= _speeder_config.count_factor;
+    metric.LowPart /= _speeder_config.count_factor;
     *lpPerformanceFrequency = metric;
+
     return result;
 }
 

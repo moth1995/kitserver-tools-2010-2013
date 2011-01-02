@@ -33,7 +33,7 @@ all: dlls apps
 	copy $(LIBPNGDLL) output
 	copy $(ZLIBDLL) output
 	copy manager.exe output
-	rem copy config.exe output
+	copy config.exe output
 	copy lang_*.txt output
 	
 all_dlls: dlls
@@ -48,7 +48,7 @@ all_apps: apps
 	if exist output (rd /S /Q output)
 	mkdir output
 	copy manager.exe output
-	rem copy config.exe output
+	copy config.exe output
 	copy lang_*.txt output
 
 pngdib:
@@ -57,7 +57,7 @@ pngdib:
 #dlls: kload.dll kserv.dll lodmixer.dll kset.dll afsio.dll afs2fs.dll sched.dll fserv.dll rwdata.dll camera.dll time.dll speeder.dll stadium.dll bootserv.dll bserv.dll leagues.dll
 #apps: manager.exe config.exe zlibtool.exe
 dlls: kload.dll afsio.dll afs2fs.dll speeder.dll sides.dll lodmixer.dll
-apps: manager.exe zlibtool.exe
+apps: manager.exe zlibtool.exe config.exe
 
 imageutil.obj: imageutil.cpp imageutil.h
 detect.obj: detect.cpp detect.h
@@ -96,6 +96,13 @@ lodmixer.lib: lodmixer.obj configs.obj
 lodmixer.dll: lodmixer.lib lodmixer.res
 	$(LINK) $(LFLAGS) /out:lodmixer.dll /DLL lodmixer.obj configs.obj lodmixer.res $(LIBS) $(D3DX9) kload.lib
 lodmixer.obj: lodmixer.cpp lodmixer.h lodmixer_addr.h lodmixer.rc
+
+lodcfg.obj: lodcfg.cpp lodcfg.h lodcfgui.h lodmixer.h
+lodcfgui.obj: lodcfgui.cpp lodcfgui.h
+config.exe: lodcfg.obj detect.obj lodcfgui.obj configs.obj config.res
+	$(LINK) $(LFLAGS) /out:config.exe lodcfg.obj detect.obj lodcfgui.obj configs.obj config.res $(LIBS)
+config.res: 
+	$(RC) -r -fo config.res config.rc
 
 kload.lib: hook.obj kload.obj detect.obj imageutil.obj lang.obj log.obj configs.obj hooklib.obj hook.obj crc32.obj
 kload.dll: kload.lib kload.res

@@ -2,6 +2,12 @@ Kitserver 2011 HISTORY notes
 ============================
 
 
+2011-01-02
+----------
+v10.1.0
+- LOD mixer, configuration UI tool.
+
+
 2010-12-23
 ----------
 v10.0.5

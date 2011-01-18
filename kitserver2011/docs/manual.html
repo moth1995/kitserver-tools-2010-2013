@@ -3,7 +3,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta http-equiv="Content-Language" content="en">
     <!-- meta -->
-    <title>Kitserver 2011 for Pro Evolution Soccer 2011 Manual</title>
+    <title>Kitserver 11 for Pro Evolution Soccer 2011 Manual</title>
     <style>
         img { display:block;margin:10px 15px 15px 0;border:1px solid #888;}
         table td img {border:0}
@@ -48,13 +48,13 @@
     </style>
 </head>
 <body>
-<h2>Kitserver 2011 Manual</h2>
+<h2>Kitserver 11 Manual</h2>
 
 <div class="hist">
 Version history: <a href="history.txt">history.txt</a><br />
 </div>
 <div>
-    January 2, 2011 - <b>Kitserver 10.1.0</b> 
+    January 18, 2011 - <b>Kitserver 11.0.0</b> 
 </div>
 <p class="note">
 Usually, the most up-to-date version of this documentation, and the translations to many languages, are located here: <a href="http://kitserver.ath.cx/docs/">http://kitserver.ath.cx/docs/</a>. Documentation for Kitservers 5-8 and Kitserver 2010 can also be found there.
@@ -66,7 +66,7 @@ Usually, the most up-to-date version of this documentation, and the translations
 -->
 <h3>1. Introduction</h3>
 <p>
-Kitserver 2011 is an add-on program for Pro Evolution Soccer 2011 (and Pro Evolution Soccer 2011 DEMO). It is a loader and manager for various modules, where
+Kitserver 11 is an add-on program for Pro Evolution Soccer 2011 (and Pro Evolution Soccer 2011 DEMO). It is a loader and manager for various modules, where
 each module is built as a (typically) independent DLL containing logic to 
 enhance the game in particular aspect. While originally the Kitserver was 
 developed to "serve" kits Pro Evolution Soccer 3, a lot more functionality 
@@ -81,20 +81,20 @@ If you are new to Kitserver, please make sure you read the
 
 <p>
 <table>
-    <tr><td><a href="#afs2fs">AFS2FS 10.0.5</a></td>
+    <tr><td><a href="#afs2fs">AFS2FS 11.0.0</a></td>
         <th><b>afs2fs.dll</b></th>
         <td>Manage AFS (.img) game content using files and folders: much easier and quicker to install/remove patches, without the need modify *.img files.</td>
     </tr>
-    <tr><td><a href="#lodmixer">LOD Mixer 10.1.0</a></td>
+    <tr><td><a href="#lodmixer">LOD Mixer 11.0.0</a></td>
         <th><b>lodmixer.dll</b></th>
         <td>Fine-tune LOD configuration for players and referees.</span>
         </td>
     </tr>
-    <tr><td><a href="#speeder">Speeder module 10.0.4</a></td>
+    <tr><td><a href="#speeder">Speeder module 11.0.0</a></td>
         <th><b>speeder.dll</b></th>
         <td>Increase or decrease gameplay speed.</td>
     </tr>
-    <tr><td><a href="#sides">Sides module 10.0.5</a></td>
+    <tr><td><a href="#sides">Sides module 11.0.0</a></td>
         <th><b>sides.dll</b></th>
         <td>Allow free side selection during matches.</td>
     </tr>
@@ -127,12 +127,12 @@ won't run into any File Virtualization surprises on Vista, and also that <b>you 
 </p>
 
 <p>Now go to that directory that you installed your kitserver to. You will see there
-a folder named <b>Kitserver2011</b>. Open that folder, you should see something like this:
+a folder named <b>Kitserver11</b>. Open that folder, you should see something like this:
 
 <img src="layout1.png"/>
 
 <p>
-Now, copy the two executables from your game folder to the Kitserver2011 folder - <b>pes2011.exe</b> and <b>settings.exe</b>. (<span class="devnote">Depending on your Windows settings, you may see them 
+Now, copy the two executables from your game folder to the Kitserver11 folder - <b>pes2011.exe</b> and <b>settings.exe</b>. (<span class="devnote">Depending on your Windows settings, you may see them 
 as simply <b>pes2011</b> and <b>settings</b> - with file extensions hidden. 
 In fact, by default the file extensions of known file types are hidden, as you can see 
 on the screenshot below).</span> So, now it should look like this:
@@ -175,7 +175,7 @@ only for one exe by setting the other one to "no action".
 </p>
 
 <p>That's it. You're ready to launch the game.<br />
-<span class="note">REMEMBER: you need to start the game using the game EXE (pes2011.exe) in Kitserver2011 folder, because that is the one that has the kitserver attached to it.</span>
+<span class="note">REMEMBER: you need to start the game using the game EXE (pes2011.exe) in Kitserver11 folder, because that is the one that has the kitserver attached to it.</span>
 </p>
 
 <p class="devnote">For folks who had been using kitserver for some time, it is worth noting that
@@ -189,7 +189,7 @@ game i don't see the effect? What is going on?!!..."</p>
 
 <h5>2.2. Uninstall</h5>
 
-<p>Uninstall is very easy: just delete the <b>Kitserver2011</b> folder, and that's it.<br /> Kitserver 
+<p>Uninstall is very easy: just delete the <b>Kitserver11</b> folder, and that's it.<br /> Kitserver 
 doesn't write into system folders, or anything of that sort, so removal is very simple.
 </p>
 
@@ -203,11 +203,11 @@ there is some other reason.</p>
 and there probably will be more released in the future. When you install these patches, you get
 a brand new game executable (pes2011.exe) among other things. It is important to realise that 
 Konami patch doesn't now about your Kitserver installation, and therefore the game EXE in your 
-<b>Kitserver2011</b> folder will still be the old one.</p>
+<b>Kitserver11</b> folder will still be the old one.</p>
 
-<p>So what you need to do is copy the new game EXE over to the Kitserver2011 folder, then run the
+<p>So what you need to do is copy the new game EXE over to the Kitserver11 folder, then run the
 <b>manager.exe</b> program and attach the kitserver to the new EXE. Assuming, of course, that Kitserver
-supports the new EXE, that's all there is to it. Now you can again start the game from Kitserver2011
+supports the new EXE, that's all there is to it. Now you can again start the game from Kitserver11
 folder.
 </p>
 

@@ -294,7 +294,13 @@ IDirect3D9* STDMETHODCALLTYPE newDirect3DCreate9(UINT sdkVersion) {
 			vtable[VTAB_CREATEDEVICE] = (DWORD)newCreateDevice;
 			TRACE(L"CreateDevice hooked.");
 		}
+        else {
+            LOG(L"Unable to hook CreateDevice.");
+        }
 	}
+    else {
+        LOG(L"g_device = %p", g_device);
+    }
 	
 	//hookOthers();
 

@@ -34,6 +34,7 @@ all: dlls apps
 	copy $(ZLIBDLL) output
 	copy manager.exe output
 	copy config.exe output
+	copy krun.exe output
 	copy lang_*.txt output
 	
 all_dlls: dlls
@@ -57,7 +58,7 @@ pngdib:
 #dlls: kload.dll kserv.dll lodmixer.dll kset.dll afsio.dll afs2fs.dll sched.dll fserv.dll rwdata.dll camera.dll time.dll speeder.dll stadium.dll bootserv.dll bserv.dll leagues.dll
 #apps: manager.exe config.exe zlibtool.exe
 dlls: kload.dll afsio.dll afs2fs.dll speeder.dll sides.dll lodmixer.dll
-apps: manager.exe zlibtool.exe config.exe
+apps: manager.exe zlibtool.exe config.exe krun.exe
 
 imageutil.obj: imageutil.cpp imageutil.h
 detect.obj: detect.cpp detect.h
@@ -70,6 +71,12 @@ hook.obj: hook.cpp hook.h hook_addr.h
 apihijack.obj: apihijack.cpp apihijack.h
 kload.lib: kload.obj hook.obj
 kload.obj: kload.h kload_addr.h kload.cpp
+regtools.obj: regtools.cpp regtools.h
+
+krun.exe: krun.obj imageutil.obj regtools.obj krun.res
+	$(LINK) $(LFLAGS) /out:krun.exe krun.obj imageutil.obj regtools.obj krun.res $(LIBS)
+krun.res: 
+	$(RC) -r -fo krun.res krun.rc
 
 afs2fs.lib: afs2fs.obj names.obj configs.obj
 afs2fs.dll: afs2fs.lib afsio.lib afs2fs.res kload.lib

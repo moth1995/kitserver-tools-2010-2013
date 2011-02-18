@@ -447,12 +447,14 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
        }
     }
     if (noneInConfig) {
-       _kserv_config._techfit[256] = 1;
-       _kserv_config._techfit[257] = 1;
-       _kserv_config._techfit[259] = 1;
-       _kserv_config._techfit[260] = 1;
-       _kserv_config._techfit[261] = 1;
-       _kserv_config._techfit[264] = 1;
+       LOG(L"defaulting to this techfit models: 35-41");
+       _kserv_config._techfit[35] = 1;
+       _kserv_config._techfit[36] = 1;
+       _kserv_config._techfit[37] = 1;
+       _kserv_config._techfit[38] = 1;
+       _kserv_config._techfit[39] = 1;
+       _kserv_config._techfit[40] = 1;
+       _kserv_config._techfit[41] = 1;
     }
 
     // initialize iterators

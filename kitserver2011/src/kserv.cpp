@@ -64,15 +64,15 @@
 #define XBIN_LAST XBIN_NUMBER_LAST
 
 #define KITS_IMG        0x0c   // dt0c.img
-#define EXPANSION_IMG   0xff   // dt0f.img
+#define EXPANSION_IMG   0x0f   // dt0f.img
 
 #define NUM_SLOTS_DT0F 128
-#define DT0F_BIN_FONT_FIRST   269
-#define DT0F_BIN_FONT_LAST    780
-#define DT0F_BIN_NUMBER_FIRST 781
-#define DT0F_BIN_NUMBER_LAST  1292
-#define DT0F_BIN_KIT_FIRST    2009
-#define DT0F_BIN_KIT_LAST     2264
+#define DT0F_BIN_FONT_FIRST   397
+#define DT0F_BIN_FONT_LAST    908
+#define DT0F_BIN_NUMBER_FIRST 909
+#define DT0F_BIN_NUMBER_LAST  1420
+#define DT0F_BIN_KIT_FIRST    1923
+#define DT0F_BIN_KIT_LAST     2178
 
 
 HINSTANCE hInst = NULL;

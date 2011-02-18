@@ -116,12 +116,10 @@ KEXPORT void enterUniformSelect();
 KEXPORT void exitUniformSelect();
 list<UNIFORM_SELECT_EVENT_CALLBACK> _uniformSelectEventCallbacks;
 
-/*
 void hookAtCopyEditDataCallPoint();
 void hookCopyPlayerData(PLAYER_INFO* players, int place, bool writeList=true);
 DWORD hookAtCopyEditData2(DWORD dest, DWORD src, DWORD len);
 list<COPY_PLAYER_DATA_CALLBACK> _copyPlayerDataCallbacks;
-*/
 
 list<READ_DATA_CALLBACK> _writeEditDataCallbacks;
 list<READ_DATA_CALLBACK> _writeReplayDataCallbacks;
@@ -440,11 +438,9 @@ HRESULT STDMETHODCALLTYPE newCreateDevice(IDirect3D9* self, UINT Adapter,
     HookCallPoint(code[C_EXIT_UNIFORM_SELECT], 
             exitUniformSelectCallPoint, 6, 0);
 
-    /*
     HookCallPoint(code[C_COPY_DATA], hookAtCopyEditDataCallPoint, 6, 1);
     _org_copyData2 = (COPYDATA_PROC)GetTargetAddress(code[C_COPY_DATA2]);
     HookCallPoint(code[C_COPY_DATA2], hookAtCopyEditData2, 0, 0);
-    */
 
 	CALLCHAIN_BEGIN(hk_D3D_CreateDevice, it) {
 		PFNCREATEDEVICEPROC NextCall = (PFNCREATEDEVICEPROC)*it;
@@ -1606,7 +1602,7 @@ BOOL WINAPI hookReadFile(
   LPOVERLAPPED lpOverlapped
 )
 {
-    TRACE(L"ReadFile: len=%d", nNumberOfBytesToRead);
+    LOG(L"ReadFile: len=%d", nNumberOfBytesToRead);
 
     //BOOL result = _readFile(
     BOOL result = ReadFile(
@@ -1667,7 +1663,6 @@ KEXPORT void addUniformSelectCallback(
     _uniformSelectEventCallbacks.push_back(callback);
 }
 
-/*
 KEXPORT void addCopyPlayerDataCallback(COPY_PLAYER_DATA_CALLBACK callback)
 {
     _copyPlayerDataCallbacks.push_back(callback);
@@ -1730,5 +1725,4 @@ DWORD hookAtCopyEditData2(DWORD dest, DWORD src, DWORD len)
     }
     return result;
 }
-*/
 

@@ -57,7 +57,7 @@ pngdib:
 
 #dlls: kload.dll kserv.dll lodmixer.dll kset.dll afsio.dll afs2fs.dll sched.dll fserv.dll rwdata.dll camera.dll time.dll speeder.dll stadium.dll bootserv.dll bserv.dll leagues.dll
 #apps: manager.exe config.exe zlibtool.exe
-dlls: kload.dll afsio.dll afs2fs.dll speeder.dll sides.dll lodmixer.dll
+dlls: kload.dll kserv.dll afsio.dll afs2fs.dll speeder.dll sides.dll lodmixer.dll fserv.dll
 apps: manager.exe zlibtool.exe config.exe krun.exe
 
 imageutil.obj: imageutil.cpp imageutil.h
@@ -118,8 +118,20 @@ kload.obj: kload.cpp kload.h
 
 kload.res: 
 	$(RC) -r -fo kload.res kload.rc
+
+fserv.lib: fserv.obj configs.obj afsio.lib
+fserv.dll: fserv.lib fserv.res
+	$(LINK) $(LFLAGS) /out:fserv.dll /DLL fserv.obj configs.obj fserv.res $(LIBS) $(D3DX9) kload.lib afsio.lib
+fserv.obj: fserv.cpp fserv.h fserv_addr.h fserv.rc
+fserv.res: 
+	$(RC) -r -fo fserv.res fserv.rc
 	
-	
+kserv.lib: kserv.obj gdb.obj configs.obj afsio.dll kload.dll pngdib
+kserv.dll: kserv.lib kserv.res
+	$(LINK) $(LFLAGS) /out:kserv.dll /LIBPATH:$(LPPNGDIB) /LIBPATH:$(LPLIBPNG) /LIBPATH:$(LPZLIB) /DLL kserv.obj gdb.obj configs.obj kserv.res $(LIBS) $(D3DX9) kload.lib afsio.lib $(LIBSDLL)
+kserv.obj: kserv.cpp kserv.h kserv_addr.h kserv.rc dllinit.h afsio.h teaminfo.h
+gdb.obj: gdb.cpp gdb.h
+
 setupgui.obj: setupgui.cpp setupgui.h
 manager.obj: manager.cpp manager.h setupgui.h
 manager.exe: manager.obj detect.obj setupgui.obj imageutil.obj lang.obj configs.obj manager.res

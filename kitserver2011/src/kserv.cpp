@@ -266,6 +266,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     IDirect3DDevice9** ppReturnedDeviceInterface);
 void kservConfig(char* pName, const void* pValue, DWORD a);
 void kservConfigModels(char* pName, const void* pValue, DWORD a);
+void kservConfigModels2(char* pName, const void* pValue, DWORD a);
 	
 WORD GetTeamId(KIT_CHOICE* kc);
 WORD GetTeamIndex(KIT_CHOICE* kc);
@@ -434,6 +435,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     getConfig("kserv", "debug", DT_DWORD, 1, kservConfig);
     getConfig("kserv", "use.description", DT_DWORD, 2, kservConfig);
     getConfig("kserv", "techfit.model", DT_DWORD, C_ALL, kservConfigModels);
+    getConfig("kserv", "tight.model", DT_DWORD, C_ALL, kservConfigModels2);
     LOG(L"debug = %d", k_kserv.debug);
     LOG(L"use.description = %d", _kserv_config._use_description);
 
@@ -445,9 +447,14 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
           LOG(L"techfit model: %d", i);
           noneInConfig = false;
        }
+       else if (_kserv_config._techfit[i] == 2) {
+          LOG(L"tight model: %d", i);
+          noneInConfig = false;
+       }
     }
     if (noneInConfig) {
        LOG(L"defaulting to this techfit models: 35-41");
+       _kserv_config._techfit[24] = 2;
        _kserv_config._techfit[35] = 1;
        _kserv_config._techfit[36] = 1;
        _kserv_config._techfit[37] = 1;
@@ -488,6 +495,12 @@ void kservConfigModels(char* pName, const void* pValue, DWORD a)
 {
    WORD model = *(DWORD*)pValue;
    _kserv_config._techfit[model] = 1;
+}
+
+void kservConfigModels2(char* pName, const void* pValue, DWORD a)
+{
+   WORD model = *(DWORD*)pValue;
+   _kserv_config._techfit[model] = 2;
 }
 
 KEXPORT DWORD hookVtableFunction(DWORD vtableAddr, DWORD offset, void* func)
@@ -692,6 +705,13 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         {
             _slotMap.insert(pair<WORD,WORD>((WORD)slot,i));
             _reverseSlotMap.insert(pair<WORD,WORD>(i,(WORD)slot));
+        
+            // debug
+            /*
+            if (i==39) {
+                DumpData(&teamKitInfo[i], sizeof(TEAM_KIT_INFO));
+            }
+            */
         }
     }
     LOG(L"Normal slots taken: %d", _slotMap.size());

@@ -165,10 +165,11 @@ typedef struct _KIT_CHOICE
     BYTE other9[2];
     KCOLOR shortsColor;
     BYTE other10[0x18];
-    BYTE other11[3];
-    BYTE sleevePatch;
-    BYTE sleevePatchPosShort;
-    BYTE sleevePatchPosLong;
+    BYTE other11[2];
+    BYTE sleevePatchRightPosShort;
+    BYTE sleevePatchRightPosLong;
+    BYTE sleevePatchLeftPosShort;
+    BYTE sleevePatchLeftPosLong;
     BYTE other12[2];
     BYTE other13[0x154];
     BYTE other14[2];

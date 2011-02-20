@@ -24,10 +24,10 @@ typedef struct _KIT_INFO {
     BYTE shortsNumberPosition;
     BYTE unknown4;
     BYTE unknown5;
-    BYTE nameStyle;
-    BYTE sleevePatch;
-    BYTE sleevePatchPosLong;
-    BYTE sleevePatchPosShort;
+    BYTE sleevePatchRightPosLong;
+    BYTE sleevePatchRightPosShort;
+    BYTE sleevePatchLeftPosLong;
+    BYTE sleevePatchLeftPosShort;
     BYTE unknown6;
     BYTE numberY;
     BYTE numberSize;

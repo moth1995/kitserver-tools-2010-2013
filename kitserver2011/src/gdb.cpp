@@ -50,9 +50,10 @@ enum {
     ATT_FRONT_NUMBER_Y,
     ATT_FRONT_NUMBER_X,
     ATT_FRONT_NUMBER_SIZE,
-    ATT_SLEEVE_PATCH,
-    ATT_SLEEVE_PATCH_POS_SHORT,
-    ATT_SLEEVE_PATCH_POS_LONG,
+    ATT_SLEEVE_PATCH_LEFT_POS_SHORT,
+    ATT_SLEEVE_PATCH_LEFT_POS_LONG,
+    ATT_SLEEVE_PATCH_RIGHT_POS_SHORT,
+    ATT_SLEEVE_PATCH_RIGHT_POS_LONG,
     ATT_SHORTS_NUMBER_SIZE,
     ATT_SHORTS_NUMBER_Y,
     ATT_SHORTS_NUMBER_X,
@@ -304,9 +305,10 @@ void GDB::loadConfig(Kit& kit)
         _getConfig("", "front.number.y", DT_DWORD, (DWORD)&kattr_data(kit,ATT_FRONT_NUMBER_Y), kitConfig);
         _getConfig("", "front.number.x", DT_DWORD, (DWORD)&kattr_data(kit,ATT_FRONT_NUMBER_X), kitConfig);
         _getConfig("", "front.number.size", DT_DWORD, (DWORD)&kattr_data(kit,ATT_FRONT_NUMBER_SIZE), kitConfig);
-        _getConfig("", "sleeve.patch", DT_DWORD, (DWORD)&kattr_data(kit,ATT_SLEEVE_PATCH), kitConfig);
-        _getConfig("", "sleeve.patch.pos.short", DT_DWORD, (DWORD)&kattr_data(kit,ATT_SLEEVE_PATCH_POS_SHORT), kitConfig);
-        _getConfig("", "sleeve.patch.pos.long", DT_DWORD, (DWORD)&kattr_data(kit,ATT_SLEEVE_PATCH_POS_LONG), kitConfig);
+        _getConfig("", "sleeve.patch.left.pos.short", DT_DWORD, (DWORD)&kattr_data(kit,ATT_SLEEVE_PATCH_LEFT_POS_SHORT), kitConfig);
+        _getConfig("", "sleeve.patch.left.pos.long", DT_DWORD, (DWORD)&kattr_data(kit,ATT_SLEEVE_PATCH_LEFT_POS_LONG), kitConfig);
+        _getConfig("", "sleeve.patch.right.pos.short", DT_DWORD, (DWORD)&kattr_data(kit,ATT_SLEEVE_PATCH_RIGHT_POS_SHORT), kitConfig);
+        _getConfig("", "sleeve.patch.right.pos.long", DT_DWORD, (DWORD)&kattr_data(kit,ATT_SLEEVE_PATCH_RIGHT_POS_LONG), kitConfig);
         _getConfig("", "shorts.number.size", DT_DWORD, (DWORD)&kattr_data(kit,ATT_SHORTS_NUMBER_SIZE), kitConfig);
         _getConfig("", "shorts.number.y", DT_DWORD, (DWORD)&kattr_data(kit,ATT_SHORTS_NUMBER_Y), kitConfig);
         _getConfig("", "shorts.number.x", DT_DWORD, (DWORD)&kattr_data(kit,ATT_SHORTS_NUMBER_X), kitConfig);
@@ -445,25 +447,32 @@ static void kitConfig(char* pName, const void* pValue, DWORD a)
             kd->kit.attDefined |= FRONT_NUMBER_SIZE;
             break;
 
-        case ATT_SLEEVE_PATCH:
-            kd->kit.sleevePatch = *(DWORD*)pValue;
-            GDB_DEBUG(wlog,(slog,L"sleeve.patch = {%s}\n",
-                        kd->kit.sleevePatch));
-            kd->kit.attDefined |= SLEEVE_PATCH;
+        case ATT_SLEEVE_PATCH_LEFT_POS_SHORT:
+            kd->kit.sleevePatchLeftPosShort = *(DWORD*)pValue;
+            GDB_DEBUG(wlog,(slog,L"sleeve.patch.left.pos.short = {%s}\n",
+                        kd->kit.sleevePatchLeftPosShort));
+            kd->kit.attDefined |= SLEEVE_PATCH_LEFT_POS_SHORT;
             break;
 
-        case ATT_SLEEVE_PATCH_POS_SHORT:
-            kd->kit.sleevePatchPosShort = *(DWORD*)pValue;
-            GDB_DEBUG(wlog,(slog,L"sleeve.patch.pos.short = {%s}\n",
-                        kd->kit.sleevePatchPosShort));
-            kd->kit.attDefined |= SLEEVE_PATCH_POS_SHORT;
+        case ATT_SLEEVE_PATCH_LEFT_POS_LONG:
+            kd->kit.sleevePatchLeftPosLong = *(DWORD*)pValue;
+            GDB_DEBUG(wlog,(slog,L"sleeve.patch.left.pos.long = {%s}\n",
+                        kd->kit.sleevePatchLeftPosLong));
+            kd->kit.attDefined |= SLEEVE_PATCH_LEFT_POS_LONG;
             break;
 
-        case ATT_SLEEVE_PATCH_POS_LONG:
-            kd->kit.sleevePatchPosLong = *(DWORD*)pValue;
-            GDB_DEBUG(wlog,(slog,L"sleeve.patch.pos.long = {%s}\n",
-                        kd->kit.sleevePatchPosLong));
-            kd->kit.attDefined |= SLEEVE_PATCH_POS_LONG;
+        case ATT_SLEEVE_PATCH_RIGHT_POS_SHORT:
+            kd->kit.sleevePatchRightPosShort = *(DWORD*)pValue;
+            GDB_DEBUG(wlog,(slog,L"sleeve.patch.right.pos.short = {%s}\n",
+                        kd->kit.sleevePatchRightPosShort));
+            kd->kit.attDefined |= SLEEVE_PATCH_RIGHT_POS_SHORT;
+            break;
+
+        case ATT_SLEEVE_PATCH_RIGHT_POS_LONG:
+            kd->kit.sleevePatchRightPosLong = *(DWORD*)pValue;
+            GDB_DEBUG(wlog,(slog,L"sleeve.patch.right.pos.long = {%s}\n",
+                        kd->kit.sleevePatchRightPosLong));
+            kd->kit.attDefined |= SLEEVE_PATCH_RIGHT_POS_LONG;
             break;
 
         case ATT_SHORTS_NUMBER_SIZE:

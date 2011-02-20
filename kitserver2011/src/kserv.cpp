@@ -708,7 +708,11 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         
             // debug
             /*
-            if (i==39) {
+            if (i==277||i==176) {
+                teamKitInfo[i].pb.sleevePatchRightPosLong = 1;
+                teamKitInfo[i].pb.sleevePatchRightPosShort = 5;
+                teamKitInfo[i].pb.sleevePatchLeftPosLong = 1;
+                teamKitInfo[i].pb.sleevePatchLeftPosShort = 5;
                 DumpData(&teamKitInfo[i], sizeof(TEAM_KIT_INFO));
             }
             */
@@ -848,12 +852,14 @@ KEXPORT void ApplyKitAttributes(const map<wstring,Kit>::iterator kiter, KIT_INFO
         ki.frontNumberX = kiter->second.frontNumberX;
     if (kiter->second.attDefined & FRONT_NUMBER_SIZE)
         ki.frontNumberSize = kiter->second.frontNumberSize;
-    if (kiter->second.attDefined & SLEEVE_PATCH)
-        ki.sleevePatch = kiter->second.sleevePatch;
-    if (kiter->second.attDefined & SLEEVE_PATCH_POS_SHORT)
-        ki.sleevePatchPosShort = kiter->second.sleevePatchPosShort;
-    if (kiter->second.attDefined & SLEEVE_PATCH_POS_LONG)
-        ki.sleevePatchPosLong = kiter->second.sleevePatchPosLong;
+    if (kiter->second.attDefined & SLEEVE_PATCH_RIGHT_POS_SHORT)
+        ki.sleevePatchRightPosShort = kiter->second.sleevePatchRightPosShort;
+    if (kiter->second.attDefined & SLEEVE_PATCH_RIGHT_POS_LONG)
+        ki.sleevePatchRightPosLong = kiter->second.sleevePatchRightPosLong;
+    if (kiter->second.attDefined & SLEEVE_PATCH_LEFT_POS_SHORT)
+        ki.sleevePatchLeftPosShort = kiter->second.sleevePatchLeftPosShort;
+    if (kiter->second.attDefined & SLEEVE_PATCH_LEFT_POS_LONG)
+        ki.sleevePatchLeftPosLong = kiter->second.sleevePatchLeftPosLong;
     if (kiter->second.attDefined & SHORTS_NUMBER_SIZE)
         ki.shortsNumberSize = kiter->second.shortsNumberSize;
     if (kiter->second.attDefined & SHORTS_NUMBER_Y)
@@ -1970,13 +1976,15 @@ void ApplySomeAttributes(map<wstring,Kit>::iterator kiter, KIT_CHOICE* kc)
         RGBAColor2KCOLOR(kiter->second.shortsFirstColor,
                 kc->shortsColor);
 
-    // sleeve patch
-    if (kiter->second.attDefined & SLEEVE_PATCH)
-        kc->sleevePatch = kiter->second.sleevePatch;
-    if (kiter->second.attDefined & SLEEVE_PATCH_POS_SHORT)
-        kc->sleevePatchPosShort = kiter->second.sleevePatchPosShort;
-    if (kiter->second.attDefined & SLEEVE_PATCH_POS_LONG)
-        kc->sleevePatchPosLong = kiter->second.sleevePatchPosLong;
+    // sleeve patch settings
+    if (kiter->second.attDefined & SLEEVE_PATCH_RIGHT_POS_SHORT)
+        kc->sleevePatchRightPosShort = kiter->second.sleevePatchRightPosShort;
+    if (kiter->second.attDefined & SLEEVE_PATCH_RIGHT_POS_LONG)
+        kc->sleevePatchRightPosLong = kiter->second.sleevePatchRightPosLong;
+    if (kiter->second.attDefined & SLEEVE_PATCH_LEFT_POS_SHORT)
+        kc->sleevePatchLeftPosShort = kiter->second.sleevePatchLeftPosShort;
+    if (kiter->second.attDefined & SLEEVE_PATCH_LEFT_POS_LONG)
+        kc->sleevePatchLeftPosLong = kiter->second.sleevePatchLeftPosLong;
 }
 
 bool SameTeams()

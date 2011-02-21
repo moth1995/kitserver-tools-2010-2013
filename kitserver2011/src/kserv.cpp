@@ -367,8 +367,7 @@ char* GetTeamNameByIndex(int index, TEAM_NAME* teamNames)
     if (index < 0 || index >= NUM_TEAMS_TOTAL)
         return NULL; // invalid index
     if (!teamNames)
-        //teamNames = **(TEAM_NAME***)data[TEAM_NAMES];
-        teamNames = (TEAM_NAME*)((BYTE*)data[PLAYERS_DATA] 
+        teamNames = (TEAM_NAME*)(*(DWORD*)data[PLAYERS_DATA] 
             + data[TEAM_NAMES_OFFSET]);
 
     return (char*)&(teamNames[index].name);
@@ -376,8 +375,7 @@ char* GetTeamNameByIndex(int index, TEAM_NAME* teamNames)
 
 char* GetTeamNameById(WORD id)
 {
-    //TEAM_NAME* teamNames = **(TEAM_NAME***)data[TEAM_NAMES];
-    TEAM_NAME* teamNames = (TEAM_NAME*)((BYTE*)data[PLAYERS_DATA] 
+    TEAM_NAME* teamNames = (TEAM_NAME*)(*(DWORD*)data[PLAYERS_DATA] 
             + data[TEAM_NAMES_OFFSET]);
     for (int i=0; i<NUM_TEAMS_TOTAL; i++)
     {

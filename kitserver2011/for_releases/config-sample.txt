@@ -6,6 +6,7 @@ img.dir = "example-root"
 dll = afsio.dll
 dll = kserv.dll
 dll = afs2fs.dll
+dll = sides.dll
 dll = speeder.dll
 dll = lodmixer.dll
 

@@ -1,7 +1,7 @@
-Kitserver 2011 v10.1.0
+Kitserver 11.0.0
 ======================
 
-Released: January 2, 2011
+Released: February 21, 2011
 
 
 Supports: PES2011 demo, 1.0, 1.01, 1.02, 1.03
@@ -10,6 +10,7 @@ Modules implemented:
 - speeder
 - sides
 - lodmixer
+- kserv
 
 
 

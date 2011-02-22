@@ -54,22 +54,20 @@
 Version history: <a href="history.txt">history.txt</a><br />
 </div>
 <div>
-    January 18, 2011 - <b>Kitserver 11.0.0</b> 
+    February 21, 2011 - <b>Kitserver 11.0.0</b> 
 </div>
 <p class="note">
 Usually, the most up-to-date version of this documentation, and the translations to many languages, are located here: <a href="http://kitserver.ath.cx/docs/">http://kitserver.ath.cx/docs/</a>. Documentation for Kitservers 5-8 and Kitserver 2010 can also be found there.
 </p>
 
 <!-- ad top -->
-<!--
 <img style="border:0;align:left;display:inline;float:right" src="kslogo.png"/>
--->
 <h3>1. Introduction</h3>
 <p>
 Kitserver 11 is an add-on program for Pro Evolution Soccer 2011 (and Pro Evolution Soccer 2011 DEMO). It is a loader and manager for various modules, where
 each module is built as a (typically) independent DLL containing logic to 
 enhance the game in particular aspect. While originally the Kitserver was 
-developed to "serve" kits Pro Evolution Soccer 3, a lot more functionality 
+developed to "serve" kits for Pro Evolution Soccer 3, a lot more functionality 
 has been added over the years.<br />
 Below is a quick summary of the available features. Follow the link in the left column to get more details about a particular module.
 </p>
@@ -84,6 +82,10 @@ If you are new to Kitserver, please make sure you read the
     <tr><td><a href="#afs2fs">AFS2FS 11.0.0</a></td>
         <th><b>afs2fs.dll</b></th>
         <td>Manage AFS (.img) game content using files and folders: much easier and quicker to install/remove patches, without the need modify *.img files.</td>
+    </tr>
+    <tr><td><a href="#kserv">Kserv 11.0.0.0</a></td>
+        <th><b>kserv.dll</b></th>
+        <td>Organize your kits into GDB, and assign each team its own kits.</td>
     </tr>
     <tr><td><a href="#lodmixer">LOD Mixer 11.0.0</a></td>
         <th><b>lodmixer.dll</b></th>
@@ -109,138 +111,153 @@ If you are new to Kitserver, please make sure you read the
 <h5>2.1. Install</h5>
 
 <p>
-With XP and Vista, and now Windows 7 having more emphasis and enforcement of file ownership and 
-different user rights, and promoting the use of "Standard User" accounts, i realized it was time 
-to change the installation routine slightly, compared
-to the previous versions of Kitserver. So, first new thing: you have a more traditional installer
-now, well it's just a self-extractable archive with some logos :) Run it, and it will ask you
-where you want your kitserver files extracted:
+With XP and Vista, and now Windows 7 having more emphasis and enforcement 
+of file ownership and different user rights, and promoting the use of 
+"Standard User" accounts, the installation routine of Kitserver has changed. 
+If you are a "seasoned" kitserver user, please read this carefully, because it
+will save you a lot of unnecessary hair-pulling.
 </p>
 
 <img src="installer.png"/>
 
-<p>You can leave the default directory specified in the installer, or you can put in your own.
-The important thing is that you unpack the files into a place where you have full control
-over the files (your HOME directory is one example of that.) This will ensure that you 
-won't run into any File Virtualization surprises on Vista, and also that <b>you will NOT 
-    need administrative privileges</b> to run the game with Kitserver. 
+<p>In many cases, following the 3 steps, as outlined by the message in the
+installer window, will be all that you need to do. If so, then great, go on
+and enjoy the game with new features that Kitserver adds. :)</p>
+
+<p>You can leave the default directory as specified by the installer, or 
+you can put in your own. The important thing is that you choose a folder
+that you have full ownership of. (Your HOME directory is one good example 
+of that. Another good candidates are: "My Documents" folder or Desktop).
+This is particularly important on Vista, because this way we sidestep all
+the nasty surprises of Vista File Virtualization. Also, this makes
+sure that <b>you will NOT need administrative privileges</b> to run the 
+game under the control of Kitserver. 
 </p>
 
-<p>Now go to that directory that you installed your kitserver to. You will see there
-a folder named <b>Kitserver11</b>. Open that folder, you should see something like this:
+<p>Once installer unpacks the files into the folder of your choice, go there.
+You should see a folder named <b>Kitserver11</b>. Open it, and you should see 
+the following files:</p>
 
 <img src="layout1.png"/>
 
+<p>Next step is to make sure you have a file called <b>config.txt</b>.<br />
+If you are installing Kitserver 11 for the first time, you probably do not
+have an existing config.txt. In that case, just run the 
+<a href="#configtool">configuration tool</a> program, called <b>config.exe</b>,
+press [Save] button, and it will create a config.txt file for you.
+</p>
+
+<p>If, however, you are upgrading from previous version of Kitserver, then
+you already have an existing config.txt, which you probably will want to 
+re-use. (For instance, it contains your carefully configured LOD settings,
+which you definitely don't want to lose!). If that's the case, then you will
+need to do the following: 
+
+<ol>
+    <li>copy your existing config.txt from your old kitserver installation
+    into the new Kitserver root folder (Kitserver11).
+    <li>open it with Notepad or other text editor of your choice, and add the
+    following line to the [kload] section:
+
+    <pre>dll = kserv.dll
+    </pre>
+    </li>
+</ol>
+</p>
+
+<p>So now you have the <b>config.txt</b> file, and we are ready to launch
+the game under the "guidance" of Kitserver. To do that, we are going to
+use a new utility, included with Kitserver11 - called <b>krun.exe</b>. Just double-click on krun.exe and it should launch the game. (It determines the location of your game install automatically, by reading the Windows registry).
+</p>
+
+<h5>2.2. krun.exe - Kitserver Game Launcher</h5>
+
 <p>
-Now, copy the two executables from your game folder to the Kitserver11 folder - <b>pes2011.exe</b> and <b>settings.exe</b>. (<span class="devnote">Depending on your Windows settings, you may see them 
-as simply <b>pes2011</b> and <b>settings</b> - with file extensions hidden. 
-In fact, by default the file extensions of known file types are hidden, as you can see 
-on the screenshot below).</span> So, now it should look like this:
+With Kitserver 11.0.0, a new tool is introduced: <b>krun.exe - Kitserver 
+Game Launcher</b>. This is the tool that you will use to run the game under
+the control of Kitserver.
 </p>
 
-<img src="layout2.png"/>
-
-<p>Almost there! A couple more steps and we'll have the game running with Kitserver.<br />
-Now open the <b>kitserver</b> folder and run the <b>manager.exe</b> program. 
+<p>By default, the krun tool will consult your Windows registry, to find out
+where you have the game installed, and try to launch an executable from that
+folder, called PES2011.exe. In many cases, this is exactly what you want :)
 </p>
-<p><span class="devnote">This was previously called setup.exe, but Windows thinks that any
-application named setup.exe wants administrative access, even though the kitserver's 
-setup actually doesn't. Also, the name "setup" was always slightly misleading, so 
-i decided to rename it to more neutral - manager - because it manages the attachment
-of kitserver to the game EXE files.</span></p>
 
-<img src="layout3.png"/>
+<p>Sometimes though, it may be the case that you have alternative EXEs 
+installed, perhaps those that came from comminity-created patches. So let's
+say instead of PES2011.exe from your game folder, you want to launch the game
+using this exe: <b>C:\myPesPatch\PES2011_patched.exe</b>.
+</p>
+
+<p>This is also possible to do with krun tool: you just need to create a
+configuration file for it, which contains the full pathname of the exe. We
+make a text file called <b>krun-config.txt</b>, and put this line into it:
+
+<pre>
+C:\myPesPatch\PES2011_patched.exe
+</pre>
 
 <p>
-Now select the game executable (it should actually already be preselected). You can
-also select your settings.exe (if say you wish to by-pass the quality 
-checks, for example. Otherwise, it is not necessary). 
-Once you select the files, click <b>"Attach"</b> button.
-What this does is it "connects" the kitserver to the game: now whenever you start the game (using that particular game EXE), the Kitserver DLLs will be loaded into memory. If all went well, you should see a picture like this:
+That's it. Now when you double-click on <b>krun.exe</b>, instead of reading
+the location of the game from registry, it will launch the EXE that is 
+specified in <b>krun-config.txt</b>.
 </p>
 
-<img src="manager.png"/>
+<h5>Renaming/copying krun.exe</h5>
 
 <p>
-If you decide that you don't want to use Kitserver any longer, run manager.exe again and click <b>"Detach"</b>, and it will disconnect the kitserver from the game EXE. 
-<span class="devnote">(This is useful when troubleshooting
-crashes: you can always temporarily detach Kitserver from the game to verify that the game
-runs fine without it. And then re-attach the Kitserver later).</span>
-You can also install/remove Kitserver
-only for one exe by setting the other one to "no action".
+This perhaps can be called an "advanced" trick, and may be useful to
+patchmakers: you can rename krun.exe to something else, and it will still
+be able to find its configuration file, if you also name it correctly.
 </p>
 
-<p>Now for one last step, before we can run the game with kitserver:<br />
-<span class="note">We need to make sure there exists a file called <b>config.txt</b> in the kitserver folder. 
-</p>
-
-<p>That's it. You're ready to launch the game.<br />
-<span class="note">REMEMBER: you need to start the game using the game EXE (pes2011.exe) in Kitserver11 folder, because that is the one that has the kitserver attached to it.</span>
-</p>
-
-<p class="devnote">For folks who had been using kitserver for some time, it is worth noting that
-it is still possible to install the kitserver the "old" way: in the game folder. Everything would
-still work fine, as long as you do everything as Administrator: run config.exe, run manager.exe,
-and you have to run the game as administrator too. I would honestly not recommend doing that, but
-instead adopt the new way. It is safer and you don't need to worry about administrative privileges,
-and you don't run into File Virtualization issues which can lead to nasty surprises, and many
-hours spent muttering things like: "why does my config.txt show correct setting, but in the
-game i don't see the effect? What is going on?!!..."</p>
-
-<h5>2.2. Uninstall</h5>
-
-<p>Uninstall is very easy: just delete the <b>Kitserver11</b> folder, and that's it.<br /> Kitserver 
-doesn't write into system folders, or anything of that sort, so removal is very simple.
-</p>
-
-<p>Also, it is worth reminding that you can always temporarily detach the kitserver from the game exe, and then re-attach it back, by using the manager program (as described in 2.1 section above). This is 
-useful when suddenly you get game crashes, and you are not sure whether Kitserver is at fault, or
-there is some other reason.</p>
-
-<h5>2.3. Installing KONAMI patches</h5>
-
-<p>From time to time, Konami releases patches to the game. There is already 1.01 and 1.02 patches,
-and there probably will be more released in the future. When you install these patches, you get
-a brand new game executable (pes2011.exe) among other things. It is important to realise that 
-Konami patch doesn't now about your Kitserver installation, and therefore the game EXE in your 
-<b>Kitserver11</b> folder will still be the old one.</p>
-
-<p>So what you need to do is copy the new game EXE over to the Kitserver11 folder, then run the
-<b>manager.exe</b> program and attach the kitserver to the new EXE. Assuming, of course, that Kitserver
-supports the new EXE, that's all there is to it. Now you can again start the game from Kitserver11
-folder.
-</p>
-
-<h5>2.4. Advanced usage of manager.exe</h5>
 <p>
-The kitserver <b>manager.exe</b> program can also be run without GUI - in a so-called batch or command-line mode. This can be useful, if kitserver is part of a bigger patch, which contains an installer, and typically the last step of the installer is to attach kitserver to the game EXE file. This can be accomplished by running the manager like this:
+For example, let's say your called it 
+<span class="devnote">MyPatchRun.exe</span>. Then you need
+to call the configuration file: 
+<span class="devnote">MyPatchRun-config.txt</span>.
 </p>
 
-<p class="devnote">
-manager --install --gfile={game-exe} --sfile={settings-exe}<br />
-manager --remove --gfile={game-exe} --sfile={settings-exe}<br />
-</p>
-<p>Example:</p>
-<p>
-<b>manager --install --gfile=..\pes2011.exe --sfile=..\settings.exe</b>
+
+<h5>2.3. Running the game without Kitserver</h5>
+
+<p>You can always run the game without Kitserver.<br />
+Just launch it the normal way, as you would - through the Start Menu or
+via a shortcut on your Desktop. If you don't use <b>krun</b> utility, then
+Kitserver is not loaded into memory with the game.</p>
+
+<p>This is handy for troubleshooting crashes, for example. Things go wrong 
+no matter what, so the first thing you'd want to do is to isolate a problem. 
+You will want to know if the Kitserver is causing a crash, or if something else is at fault. Launching the game without Kitserver is a good first step to
+see what's causing the issue.
 </p>
 
-<h5>2.5. config.txt</h5>
-<p>Kitserver uses a file called <b>config.txt</b> as its main configuration file. A lot of things are specified there, including which modules
-to load, what settings those modules should use, and etc. Go to your <b>kitserver</b> folder and you should see a file called <span class="devnote">config-sample.txt</span>. (I gave it
-a different name on purpose: so that those who upgrade their kitserver installation don't accidently overwrite their existing config.txt). If you aren't
-upgrading then the chances are that you don't have an existing config.txt, in which case just rename (or copy) the sample config into <b>config.txt</b> (or run <a href="#config">configuration tool</a>, click "Save" and it will do the same thing). Otherwise
-you may want to compare the sample config with yours and see if you need to make changes to your config: such as add new modules in the [kload] section,
-for example.</p>
-<p class="note">Remember: if you don't have config.txt in your kitserver folder, kitserver will not do much. But it will log the fact that it couldn't find the config.txt. So if you think kitserver doesn't work for you, check the pes2011.log file for error messages</p>
+<p class="devnote">People who had been using Kitserver for a few years now,
+will notice that this is different from how things worked before: Kitserver
+no longer physically attaches to the game EXE, but instead the game is run
+as a child process of <b>krun</b> program, which loads the Kitserver modules
+together with the game. The new way maybe somewhat unfamiliar, but it actually
+solves many security-related problems that surfaced with using the old
+kitserver attachment routines on new Windows systems. No longer Kitserver
+needs to modify game files (which is always a suspicious looking activity
+for tools like antivirus protection), everything is done at run-time.</p>
+
+<h5>2.4. Uninstall</h5>
+
+<p>Uninstall is very easy: just delete the <b>Kitserver11</b> folder, when
+you no longer need it. Kitserver doesn't write into system folders, or 
+anything of that sort, so removal is very simple.
+</p>
+
 
 <p><a class="backlink" href="#">Top</a></p>
 <h3>3. Usage and configuration</h3>
 
 <h5>3.1. Main configuration file: config.txt</h5>
 
-<p>The main configuration file for kitserver - config.txt - is located in the
-kitserver folder. If you don't have it there - re-read the end of Install section (2.1) above.
+<p>Kitserver uses a file called <b>config.txt</b> as its main 
+configuration file. A lot of things are specified there, including which 
+modules to load, what settings those modules should use, and etc. 
 Here is an example of what can be in config.txt:
 </p>
 
@@ -253,6 +270,7 @@ dll = afsio.dll
 dll = afs2fs.dll
 dll = speeder.dll
 dll = sides.dll
+dll = kserv.dll
 
 </pre>
 
@@ -415,9 +433,352 @@ afs-root), then the "conflicts" are resolved the same way as they are with BINs 
 <img src="names.png"/>
 </p>
 
+<a name="kserv"><br /></a>
+<p><a class="backlink" href="#">Top</a></p>
+<h3>5. Kserv Module (kserv.dll)</h3>
+
+<p>
+Kserv module is responsible for serving kits from the GDB ("<b>G</b>ame content <b>D</b>ata<b>B</b>ase") during the game. The main feature of it is that you are not limited to the slots that dt0c.img has for the kits, and you can assign a kit to any team. 
+</p>
+
+<p class="devnote" style="font-weight:normal">
+Kserv was historically the first module implemented in the original Kitserver program, made for PES3. That's where the <b>Kitserver</b> name originated from. Later, as more functionality were introduced as new modules, to avoid confusion, we changed the name of the module that serves kits to <b>kserv</b>, while Kitserver name now refers to the entire program.
+</p>
+
+<h5>5.1 GDB organization</h5>
+
+<p>
+The GDB contains a folder named <b>uni</b>, which is responsible for storing
+the team kits (uniforms). The single most important file inside <b>uni</b> is called <b>map.txt</b>.
+This file tells kitserver where to find the kits for particular team. As you know, each team has a unique id - an integer number from 0 to 370. For every team in the GDB, you must specify in the map.txt where the kits for this team are. Here is an example:
+
+<pre>
+# This config maps team number into folder name
+# Format: &lt;team-num&gt;,"&lt;folder name&gt;"
+# Example: 23,"Russia"
+
+23,"National\Russia"
+10, "National\Germany"
+7, "National\England"
+</pre>
+</p>
+
+<p>
+<div class="note">IMPORTANT: Double quotes are not required, but advised - just so that there is no ambiguity about folder name. IDs for the teams will depend on whether you have installed any patches, but for default option file, you can see the IDs here - <a href="uni.txt">uni.txt</a> file.</div>
+</p>
+
+<p>
+Please note that the sample GDB (provided with kitserver) is just one possible way of organizing the teams and 
+folders. It uses "EPL" folder to group all english teams, "National" - to group all national
+teams, and so for. You may find that you just prefer a flat list of folders - without these
+extra groups. In that case, just modify the <b>map.txt</b> file accordingly, and create
+the structure of folders that you prefer. That's the main advantage of having map.txt - the
+flexibility of kit organization.
+</p>
+
+<p>
+You can see from map.txt above that in order to find a kit for team #23, the kitserver needs to go to the 
+folder <b>GDB\uni\National\Russia</b>. This folder will contain all of the kits that are
+available to team #23. Inside it, you must create an individual folder for each kit. Like this:
+
+<img src="russia.png"/>
+
+For players, 1st kit must have a folder name <b>pa</b>, 2nd - <b>pb</b>. Extra kits can have 
+any folder names that start with letter "p". I found it useful to prefix all extra kits with 
+<b>px-</b>. For example, <b>px-redwhite</b>. For the goalkeepers, 1st kit must be in the folder
+<b>ga</b>, 2nd - in the <b>gb</b>. Extra kits can have any folder names that start with letter "g".
+</p>
+
+<div class="note">IMPORTANT: Folder name acts as a kind of ID for kitserver, which puts the 
+additional restriction on all those folder names: they cannot contain spaces, and preferably
+they should be relatively short, and in English,French or other language withing Latin1 
+(iso8859-1) character set. Typically, if you want to make sure kitserver can properly
+find/read the folder, just use latin characters, digits, underscore, and the dash (minus sign).
+</div>
+
+<p>
+Now let's move on inside one of the kit folders. Take <b>pb</b>, for example.
+
+<img src="pb.png" />
+
+See the table below for explanation of each file:
+</p>
+
+<div class="note">Images must be in PNG format: 8-bit paletted or 4-bit paletted (those may be used with fonts/numbers). So the filename must have 
+a ".png" extension.</b></div>
+
+<p>
+<table>
+    <tr><th>Reserved file name</th><th>Meaning</th><th>Format</th></tr>
+    <tr><td><nobr>kit.png</nobr></td><td>Kit texture</td>
+        <td>1024x512 8-bit paletted image in PNG format.
+    </td></tr>
+    <tr><td><nobr>font.png</nobr></td><td>Font texture: used for names on the back of the shirt</td>
+        <td>256x64 8-bit or 4-bit paletted image in PNG format.</td></tr>
+    <tr><td><nobr>numbers.png</nobr></td><td>Numbers texture: used for numbers on the back and the front of the shirt, and also on shorts</td>
+        <td>512x256 8-bit or 4-bit paletted image in PNG format.</td></tr>
+    <tr><td>config.txt</td><td>Kit attribute configuration file (see next section for more details)</td>
+        <td>text file (in UTF-8 encoding)</td></tr>
+</table>
+</p>
+
+<p class="devnote">
+IMPORTANT NOTE TO KITMAKERS:<br />
+BMP kits are no longer supported, please use PNG format instead.
+</p>
+
+<h5>5.2. config.txt</h5>
+
+<p>
+This is the attribute configuration file.
+As before, it is just a plain text file - you can use Notepad or any other text editor to
+view or modify it. For each folder, you should have a <b>config.txt</b> file in it. Here is an example config.txt from <b>pa</b> folder:
+</p>
+
+<pre>
+# Attribute configuration file auto-generated by GDB Manager
+
+collar = 0
+front.number.show = 1
+front.number.size = 8
+front.number.x = 26
+front.number.y = 18
+main.color = A70623
+model = 45
+name.shape = type3
+name.show = 1
+name.size = 28
+name.y = 24
+number.size = 22
+number.y = 11
+shorts.color = A70623
+shorts.number.location = left
+shorts.number.size = 14
+shorts.number.x = 14
+shorts.number.y = 6
+sleeve.patch.left.pos.long = 1
+sleeve.patch.left.pos.short = 1
+sleeve.patch.right.pos.long = 1
+sleeve.patch.right.pos.short = 1
+</pre>
+
+<p><br />
+The summary table of all the supported attributes:</p>
+
+<table>
+    <tr><th>Attribute name</th><th>Meaning</th><th>Format</th><th>Example</th></tr>
+    <tr>
+        <td><b>collar</b></td>
+        <td>Collar-type (note that different models will have different interpratations of the collar value)</td>
+        <td>1/2/3/4</td>
+        <td><nobr>collar = 1</nobr></td>
+    </tr>
+	<tr>
+        <td><b>description</b></td>
+        <td>Any notes about the kit. This text will be displayed on
+            kit selection screen. Useful when there are
+            several kits that look nearly identical,
+            but you want to know which one is currently selected.</td>
+        <td>any text in double quotes</td>
+        <td><nobr>description = "Home red"</nobr></td>
+    </tr>
+    <tr>
+        <td><b>front.number.show</b></td>
+        <td>Specifies if front number should be shown on the shirt: 1-show, 0-hide.(This only applies to national teams.)
+        </td>
+        <td>0|1</td>
+        <td><nobr>front.number.show = 1</nobr></td>
+    </tr>
+    <tr>
+        <td><b>front.number.size</b></td>
+        <td>How big the front number on the shirt is.</td>
+        <td>decimal number. Range: 1-30</td>
+        <td><nobr>front.number.size = 8</nobr></td>
+    </tr>
+    <tr>
+        <td><b>front.number.x</b></td>
+        <td>Horizontal position of the front number on the shirt.</td>
+        <td>decimal number. Range: 0(left)-30(right)</td>
+        <td><nobr>front.number.x = 26</nobr></td>
+    </tr>
+    <tr>
+        <td><b>front.number.y</b></td>
+        <td>Vertical position of the front number on the shirt.</td>
+        <td>decimal number. Range: 0(low)-30(high)</td>
+        <td><nobr>front.number.y = 18</nobr></td>
+    </tr>
+	<tr>
+        <td><b>main.color</b><br />
+            <span style="color:#888"><b>( radar.color )</b></span></td>
+        <td>This attribute specifies the main color of the shirt. It is also used as the color of the players on radar screen. It also influences the kit that is selected by default. (The old name "radar.color" is also supported for backwards compatibility)</td>
+        <td>color, written in hexadecimal format RRGGBB (red,green,blue)</td>
+        <td><nobr>main.color = A70623</nobr><br />
+            <nobr><span style="color:#888">radar.color = A70623</span></nobr></td>
+    </tr>
+    <tr>
+        <td><b>model</b></td>
+        <td>identifier for 3D-model of the shirt</td>
+        <td>decimal integer</td>
+        <td><nobr>model = 45</nobr></td>
+    </tr>
+    <tr>
+        <td><b>name.show</b></td>
+        <td>Specifies if player name should be shown on the shirt: 1-show, 0-hide.</td>
+        <td>0|1</td>
+        <td><nobr>name.show = 1</nobr></td>
+    </tr>
+    <tr>
+        <td><b>name.shape</b></td>
+        <td>Indicates whether the name should be curved or straight. The values
+have the same meaning as in Edit Mode: type1 - straight, type2 - slightly curved,
+type3 - more curved, type4 - even more curved.</td>
+        <td>type1|type2|type3|type4</td>
+        <td><nobr>name.shape = type1</nobr></td>
+    </tr>
+    <tr>
+        <td><b>name.size</b></td>
+        <td>Size of the player's name on the shirt.</td>
+        <td>decimal number. Range: 1-35</td>
+        <td><nobr>name.size = 28</nobr></td>
+    </tr>
+    <tr>
+        <td><b>name.y</b></td>
+        <td>Vertical position of the player's name.</td>
+        <td>decimal number. Range: 0(low)-30(high)</td>
+        <td><nobr>name.y = 24</nobr></td>
+    </tr>
+    <tr>
+        <td><b>number.size</b></td>
+        <td>Size of the number on the back.</td>
+        <td>decimal number. Range: 1-35</td>
+        <td><nobr>number.size = 22</nobr></td>
+    </tr>
+    <tr>
+        <td><b>number.y</b></td>
+        <td>Vertical position of the number on the back.</td>
+        <td>decimal number. Range: 0(low)-30(high)</td>
+        <td><nobr>number.y = 11</nobr></td>
+    </tr>
+	<tr>
+        <td><b>shorts.color</b></td>
+        <td>This attribute specifies the color of the player/gk shorts. The color
+         of shorts is used by the game to determine correct color of the underpants
+         for those players who wear them, and have them set to match the shorts
+         color.</td>
+        <td>color, written in hexadecimal format RRGGBB (red,green,blue)</td>
+        <td><nobr>shorts.color = A70623</nobr></td>
+    </tr>
+    <tr>
+        <td><b>shorts.number.location</b></td>
+        <td>Where on the shorts the number should be placed. 
+            ("off" means the number will not be displayed at all.)
+        </td>
+        <td>left|right|off</td>
+        <td><nobr>shorts.number.location = left</nobr></td>
+    </tr>
+    <tr>
+        <td><b>shorts.number.size</b></td>
+        <td>Size of the number on shorts.</td>
+        <td>decimal number. Range: 1-35</td>
+        <td><nobr>shorts.number.size = 14</nobr></td>
+    </tr>
+    <tr>
+        <td><b>shorts.number.x</b></td>
+        <td>Horizontal position of the number on shorts.</td>
+        <td>decimal number. Range: 0(left)-30(right)</td>
+        <td><nobr>shorts.number.x = 14</nobr></td>
+    </tr>
+    <tr>
+        <td><b>shorts.number.y</b></td>
+        <td>Vertical position of the number on shorts.</td>
+        <td>decimal number. Range: 0(low)-30(high)</td>
+        <td><nobr>shorts.number.y = 6</nobr></td>
+    </tr>
+    <tr>
+        <td><b>sleeve.patch.left.pos.long</b></td>
+        <td>Position of the patch on left long sleeve.</td>
+        <td>decimal number. Range: 0-13</td>
+        <td><nobr>sleeve.patch.left.pos.long = 12</nobr></td>
+    </tr>
+    <tr>
+        <td><b>sleeve.patch.left.pos.short</b></td>
+        <td>Position of the patch on left short sleeve.</td>
+        <td>decimal number. Range: 0-13</td>
+        <td><nobr>sleeve.patch.left.pos.short = 12</nobr></td>
+    </tr>
+    <tr>
+        <td><b>sleeve.patch.right.pos.long</b></td>
+        <td>Position of the patch on right long sleeve.</td>
+        <td>decimal number. Range: 0-13</td>
+        <td><nobr>sleeve.patch.right.pos.long = 7</nobr></td>
+    </tr>
+    <tr>
+        <td><b>sleeve.patch.right.pos.short</b></td>
+        <td>Position of the patch on right short sleeve.</td>
+        <td>decimal number. Range: 0-13</td>
+        <td><nobr>sleeve.patch.right.pos.short = 7</nobr></td>
+    </tr>
+</table>
+
+<p class="devnote">
+By default, the usage of "description" attribute is enabled, but if you want, you can disable it. To do that, edit the main configuration file, and add the following option to the [kserv] section:
+</p>
+
+<pre>
+[kserv]
+use.description = 0
+</pre>
+
+<h5>5.3. "Techfit" models</h5>
+
+<p>In their DLC updates, KONAMI included new models which use different kit
+textures - the one where two variants of a kit coexist in the same picture:
+a tight fit, and a normal one.</p>
+
+<p>Only certain models support those textures, and as of DLC 2.00, they
+are: 35,36,37,38,39,40 and 41. Kserv module 11.0.0.0 supports those 
+without any additional configuration. However, if another update is released
+and more models like that are added, it is now possible to specify them
+in the [kserv] section of config.txt. You need to list <b>all</b> of them 
+like this:
+</p>
+
+<pre>
+[kserv]
+...
+techfit.model = 35
+techfit.model = 36
+techfit.model = 37
+techfit.model = 38
+techfit.model = 39
+techfit.model = 40
+techfit.model = 41
+...
+</pre>
+
+<h5>5.4. "Tight" models</h5>
+
+<p>Another type of special model is Puma Tight-fit, model 24.
+It allows to make any normal kit become tight-fitting kit (good examples of
+that are kits worn by African teams)</p>
+
+<p>As of DLC 2.00, only 24 is a model like and Kserv module 11.0.0.0 
+supports those without any additional configuration. However, if another 
+update is released and more models like that are added, it is possible to 
+specify them in the [kserv] section of config.txt. You need to list <b>all</b>
+of them like this:
+</p>
+
+<pre>
+[kserv]
+...
+tight.model = 24
+...
+</pre>
+
 <a name="lodmixer"><br /></a>
 <p><a class="backlink" href="#">Top</a></p>
-<h3>5. LOD Mixer (lodmixer.dll)</h3>
+<h3>6. LOD Mixer (lodmixer.dll)</h3>
 
 <p>
 LOD-Mixer is the module that allows to fine-tune some aspects of PES2011 graphics engine.<br />
@@ -427,7 +788,7 @@ to use Kitserver's <a href="#config">configuration tool</a>
 (<b>config.exe</b>). 
 </p>
 
-<h5>5.1. Player and referees LOD configuration.</h5>
+<h5>6.1. Player and referees LOD configuration.</h5>
 <p>
 LOD (Level-Of-Detail) algorithms are used in graphics engines to improve both
 the picture quality and the speed of rendering, when drawing objects at various
@@ -476,7 +837,7 @@ normal. This may improve the framerate, although at the expense of picture
 quality. To achieve that, <b>move the sliders to the left.</b>
 </p>
 
-<h5>5.2. Choosing optimal LOD config</h5>
+<h5>6.2. Choosing optimal LOD config</h5>
 
 <P>
 Configuring LOD well takes time and is best done via trial-and-error method. 
@@ -537,7 +898,7 @@ effect you want, without hurting the frame-rate.</p>
 
 <a name="speeder"><br /></a>
 <p><a class="backlink" href="#">Top</a></p>
-<h3>6. Speeder module (speeder.dll)</h3>
+<h3>7. Speeder module (speeder.dll)</h3>
 
 <p>Not everyone is satisfied with the pace of the gameplay. It must be said
 that it is not an easy thing to get this aspect of simulating a football 
@@ -575,7 +936,7 @@ count.factor = 0.95
 
 <a name="sides"><br /></a>
 <p><a class="backlink" href="#">Top</a></p>
-<h3>7. Sides module (sides.dll)</h3>
+<h3>8. Sides module (sides.dll)</h3>
 
 <p>This module allows to change sides freely during non-exhibition matches.
 Useful, if you like to play tournaments with your friends, and want them to

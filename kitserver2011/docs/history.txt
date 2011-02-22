@@ -2,6 +2,13 @@ Kitserver 2011 HISTORY notes
 ============================
 
 
+2011-02-21
+----------
+v11.0.0
+- kserv module with support for 1st and 2nd kits
+- krun game launcher
+
+
 2011-01-02
 ----------
 v10.1.0

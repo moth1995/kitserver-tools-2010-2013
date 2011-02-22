@@ -2,6 +2,16 @@ Kitserver 2011 HISTORY notes
 ============================
 
 
+2011-02-22
+----------
+v11.0.1
+- kserv: new attributes added:
+    * second.color
+    * socks.color
+    * icon.type
+- fixed bug in config-sample.txt
+
+
 2011-02-21
 ----------
 v11.0.0

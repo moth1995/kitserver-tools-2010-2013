@@ -1,6 +1,9 @@
 collar = 1
 front.number.show = 0
 main.color = BA001D
+second.color = D7D7D7
+socks.color = D7D7D7
+icon.type = 4
 model = 10
 name.shape = type3
 name.show = 1

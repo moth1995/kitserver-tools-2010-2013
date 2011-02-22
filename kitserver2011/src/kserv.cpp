@@ -630,9 +630,9 @@ void DumpSlotsInfo(TEAM_KIT_INFO* teamKitInfo, TEAM_NAME* teamNames)
         if (teamId == 0xffff)
             continue;
         fprintf(f, "slot: %6d\tteam: %3d (%04x) %s\n", 
-                (short)teamKitInfo[i].ga.slot, 
-                i, teamId, GetTeamNameByIndex(i, teamNames));
-        //char* name = GetTeamNameByIndex(i);
+            (short)teamKitInfo[i].ga.slot, 
+            i, teamId, GetTeamNameByIndex(i, teamNames));
+        //char* name = GetTeamNameByIndex(i, teamNames);
         //if (name[0]!='\0')
         //    fprintf(f, "%3d, %s\n", i, name);
         //else
@@ -697,7 +697,7 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
     for (WORD i=0; i<NUM_TEAMS; i++)
     {
         short slot = (short)teamKitInfo[i].pa.slot;
-        LOG(L"team (index=%d, id=0x%04x): slot=0x%04x",
+        TRACE(L"team (index=%d, id=0x%04x): slot=0x%04x",
                 i, teamKitInfo[i].id, (WORD)slot);
         if (slot >= 0)
         {

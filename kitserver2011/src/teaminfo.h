@@ -10,9 +10,13 @@ typedef WORD KCOLOR;
 typedef struct _KIT_INFO {
     DWORD unknown1[3];
     KCOLOR mainColor;
-    KCOLOR editShirtColors[4];
+    KCOLOR editShirtColors[2];
+    KCOLOR secondColor;
+    KCOLOR editShirtColor5;
     KCOLOR shortsFirstColor;
-    KCOLOR editKitColors[9];
+    KCOLOR editKitColors[3];
+    KCOLOR socksColor;
+    KCOLOR editKitColors2[5];
     BYTE unknown2[16];
     BYTE collar;
     BYTE editKitStyles[10];
@@ -45,7 +49,7 @@ typedef struct _KIT_INFO {
     WORD model;
     WORD slot;
     BYTE techfit;
-    BYTE unknown10;
+    BYTE iconType;
 } KIT_INFO; // size = 0x68
 
 typedef struct _TEAM_KIT_INFO

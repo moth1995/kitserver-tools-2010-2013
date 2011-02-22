@@ -13,7 +13,7 @@ using namespace stdext;
 
 // attribute definition flags (bits)
 #define SHIRT_NUMBER                 0x00000001 
-#define SHIRT_NAME                   0x00000002 
+#define SOCKS_COLOR                  0x00000002 
 #define SHORTS_NUMBER                0x00000004 
 #define COLLAR                       0x00000008 
 #define MODEL                        0x00000010 
@@ -23,9 +23,9 @@ using namespace stdext;
 #define NAME_TYPE                    0x00000100
 #define NAME_SHAPE                   0x00000200
 #define NUMBERS_FILE                 0x00000400
-#define NUMBERS_PALETTE_FILE         0x00000800
+#define SECOND_COLOR                 0x00000800
 #define NAME_SHOW                    0x00001000
-#define LOGO_LOCATION                0x00002000
+#define ICON_TYPE                    0x00002000
 #define MAIN_COLOR                   0x00004000
 #define MASK_FILE                    0x00008000
 #define KITDESCRIPTION               0x00010000
@@ -70,7 +70,9 @@ public:
     BYTE nameShape;
     BYTE logoLocation;
     RGBAColor mainColor;
+    RGBAColor secondColor;
     RGBAColor shortsFirstColor;
+    RGBAColor socksColor;
     //wstring maskFile;
     //wstring shirtFolder;
     //wstring shortsFolder;
@@ -93,6 +95,7 @@ public:
     DWORD attDefined;
     bool configLoaded;
     WORD slot;
+    BYTE iconType;
 
     Kit() : attDefined(0), configLoaded(false), slot(0xffff) {}
 };

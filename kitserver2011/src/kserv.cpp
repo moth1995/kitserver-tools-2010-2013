@@ -703,18 +703,18 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         {
             _slotMap.insert(pair<WORD,WORD>((WORD)slot,i));
             _reverseSlotMap.insert(pair<WORD,WORD>(i,(WORD)slot));
-        
-            // debug
-            /*
-            if (i==277||i==176) {
-                teamKitInfo[i].pb.sleevePatchRightPosLong = 1;
-                teamKitInfo[i].pb.sleevePatchRightPosShort = 5;
-                teamKitInfo[i].pb.sleevePatchLeftPosLong = 1;
-                teamKitInfo[i].pb.sleevePatchLeftPosShort = 5;
-                DumpData(&teamKitInfo[i], sizeof(TEAM_KIT_INFO));
-            }
-            */
         }
+
+        /*
+        // debug
+        if (i==88) {
+            //teamKitInfo[i].pb.sleevePatchRightPosLong = 1;
+            //teamKitInfo[i].pb.sleevePatchRightPosShort = 5;
+            //teamKitInfo[i].pb.sleevePatchLeftPosLong = 1;
+            //teamKitInfo[i].pb.sleevePatchLeftPosShort = 5;
+            DumpData(&teamKitInfo[i], sizeof(TEAM_KIT_INFO));
+        }
+        */
     }
     LOG(L"Normal slots taken: %d", _slotMap.size());
 
@@ -872,6 +872,8 @@ KEXPORT void ApplyKitAttributes(const map<wstring,Kit>::iterator kiter, KIT_INFO
         ki.nameY = kiter->second.nameY;
     if (kiter->second.attDefined & NAME_SIZE)
         ki.nameSize = kiter->second.nameSize;
+    if (kiter->second.attDefined & ICON_TYPE)
+        ki.iconType = kiter->second.iconType;
 
     if (kiter->second.attDefined & MAIN_COLOR) 
     {
@@ -880,9 +882,15 @@ KEXPORT void ApplyKitAttributes(const map<wstring,Kit>::iterator kiter, KIT_INFO
         for (int i=0; i<4; i++)
             RGBAColor2KCOLOR(kiter->second.mainColor, ki.editShirtColors[i]);
     }
+    // shirt second color
+    if (kiter->second.attDefined & SECOND_COLOR)
+        RGBAColor2KCOLOR(kiter->second.secondColor, ki.secondColor);
     // shorts main color
     if (kiter->second.attDefined & SHORTS_MAIN_COLOR)
         RGBAColor2KCOLOR(kiter->second.shortsFirstColor, ki.shortsFirstColor);
+    // socks color
+    if (kiter->second.attDefined & SOCKS_COLOR)
+        RGBAColor2KCOLOR(kiter->second.socksColor, ki.socksColor);
 }
 
 void RGBAColor2KCOLOR(const RGBAColor& color, KCOLOR& kcolor)

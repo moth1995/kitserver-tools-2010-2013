@@ -43,9 +43,11 @@ enum {
     ATT_SHORTS_NUMBER_LOCATION,
     ATT_NAME_SHOW,
     ATT_NAME_SHAPE,
-    ATT_LOGO_LOCATION,
     ATT_MAIN_COLOR,
+    ATT_SECOND_COLOR,
     ATT_SHORTS_COLOR,
+    ATT_SOCKS_COLOR,
+    ATT_ICON_TYPE,
     ATT_DESCRIPTION,
     ATT_FRONT_NUMBER_Y,
     ATT_FRONT_NUMBER_X,
@@ -297,10 +299,12 @@ void GDB::loadConfig(Kit& kit)
         _getConfig("", "shorts.number.location", DT_STRING, (DWORD)&kattr_data(kit,ATT_SHORTS_NUMBER_LOCATION), kitConfig);
         _getConfig("", "name.show", DT_DWORD, (DWORD)&kattr_data(kit,ATT_NAME_SHOW), kitConfig);
         _getConfig("", "name.shape", DT_STRING, (DWORD)&kattr_data(kit,ATT_NAME_SHAPE), kitConfig);
-//        _getConfig("", "logo.location", DT_STRING, (DWORD)&kattr_data(kit,ATT_LOGO_LOCATION), kitConfig);
         _getConfig("", "main.color", DT_STRING, (DWORD)&kattr_data(kit,ATT_MAIN_COLOR), kitConfig);
         _getConfig("", "radar.color", DT_STRING, (DWORD)&kattr_data(kit,ATT_MAIN_COLOR), kitConfig); // for backward compatibility
         _getConfig("", "shorts.color", DT_STRING, (DWORD)&kattr_data(kit,ATT_SHORTS_COLOR), kitConfig);
+        _getConfig("", "second.color", DT_STRING, (DWORD)&kattr_data(kit,ATT_SECOND_COLOR), kitConfig);
+        _getConfig("", "socks.color", DT_STRING, (DWORD)&kattr_data(kit,ATT_SOCKS_COLOR), kitConfig);
+        _getConfig("", "icon.type", DT_DWORD, (DWORD)&kattr_data(kit,ATT_ICON_TYPE), kitConfig);
         _getConfig("", "description", DT_STRING, (DWORD)&kattr_data(kit,ATT_DESCRIPTION), kitConfig);
         _getConfig("", "front.number.y", DT_DWORD, (DWORD)&kattr_data(kit,ATT_FRONT_NUMBER_Y), kitConfig);
         _getConfig("", "front.number.x", DT_DWORD, (DWORD)&kattr_data(kit,ATT_FRONT_NUMBER_X), kitConfig);
@@ -387,17 +391,7 @@ static void kitConfig(char* pName, const void* pValue, DWORD a)
             GDB_DEBUG(wlog,(slog,L"nameShape = %d\n",kd->kit.nameShape));
             break;
 
-        case ATT_LOGO_LOCATION:
-            if (equals(pValue, L"off"))
-                kd->kit.logoLocation = 0;
-            else if (equals(pValue, L"top"))
-                kd->kit.logoLocation = 1;
-            else if (equals(pValue, L"bottom"))
-                kd->kit.logoLocation = 2;
-            kd->kit.attDefined |= LOGO_LOCATION;
-            GDB_DEBUG(wlog,(slog,L"logoLocation = %d\n",kd->kit.logoLocation));
-            break;
-
+            
         case ATT_MAIN_COLOR:
             if (ParseColor((wchar_t*)pValue, &kd->kit.mainColor))
                 kd->kit.attDefined |= MAIN_COLOR;
@@ -406,6 +400,28 @@ static void kitConfig(char* pName, const void* pValue, DWORD a)
                         kd->kit.mainColor.g,
                         kd->kit.mainColor.b,
                         kd->kit.mainColor.a
+                        ));
+            break;
+
+        case ATT_SECOND_COLOR:
+            if (ParseColor((wchar_t*)pValue, &kd->kit.secondColor))
+                kd->kit.attDefined |= SECOND_COLOR;
+            GDB_DEBUG(wlog,(slog,L"secondColor = %02x%02x%02x%02x\n",
+                        kd->kit.secondColor.r,
+                        kd->kit.secondColor.g,
+                        kd->kit.secondColor.b,
+                        kd->kit.secondColor.a
+                        ));
+            break;
+
+        case ATT_SOCKS_COLOR:
+            if (ParseColor((wchar_t*)pValue, &kd->kit.socksColor))
+                kd->kit.attDefined |= SOCKS_COLOR;
+            GDB_DEBUG(wlog,(slog,L"socksColor = %02x%02x%02x%02x\n",
+                        kd->kit.socksColor.r,
+                        kd->kit.socksColor.g,
+                        kd->kit.socksColor.b,
+                        kd->kit.socksColor.a
                         ));
             break;
 
@@ -418,6 +434,13 @@ static void kitConfig(char* pName, const void* pValue, DWORD a)
                         kd->kit.shortsFirstColor.b,
                         kd->kit.shortsFirstColor.a
                         ));
+            break;
+
+        case ATT_ICON_TYPE:
+            kd->kit.iconType = *(DWORD*)pValue;
+            GDB_DEBUG(wlog,(slog,L"iconType = {%s}\n",
+                        kd->kit.iconType));
+            kd->kit.attDefined |= ICON_TYPE;
             break;
 
         case ATT_DESCRIPTION:

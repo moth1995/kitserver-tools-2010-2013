@@ -458,8 +458,8 @@ This file tells kitserver where to find the kits for particular team. As you kno
 # Example: 23,"Russia"
 
 23,"National\Russia"
-10, "National\Germany"
 7, "National\England"
+88, "EPL\Arsenal"
 </pre>
 </p>
 
@@ -477,11 +477,11 @@ flexibility of kit organization.
 </p>
 
 <p>
-You can see from map.txt above that in order to find a kit for team #23, the kitserver needs to go to the 
-folder <b>GDB\uni\National\Russia</b>. This folder will contain all of the kits that are
-available to team #23. Inside it, you must create an individual folder for each kit. Like this:
+You can see from map.txt above that in order to find a kit for team #88, the kitserver needs to go to the 
+folder <b>GDB\uni\EPL\Arsenal</b>. This folder will contain all of the kits that are
+available to team #88. Inside it, you must create an individual folder for each kit. Like this:
 
-<img src="russia.png"/>
+<img src="arsenal.png"/>
 
 For players, 1st kit must have a folder name <b>pa</b>, 2nd - <b>pb</b>. Extra kits can have 
 any folder names that start with letter "p". I found it useful to prefix all extra kits with 
@@ -497,9 +497,9 @@ find/read the folder, just use latin characters, digits, underscore, and the das
 </div>
 
 <p>
-Now let's move on inside one of the kit folders. Take <b>pb</b>, for example.
+Now let's move on inside one of the kit folders. Take <b>pa</b>, for example.
 
-<img src="pb.png" />
+<img src="pa.png" />
 
 See the table below for explanation of each file:
 </p>
@@ -966,6 +966,7 @@ free.select = 1
 <p>
 Programming: <b>juce</b>, <b>Robbie</b> and <b>Stelios</b><br />
 Beta-testing: members and guests of Evo-Web and PesWe.com forums.<br />
+Sample GDB: Arsenal kits by <b>mstar</b>.
 </p>
 
 <p>Kitserver license is BSD-style license that can be found here:

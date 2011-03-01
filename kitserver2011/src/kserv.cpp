@@ -214,6 +214,20 @@ hash_map<WORD,WORD> _reverseSlotMap;
 typedef hash_map<WORD,KitCollection>::iterator kc_iter_t;
 CRITICAL_SECTION _cs;
 
+typedef hash_map<WORD,WORD> slot_map_t;
+class slot_maps_t 
+{
+public:
+    slot_map_t ga;
+    slot_map_t gb;
+    slot_map_t pa;
+    slot_map_t pb;
+};
+
+slot_maps_t _slotMaps;
+slot_maps_t _reverseSlotMaps;
+slot_map_t _takenSlots;
+
 // kit iterators
 map<wstring,Kit>::iterator g_iterHomePA;
 map<wstring,Kit>::iterator g_iterHomePB;
@@ -272,7 +286,8 @@ WORD GetTeamId(KIT_CHOICE* kc);
 WORD GetTeamIndex(KIT_CHOICE* kc);
 WORD GetTeamIdByIndex(int index);
 WORD GetTeamIndexById(WORD id);
-WORD GetTeamIndexBySlot(WORD slot);
+WORD GetTeamIndexBySlot(WORD slot, int binType);
+void GetTeamIndexesBySlot(WORD slot, int binType, WORD& teamA, WORD& teamB);
 bool FindTeamInGDB(WORD teamIndex, KitCollection*& kcol);
 char* GetTeamNameByIndex(int index, TEAM_NAME*);
 char* GetTeamNameById(WORD id);
@@ -285,11 +300,10 @@ void DumpSlotsInfo(TEAM_KIT_INFO* teamKitInfo=NULL, TEAM_NAME* teamNames=NULL);
 void kservKeyboardEvent(int code1, WPARAM wParam, LPARAM lParam);
 void kservReadEditData(LPCVOID data, DWORD size);
 void kservWriteEditData(LPCVOID data, DWORD size);
-void kservReadReplayData(LPCVOID data, DWORD size);
-void kservWriteReplayData(LPCVOID data, DWORD size);
 void InitSlotMapInThread(TEAM_KIT_INFO* teamKitInfo=NULL);
 DWORD WINAPI InitSlotMap(LPCVOID param=NULL);
-void RelinkKit(WORD teamIndex, WORD slot, KIT_INFO& kitInfo);
+void RelinkKit(WORD teamIndex, WORD slot, KIT_INFO& kitInfo,
+               slot_map_t& slotMap, slot_map_t& revereSlotMap);
 void ResetTeamKitInfo(WORD teamIndex, WORD slot, TEAM_KIT_INFO* tki=NULL);
 void RestoreTeamKitInfos(TEAM_KIT_INFO* tki=NULL);
 void RestoreTeamKitInfo(WORD teamIndex, int which, TEAM_KIT_INFO* tki=NULL);
@@ -451,7 +465,8 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
        }
     }
     if (noneInConfig) {
-       LOG(L"defaulting to this techfit models: 35-41");
+       LOG(L"defaulting to these techfit models: 35-41,54");
+       LOG(L"defaulting to these tight models: 24");
        _kserv_config._techfit[24] = 2;
        _kserv_config._techfit[35] = 1;
        _kserv_config._techfit[36] = 1;
@@ -460,6 +475,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
        _kserv_config._techfit[39] = 1;
        _kserv_config._techfit[40] = 1;
        _kserv_config._techfit[41] = 1;
+       _kserv_config._techfit[54] = 1;
     }
 
     // initialize iterators
@@ -468,8 +484,6 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     // add callbacks
     addReadEditDataCallback(kservReadEditData);
     addWriteEditDataCallback(kservWriteEditData);
-    //addReadReplayDataCallback(kservReadReplayData);
-    //addWriteReplayDataCallback(kservWriteReplayData);
     afsioAddCallback(kservGetFileInfo);
 
 	TRACE(L"Initialization complete.");
@@ -689,13 +703,23 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)data[PLAYERS_DATA] 
                 + data[TEAM_KIT_INFO_OFFSET]);
 
-    _slotMap.clear();
-    _reverseSlotMap.clear();
+    //_slotMap.clear();
+    //_reverseSlotMap.clear();
+    _slotMaps.ga.clear();
+    _slotMaps.gb.clear();
+    _slotMaps.pa.clear();
+    _slotMaps.pb.clear();
+    _reverseSlotMaps.ga.clear();
+    _reverseSlotMaps.gb.clear();
+    _reverseSlotMaps.pa.clear();
+    _reverseSlotMaps.pb.clear();
+    _takenSlots.clear();
     _orgTeamKitInfo.clear();
 
     // linked (or re-linked teams)
     for (WORD i=0; i<NUM_TEAMS; i++)
     {
+        /*
         short slot = (short)teamKitInfo[i].pa.slot;
         TRACE(L"team (index=%d, id=0x%04x): slot=0x%04x",
                 i, teamKitInfo[i].id, (WORD)slot);
@@ -703,6 +727,33 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         {
             _slotMap.insert(pair<WORD,WORD>((WORD)slot,i));
             _reverseSlotMap.insert(pair<WORD,WORD>(i,(WORD)slot));
+        }
+        */
+
+        short slot;
+        slot = (short)teamKitInfo[i].ga.slot;
+        if (slot >= 0) {
+            _slotMaps.ga.insert(pair<WORD,WORD>((WORD)slot,i));
+            _reverseSlotMaps.ga.insert(pair<WORD,WORD>(i, (WORD)slot));
+            _takenSlots.insert(pair<WORD,bool>(slot,true));
+        }
+        slot = (short)teamKitInfo[i].gb.slot;
+        if (slot >= 0) {
+            _slotMaps.gb.insert(pair<WORD,WORD>((WORD)slot,i));
+            _reverseSlotMaps.gb.insert(pair<WORD,WORD>(i, (WORD)slot));
+            _takenSlots.insert(pair<WORD,bool>(slot,true));
+        }
+        slot = (short)teamKitInfo[i].pa.slot;
+        if (slot >= 0) {
+            _slotMaps.pa.insert(pair<WORD,WORD>((WORD)slot,i));
+            _reverseSlotMaps.pa.insert(pair<WORD,WORD>(i, (WORD)slot));
+            _takenSlots.insert(pair<WORD,bool>(slot,true));
+        }
+        slot = (short)teamKitInfo[i].pb.slot;
+        if (slot >= 0) {
+            _slotMaps.pb.insert(pair<WORD,WORD>((WORD)slot,i));
+            _reverseSlotMaps.pb.insert(pair<WORD,WORD>(i, (WORD)slot));
+            _takenSlots.insert(pair<WORD,bool>(slot,true));
         }
 
         /*
@@ -716,7 +767,8 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         }
         */
     }
-    LOG(L"Normal slots taken: %d", _slotMap.size());
+    //LOG(L"Normal slots taken: %d", _slotMap.size());
+    LOG(L"Normal slots taken: %d", _takenSlots.size());
 
     // GDB teams
     WORD nextSlot = XSLOT_FIRST;
@@ -724,8 +776,12 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
             git != _gdb->uni.end();
             git++)
     {
-        hash_map<WORD,WORD>::iterator rit = _reverseSlotMap.find(git->first);
-        bool toRelink = (rit == _reverseSlotMap.end());
+        //hash_map<WORD,WORD>::iterator rit = _reverseSlotMap.find(git->first);
+        //bool toRelink = (rit == _reverseSlotMap.end());
+        bool gaRelink(false);
+        bool gbRelink(false);
+        bool paRelink(false);
+        bool pbRelink(false);
 
         // store original attributes
         WORD i = git->first;
@@ -739,23 +795,47 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         //DumpData(&o.tki, sizeof(TEAM_KIT_INFO));
         if (git->second.ga!=git->second.goalkeepers.end())
         {
+            hash_map<WORD,WORD>::iterator rit = 
+                _reverseSlotMaps.ga.find(git->first);
+            gaRelink = (rit == _reverseSlotMaps.ga.end());
+
             o.ga = true;
-            if (toRelink) RelinkKit(i, nextSlot, teamKitInfo[i].ga);
+            if (gaRelink) RelinkKit(
+                i, nextSlot, teamKitInfo[i].ga,
+                _slotMaps.ga, _reverseSlotMaps.ga);
         }
         if (git->second.gb!=git->second.goalkeepers.end())
         {
+            hash_map<WORD,WORD>::iterator rit = 
+                _reverseSlotMaps.gb.find(git->first);
+            gbRelink = (rit == _reverseSlotMaps.gb.end());
+
             o.gb = true;
-            if (toRelink) RelinkKit(i, nextSlot, teamKitInfo[i].gb);
+            if (gbRelink) RelinkKit(
+                i, nextSlot, teamKitInfo[i].gb,
+                _slotMaps.gb, _reverseSlotMaps.gb);
         }
         if (git->second.pa!=git->second.players.end())
         {
+            hash_map<WORD,WORD>::iterator rit = 
+                _reverseSlotMaps.pa.find(git->first);
+            paRelink = (rit == _reverseSlotMaps.pa.end());
+
             o.pa = true;
-            if (toRelink) RelinkKit(i, nextSlot, teamKitInfo[i].pa);
+            if (paRelink) RelinkKit(
+                i, nextSlot, teamKitInfo[i].pa,
+                _slotMaps.pa, _reverseSlotMaps.pa);
         }
         if (git->second.pb!=git->second.players.end())
         {
+            hash_map<WORD,WORD>::iterator rit = 
+                _reverseSlotMaps.pb.find(git->first);
+            pbRelink = (rit == _reverseSlotMaps.pb.end());
+
             o.pb = true;
-            if (toRelink) RelinkKit(i, nextSlot, teamKitInfo[i].pb);
+            if (pbRelink) RelinkKit(
+                i, nextSlot, teamKitInfo[i].pb,
+                _slotMaps.pb, _reverseSlotMaps.pb);
         }
         _orgTeamKitInfo.insert(pair<int,ORG_TEAM_KIT_INFO>(i,o));
 
@@ -785,13 +865,18 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         }
 
         // move to next slot
-        if ((o.ga||o.gb||o.pa||o.pb) && toRelink)
+        if ((o.ga||o.gb||o.pa||o.pb) && (
+                gaRelink||gbRelink||paRelink||pbRelink))
         {
             LOG(L"team %d dynamically relinked to x-slot 0x%x", i, nextSlot); 
             nextSlot++;
         }
     }
-    LOG(L"Total slots taken: %d", _slotMap.size());
+    size_t numTaken = _slotMaps.ga.size();
+    numTaken = max(numTaken, _slotMaps.gb.size());
+    numTaken = max(numTaken, _slotMaps.pa.size());
+    numTaken = max(numTaken, _slotMaps.pb.size());
+    LOG(L"Total slots taken: %d", numTaken);
 
     // keep track of slots for extra kits
     _firstXslot = _nextXslot = nextSlot;
@@ -808,11 +893,12 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
     return 0;
 }
 
-void RelinkKit(WORD teamIndex, WORD slot, KIT_INFO& kitInfo)
+void RelinkKit(WORD teamIndex, WORD slot, KIT_INFO& kitInfo,
+               slot_map_t& slotMap, slot_map_t& reverseSlotMap)
 {
     kitInfo.slot = slot;
-    _slotMap.insert(pair<WORD,WORD>(slot,teamIndex));
-    _reverseSlotMap.insert(pair<WORD,WORD>(teamIndex,slot));
+    slotMap.insert(pair<WORD,WORD>(slot,teamIndex));
+    reverseSlotMap.insert(pair<WORD,WORD>(teamIndex,slot));
 }
 
 void ApplyKitAttributes(map<wstring,Kit>& m, const wchar_t* kitKey, KIT_INFO& ki)
@@ -1047,82 +1133,6 @@ void kservWriteEditData(LPCVOID buf, DWORD size)
 }
 
 /**
- * replay data read callback
- */
-void kservReadReplayData(LPCVOID buf, DWORD size)
-{
-    BYTE* replay = (BYTE*)buf;
-
-    // adjust binId offsets so that we load appropriate
-    // kit/font/numbers bins, for GDB teams
-    WORD homeId = *(WORD*)(replay + 0x1ac);
-    WORD homeIndex = GetTeamIndexById(homeId);
-    hash_map<WORD,WORD>::iterator sit = _reverseSlotMap.find(homeIndex);
-    if (sit != _reverseSlotMap.end())
-    {
-        if (replay[0x1d0]==0) // flag for edited vs. real kit
-        {
-            *(WORD*)(replay+0x1d4) = 
-                ((*(WORD*)(replay+0x1d4))%2) + sit->second*2;
-            *(WORD*)(replay+0x200) =
-                ((*(WORD*)(replay+0x200))%4) + sit->second*4;
-        }
-        if (replay[0x25c]==0) // flag for edited vs. real kit
-        {
-            *(WORD*)(replay+0x260) =
-                ((*(WORD*)(replay+0x260))%2) + sit->second*2;
-            *(WORD*)(replay+0x28c) =
-                ((*(WORD*)(replay+0x28c))%4) + sit->second*4;
-        }
-    }
-
-    WORD awayId = *(WORD*)(replay + 0x370);
-    WORD awayIndex = GetTeamIndexById(awayId);
-    sit = _reverseSlotMap.find(awayIndex);
-    if (sit != _reverseSlotMap.end())
-    {
-        if (replay[0x394]==0) // flag for edited vs. real kit
-        {
-            *(WORD*)(replay+0x398) =
-                ((*(WORD*)(replay+0x398))%2) + sit->second*2;
-            *(WORD*)(replay+0x3c4) =
-                ((*(WORD*)(replay+0x3c4))%4) + sit->second*4;
-        }
-        if (replay[0x420]==0) // flag for edited vs. real kit
-        {
-            *(WORD*)(replay+0x424) =
-                ((*(WORD*)(replay+0x424))%2) + sit->second*2;
-            *(WORD*)(replay+0x450) =
-                ((*(WORD*)(replay+0x450))%4) + sit->second*4;
-        }
-    }
-}
-
-/**
- * replay data write callback
- */
-void kservWriteReplayData(LPCVOID buf, DWORD size)
-{
-    BYTE* replay = (BYTE*)buf;
-
-    // make sure we don't write the binId offsets that
-    // would cause the game to attempt loading a "extended" BIN.
-    // With kitserver detached, this would cause the game to 
-    // hang indefinitely.
-    //
-    // home team
-    if (*(WORD*)(replay + 0x1d4) > 0x1ff) *(WORD*)(replay+0x1d4) %= 2;
-    if (*(WORD*)(replay + 0x200) > 0x3ff) *(WORD*)(replay+0x200) %= 4;
-    if (*(WORD*)(replay + 0x260) > 0x1ff) *(WORD*)(replay+0x260) %= 2;
-    if (*(WORD*)(replay + 0x28c) > 0x3ff) *(WORD*)(replay+0x28c) %= 4;
-    // away team
-    if (*(WORD*)(replay + 0x398) > 0x1ff) *(WORD*)(replay+0x398) %= 2;
-    if (*(WORD*)(replay + 0x3c4) > 0x3ff) *(WORD*)(replay+0x3c4) %= 4;
-    if (*(WORD*)(replay + 0x424) > 0x1ff) *(WORD*)(replay+0x424) %= 2;
-    if (*(WORD*)(replay + 0x450) > 0x3ff) *(WORD*)(replay+0x450) %= 4;
-}
-
-/**
  * AFSIO callback
  */
 bool kservGetFileInfo(DWORD afsId, DWORD binId, HANDLE& hfile, DWORD& fsize)
@@ -1211,16 +1221,82 @@ int GetBinType(DWORD afsId, DWORD id)
     return -1;
 }
 
-WORD GetTeamIndexBySlot(WORD slot)
+WORD GetTeamIndexBySlot(WORD slot, int binType)
 {
-    hash_map<WORD,WORD>::iterator sit = _slotMap.find(slot);
-    if (sit != _slotMap.end())
-        return sit->second;
-    // check 
+    slot_map_t::iterator sit;
+
+    switch (binType) {
+        case BIN_FONT_GA:
+        case BIN_NUMS_GA:
+            sit = _slotMaps.ga.find(slot);
+            if (sit != _slotMaps.ga.end()) {
+                return sit->second;
+            }
+            break;
+        case BIN_FONT_GB:
+        case BIN_NUMS_GB:
+            sit = _slotMaps.gb.find(slot);
+            if (sit != _slotMaps.gb.end()) {
+                return sit->second;
+            }
+            break;
+        case BIN_FONT_PA:
+        case BIN_NUMS_PA:
+            sit = _slotMaps.pa.find(slot);
+            if (sit != _slotMaps.pa.end()) {
+                return sit->second;
+            }
+            break;
+        case BIN_FONT_PB:
+        case BIN_NUMS_PB:
+            sit = _slotMaps.pb.find(slot);
+            if (sit != _slotMaps.pb.end()) {
+                return sit->second;
+            }
+            break;
+    }
+
     hash_map<WORD,KIT_PICK>::iterator zit = _kitPicks.find(slot);
-    if (zit != _kitPicks.end())
+    if (zit != _kitPicks.end()) {
         return zit->second.teamIndex;
+    }
     return 0xffff;
+}
+
+void GetTeamIndexesBySlot(WORD slot, int binType, WORD& teamA, WORD& teamB)
+{
+    teamA = teamB = 0xffff;
+    slot_map_t::iterator sit;
+
+    switch (binType) {
+        case BIN_KIT_GK:
+            sit = _slotMaps.ga.find(slot);
+            if (sit != _slotMaps.ga.end()) {
+                teamA = sit->second;
+            }
+            sit = _slotMaps.gb.find(slot);
+            if (sit != _slotMaps.gb.end()) {
+                teamB = sit->second;
+            }
+            break;
+        case BIN_KIT_PL:
+            sit = _slotMaps.pa.find(slot);
+            if (sit != _slotMaps.pa.end()) {
+                teamA = sit->second;
+            }
+            sit = _slotMaps.pb.find(slot);
+            if (sit != _slotMaps.pb.end()) {
+                teamB = sit->second;
+            }
+            break;
+    }
+
+    if (teamA == 0xffff && teamB == 0xffff) {
+        hash_map<WORD,KIT_PICK>::iterator zit = _kitPicks.find(slot);
+        if (zit != _kitPicks.end()) {
+            teamA = teamB = zit->second.teamIndex;
+        }
+    }
 }
 
 bool FindTeamInGDB(WORD teamIndex, KitCollection*& kcol)
@@ -1249,19 +1325,31 @@ bool CreatePipeForKitBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
     if (afsId==EXPANSION_IMG)
         slot = NUM_SLOTS + ((binId - DT0F_BIN_KIT_FIRST) >> 1);
 
-    WORD teamIndex = GetTeamIndexBySlot(slot);
-    TRACE(L"teamIndex = %d", teamIndex);
-    KitCollection* kcol;
-    if (!FindTeamInGDB(teamIndex, kcol) && 
+    int binType = GetBinType(afsId, binId);
+    TRACE(L"binType: %d", binType);
+    WORD teamIndexA = 0xffff, teamIndexB = 0xffff;
+    GetTeamIndexesBySlot(slot, binType, teamIndexA, teamIndexB);
+    TRACE(L"teamIndexA = %d", teamIndexA);
+    TRACE(L"teamIndexB = %d", teamIndexB);
+    KitCollection* kcolA;
+    KitCollection* kcolB;
+    bool noTeamA = (!FindTeamInGDB(teamIndexA, kcolA) && 
             ((afsId==KITS_IMG && binId <= BIN_KIT_LAST) ||
-                    afsId==EXPANSION_IMG))
+                    afsId==EXPANSION_IMG));
+    bool noTeamB = (!FindTeamInGDB(teamIndexB, kcolB) && 
+            ((afsId==KITS_IMG && binId <= BIN_KIT_LAST) ||
+                    afsId==EXPANSION_IMG));
+    if (noTeamA && noTeamB) {
         return false; // not in GDB: rely on afs kit
+    }
 
     // check disabled flag
-    if (kcol->disabled)
+    if (kcolA->disabled && kcolB->disabled)
     {
         LOG(L"WARN: GDB kits for team %d (%s) are disabled.",
-                teamIndex, kcol->foldername.c_str());
+                teamIndexA, kcolA->foldername.c_str());
+        LOG(L"WARN: GDB kits for team %d (%s) are disabled.",
+                teamIndexB, kcolB->foldername.c_str());
         return false;
     }
 
@@ -1313,38 +1401,45 @@ bool CreatePipeForKitBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
 
     hash_map<WORD,KIT_PICK>::iterator zit;
     wstring files[2];
+    KitCollection* kcols[2];
+    kcols[0] = kcolA;
+    kcols[1] = kcolB;
+
     for (int i=0; i<2; i++)
     {
+        if (kcols[i]->disabled)
+            continue;
+
         wstring filename(getPesInfo()->gdbDir);
         map<wstring,Kit>::iterator kkit;
         map<wstring,Kit>::iterator kkit_end;
         //LOG(L"filename = {%s}", filename.c_str());
-        switch (GetBinType(afsId, binId))
+        switch (binType)
         {
             case BIN_KIT_GK:
-                kkit_end = kcol->goalkeepers.end();
+                kkit_end = kcols[i]->goalkeepers.end();
                 kkit = (i==0)?
-                    kcol->goalkeepers.find(L"ga"):
-                    kcol->goalkeepers.find(L"gb");
-                if (kkit == kcol->goalkeepers.end())
+                    kcols[i]->goalkeepers.find(L"ga"):
+                    kcols[i]->goalkeepers.find(L"gb");
+                if (kkit == kcols[i]->goalkeepers.end())
                 {
                     LOG(L"WARN: %s kit not found!", 
                             ((i==0)?L"ga":L"gb"));
                 }
                 break;
             case BIN_KIT_PL:
-                kkit_end = kcol->players.end();
+                kkit_end = kcols[i]->players.end();
                 zit = _kitPicks.find(slot);
                 if (zit != _kitPicks.end())
                 {
-                    kkit = kcol->players.find(zit->second.kitKey);
+                    kkit = kcols[i]->players.find(zit->second.kitKey);
                 }
                 else
                 {
                     kkit = (i==0)?
-                        kcol->players.find(L"pa"):
-                        kcol->players.find(L"pb");
-                    if (kkit == kcol->players.end())
+                        kcols[i]->players.find(L"pa"):
+                        kcols[i]->players.find(L"pb");
+                    if (kkit == kcols[i]->players.end())
                     {
                         LOG(L"WARN: %s kit not found!", 
                                 ((i==0)?L"pa":L"pb"));
@@ -1406,7 +1501,8 @@ bool CreatePipeForFontBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
     if (afsId==EXPANSION_IMG)
         slot = NUM_SLOTS + ((binId - DT0F_BIN_FONT_FIRST) >> 2);
 
-    WORD teamIndex = GetTeamIndexBySlot(slot);
+    int binType = GetBinType(afsId, binId);
+    WORD teamIndex = GetTeamIndexBySlot(slot, binType);
     KitCollection* kcol;
     if (!FindTeamInGDB(teamIndex, kcol) && 
             ((afsId==KITS_IMG && binId <= BIN_FONT_LAST) ||
@@ -1462,7 +1558,7 @@ bool CreatePipeForFontBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
     map<wstring,Kit>::iterator kkit;
     map<wstring,Kit>::iterator kkit_end;
     hash_map<WORD,KIT_PICK>::iterator zit;
-    switch (GetBinType(afsId, binId))
+    switch (binType)
     {
         case BIN_FONT_GA:
             kkit_end = kcol->goalkeepers.end();
@@ -1552,7 +1648,8 @@ bool CreatePipeForNumbersBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& si
     if (afsId==EXPANSION_IMG)
         slot = NUM_SLOTS + ((binId - DT0F_BIN_NUMBER_FIRST) >> 2);
 
-    WORD teamIndex = GetTeamIndexBySlot(slot);
+    int binType = GetBinType(afsId, binId);
+    WORD teamIndex = GetTeamIndexBySlot(slot, binType);
     KitCollection* kcol;
     if (!FindTeamInGDB(teamIndex, kcol) && 
             ((afsId==KITS_IMG && binId <= BIN_NUMBER_LAST) ||
@@ -1607,7 +1704,7 @@ bool CreatePipeForNumbersBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& si
     map<wstring,Kit>::iterator kkit;
     map<wstring,Kit>::iterator kkit_end;
     hash_map<WORD,KIT_PICK>::iterator zit;
-    switch (GetBinType(afsId, binId))
+    switch (binType)
     {
         case BIN_NUMS_GA:
             kkit_end = kcol->goalkeepers.end();

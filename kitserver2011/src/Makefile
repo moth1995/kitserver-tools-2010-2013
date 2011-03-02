@@ -73,8 +73,8 @@ kload.lib: kload.obj hook.obj
 kload.obj: kload.h kload_addr.h kload.cpp
 regtools.obj: regtools.cpp regtools.h
 
-krun.exe: krun.obj imageutil.obj regtools.obj krun.res
-	$(LINK) $(LFLAGS) /out:krun.exe krun.obj imageutil.obj regtools.obj krun.res $(LIBS)
+krun.exe: krun.obj imageutil.obj regtools.obj configs.obj krun.res
+	$(LINK) $(LFLAGS) /out:krun.exe krun.obj imageutil.obj regtools.obj configs.obj krun.res $(LIBS)
 krun.res: 
 	$(RC) -r -fo krun.res krun.rc
 

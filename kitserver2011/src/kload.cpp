@@ -72,56 +72,18 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		hInst = hInstance;
 		
 		setPesInfo();
-		
+        //SYSTEMTIME st;
+        //GetLocalTime(&st);
+
+        wchar_t logName[1024];
+        memset(logName, 0, sizeof(logName));
+        swprintf(logName, L"%s.%d", //.%03d", 
+            g_pesinfo.logName, GetCurrentProcessId());//, st.wMilliseconds);
+
+		//OpenLog(logName);//g_pesinfo.logName);
 		OpenLog(g_pesinfo.logName);
 		LOG(L"Log started.");
 		RegisterKModule(THISMOD);
-
-        // restore entry point (to avoid live_pe_crc error)
-        if (0)//g_pesinfo.gameVersion == gvPES2010)
-        {
-            DWORD newProtection = PAGE_EXECUTE_READWRITE;
-            DWORD g_savedProtection;
-            if (VirtualProtect((BYTE*)0x400d68, 4, 
-                        newProtection, &g_savedProtection))
-            {
-                *(DWORD*)0x400d68 = 0x01cedc40;
-                TRACE(L"Entry point restored.");
-            }
-        }
-        else if (0)//g_pesinfo.gameVersion == gvPES2010v11)
-        {
-            DWORD newProtection = PAGE_EXECUTE_READWRITE;
-            DWORD g_savedProtection;
-            if (VirtualProtect((BYTE*)0x400d68, 4, 
-                        newProtection, &g_savedProtection))
-            {
-                *(DWORD*)0x400d68 = 0x01d6cc40;
-                TRACE(L"Entry point restored.");
-            }
-        }
-        else if (0)//g_pesinfo.gameVersion == gvPES2010v12)
-        {
-            DWORD newProtection = PAGE_EXECUTE_READWRITE;
-            DWORD g_savedProtection;
-            if (VirtualProtect((BYTE*)0x400d68, 4, 
-                        newProtection, &g_savedProtection))
-            {
-                *(DWORD*)0x400d68 = 0x01d6ec40;
-                TRACE(L"Entry point restored.");
-            }
-        }
-        else if (0)//g_pesinfo.gameVersion == gvPES2010v13)
-        {
-            DWORD newProtection = PAGE_EXECUTE_READWRITE;
-            DWORD g_savedProtection;
-            if (VirtualProtect((BYTE*)0x400d68, 4, 
-                        newProtection, &g_savedProtection))
-            {
-                *(DWORD*)0x400d68 = 0x01e31740;
-                TRACE(L"Entry point restored.");
-            }
-        }
 
         // initialize global critical section
         InitializeCriticalSection(&g_cs);
@@ -185,6 +147,8 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 	
 	else if (dwReason == DLL_PROCESS_DETACH)
 	{
+        //__asm int 3;
+
 		LOG(L"Closing log.");
 		CloseLog();
 
@@ -232,6 +196,7 @@ void setPesInfo()
 	
 	// save short filename without ".exe" extension (shortProcessFileNoExt)
 	ZeroMemory(g_pesinfo.shortProcessFileNoExt, WBUFLEN);
+    /*
 	wchar_t* ext = g_pesinfo.shortProcessFile + wcslen(g_pesinfo.shortProcessFile) - 4;
 	if (wcsicmp(ext, L".exe")==0) {
 		memcpy(g_pesinfo.shortProcessFileNoExt, g_pesinfo.shortProcessFile, SW * (ext - g_pesinfo.shortProcessFile)); 
@@ -239,6 +204,12 @@ void setPesInfo()
 	else {
 		wcscpy(g_pesinfo.shortProcessFileNoExt, g_pesinfo.shortProcessFile);
 	}
+    */
+    wcscpy(g_pesinfo.shortProcessFileNoExt, g_pesinfo.shortProcessFile);
+    wchar_t* end = wcsrchr(g_pesinfo.shortProcessFileNoExt, '.');
+    if (end) {
+        end[0] = '\0';
+    }
 	
 	// logName
 	ZeroMemory(g_pesinfo.logName, WBUFLEN);

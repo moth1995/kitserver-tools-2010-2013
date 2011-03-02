@@ -10,6 +10,17 @@ dll = sides.dll
 dll = speeder.dll
 dll = lodmixer.dll
 
+[kserv]
+techfit.model = 35
+techfit.model = 36
+techfit.model = 37
+techfit.model = 38
+techfit.model = 39
+techfit.model = 40
+techfit.model = 41
+techfit.model = 54
+tight.model = 24
+
 [speeder]
 count.factor = 1.0
 

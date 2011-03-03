@@ -214,6 +214,7 @@ void setPesInfo()
 	// logName
 	ZeroMemory(g_pesinfo.logName, WBUFLEN);
 	wcscpy(g_pesinfo.logName, g_pesinfo.myDir);
+	wcscat(g_pesinfo.logName, L"log\\");
 	wcscat(g_pesinfo.logName, g_pesinfo.shortProcessFileNoExt); 
 	wcscat(g_pesinfo.logName, L".log");
 

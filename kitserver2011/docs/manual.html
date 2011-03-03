@@ -274,13 +274,12 @@ see what's causing the issue.
 
 <p class="devnote">People who had been using Kitserver for a few years now,
 will notice that this is different from how things worked before: Kitserver
-no longer physically attaches to the game EXE, but instead the game is run
-as a child process of <b>krun</b> program, which loads the Kitserver modules
-together with the game. The new way maybe somewhat unfamiliar, but it actually
+no longer modifies the game EXE in-place, but instead makes a modified copy
+of it in the "temp" folder, and then the modified module is executed 
+as a child process of <b>krun</b> program.
+The new way maybe somewhat unfamiliar, but it actually
 solves many security-related problems that surfaced with using the old
-kitserver attachment routines on new Windows systems. No longer Kitserver
-needs to modify game files (which is always a suspicious looking activity
-for tools like antivirus protection), everything is done at run-time.</p>
+system.</p>
 
 <h5>2.4. Uninstall</h5>
 

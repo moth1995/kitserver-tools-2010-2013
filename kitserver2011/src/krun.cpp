@@ -13,7 +13,7 @@
 
 
 std::wstring _gameExe;
-const int SECS_TO_WAIT = 2;
+const int SECS_TO_WAIT = 0;
 
 static void string_strip(wstring& s)
 {
@@ -259,7 +259,13 @@ void fmLog(file_manager_t& fm, const wchar_t *format, ...)
 
     va_list params;
     va_start(params, format);
-    vfwprintf(fm._file, format, params);
+    //vfwprintf(fm._file, format, params);
+    wchar_t buf[1024];
+    _vsnwprintf(buf, sizeof(buf)/sizeof(wchar_t), format, params);
+    BYTE* encoded = Utf8::unicodeToUtf8(buf);
+    fprintf(fm._file, "%s", encoded);
+    Utf8::free(encoded);
+
     va_end(params);
     fflush(fm._file);
 }
@@ -268,7 +274,7 @@ int ExecuteProcess(wstring& filename, file_manager_t& log)
 {
     int start = filename.rfind(L"\\") + 1;
     int end = filename.rfind(L".");
-    wstring dest(L".\\tmp\\");
+    wstring dest(L".\\temp\\");
     dest += filename.substr(start, end-start);
     dest += L".tmp";
 
@@ -325,9 +331,8 @@ int ExecuteProcess(wstring& filename, file_manager_t& log)
         fmLog(log, L"Launched successfully\n");
 
         /* Watch the process. */ 
-        dwExitCode = WaitForSingleObject(
-                piProcessInfo.hProcess, (SECS_TO_WAIT * 1000)); 
-        //DeleteFile(dest.c_str());
+        //dwExitCode = WaitForSingleObject(
+        //        piProcessInfo.hProcess, (SECS_TO_WAIT * 1000)); 
     } 
     else 
     { 
@@ -397,7 +402,11 @@ int APIENTRY WinMain(HINSTANCE hInstance,
         }
     }
 
-    wstring logname(myshortname);
+    CreateDirectory(L"log",NULL);
+    CreateDirectory(L"temp",NULL);
+
+    wstring logname(L"log\\");
+    logname += myshortname;
     logname += L".log";
     file_manager_t log(_wfopen(logname.c_str(), L"wt"));
 

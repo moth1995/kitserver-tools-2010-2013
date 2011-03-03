@@ -143,7 +143,7 @@ bool AttachKload(wstring& filename, file_manager_t& log)
     fseek(fm._file, dataOffset, SEEK_SET);
     fread(&buf, 0x20, 1, fm._file);
     if (memcmp(buf, zero, 0x20)==0 ||
-            strncmp((const char*)buf+8, "kitserver\\kload", 0x20)==0)
+            strncmp((const char*)buf+17, "\\kload", 0x20)==0)
     {
         // ok, we found an empty place. Let's live here.
         // (or preattached kitserver - that's ok too)

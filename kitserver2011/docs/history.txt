@@ -2,21 +2,16 @@ Kitserver 2011 HISTORY notes
 ============================
 
 
-2011-02-22
+2011-03-02
 ----------
-v11.0.1
-- kserv: new attributes added:
-    * second.color
-    * socks.color
-    * icon.type
-- fixed bug in config-sample.txt
-
-
-2011-02-21
-----------
-v11.0.0
-- kserv module with support for 1st and 2nd kits
-- krun game launcher
+v11.0.2
+- krun: 
+    new version launcher. 
+    Now works with licensed (securom-protected) EXEs
+- kserv: 
+    fixed bug where wrong team kits
+    were shown, if a team was linked to
+    more than one slot.
 
 
 2011-01-02

@@ -54,7 +54,8 @@
 Version history: <a href="history.txt">history.txt</a><br />
 </div>
 <div>
-    February 22, 2011 - <b>Kitserver 11.0.1</b> 
+    Match 2, 2011 - <b>Kitserver 11.0.2</b> -
+    <span class="emph2">"Denis4M" release</span>
 </div>
 <p class="note">
 Usually, the most up-to-date version of this documentation, and the translations to many languages, are located here: <a href="http://kitserver.ath.cx/docs/">http://kitserver.ath.cx/docs/</a>. Documentation for Kitservers 5-8 and Kitserver 2010 can also be found there.
@@ -83,7 +84,7 @@ If you are new to Kitserver, please make sure you read the
         <th><b>afs2fs.dll</b></th>
         <td>Manage AFS (.img) game content using files and folders: much easier and quicker to install/remove patches, without the need modify *.img files.</td>
     </tr>
-    <tr><td><a href="#kserv">Kserv 11.0.1.0</a></td>
+    <tr><td><a href="#kserv">Kserv 11.0.2</a></td>
         <th><b>kserv.dll</b></th>
         <td>Organize your kits into GDB, and assign each team its own kits.</td>
     </tr>
@@ -208,11 +209,20 @@ using this exe: <b>C:\myPesPatch\PES2011_patched.exe</b>.
 
 <p>This is also possible to do with krun tool: you just need to create a
 configuration file for it, which contains the full pathname of the exe. We
-make a text file called <b>krun-config.txt</b>, and put this line into it:
+make a text file called <b>krun-config.txt</b>, which now has the format
+similar to that of config.txt. You will need to have a [krun] section in it,
+and the option to specify EXE file is called <b>exe</b>. Here is an example
+of such file:
 
 <pre>
-C:\myPesPatch\PES2011_patched.exe
+[krun]
+exe = "c:\myPesPatch\PES2011_patched.exe"
 </pre>
+
+<div class="note">IMPORTANT: if the path to or the filename of your EXE 
+contains a non-ANSI character, you MUST save the file in UTF-8 encoding.
+Otherwise it will not be read correctly.
+</div>
 
 <p>
 That's it. Now when you double-click on <b>krun.exe</b>, instead of reading
@@ -235,6 +245,19 @@ to call the configuration file:
 <span class="devnote">MyPatchRun-config.txt</span>.
 </p>
 
+<h5>Nothing happened! What do i do?</h5>
+
+<p>So you double-clicked on krun.exe, but nothing happened - the game
+did not start. The most common reason for that is mistyped path of the
+EXE in krun-config.txt, but there could be other reasons too.</p>
+
+<p>First, wait a few seconds: it can sometimes take several seconds for 
+the game to launch with Kitserver.</p>
+
+<p>If after 5-10 seconds, the game does not start, check <b>krun.log</b>
+file. It should have an explanation there on what went wrong. (If you 
+renamed your krun.exe to MyPatchRun.exe, then the log file would also
+be named accordingly: MyPatchRun.log)</p>
 
 <h5>2.3. Running the game without Kitserver</h5>
 

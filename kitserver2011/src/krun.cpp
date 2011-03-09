@@ -12,6 +12,9 @@
 #include "configs.h"
 
 
+#define VERSION L"11.0.3.1"
+
+
 std::wstring _gameExe;
 const int SECS_TO_WAIT = 0;
 
@@ -49,6 +52,7 @@ public:
 };
 
 void fmLog(file_manager_t& fm, const wchar_t *format, ...);
+void fmLog(file_manager_t& fm, const char *format, ...);
 
 bool AttachKload(wstring& filename, file_manager_t& log)
 {
@@ -142,8 +146,14 @@ bool AttachKload(wstring& filename, file_manager_t& log)
 
     fseek(fm._file, dataOffset, SEEK_SET);
     fread(&buf, 0x20, 1, fm._file);
+    buf[0x1f] = '\0';
+    std::string sbuf((char*)buf + 8);
+    std::string kload(sbuf.substr(sbuf.rfind("\\")+1));
+    fmLog(log, "kload = {%s}\n", kload.c_str());
+
     if (memcmp(buf, zero, 0x20)==0 ||
-            strncmp((const char*)buf+17, "\\kload", 0x20)==0)
+            strnicmp(kload.c_str(), "kload", 0x18)==0 ||
+            strnicmp(kload.c_str(), "kload.dll", 0x18)==0) 
     {
         // ok, we found an empty place. Let's live here.
         // (or preattached kitserver - that's ok too)
@@ -265,6 +275,23 @@ void fmLog(file_manager_t& fm, const wchar_t *format, ...)
     BYTE* encoded = Utf8::unicodeToUtf8(buf);
     fprintf(fm._file, "%s", encoded);
     Utf8::free(encoded);
+
+    va_end(params);
+    fflush(fm._file);
+}
+
+// Universal logger (ANSI)
+void fmLog(file_manager_t& fm, const char *format, ...)
+{
+    if (!fm._file)
+        return;
+
+    va_list params;
+    va_start(params, format);
+    //vfwprintf(fm._file, format, params);
+    char buf[1024];
+    vsnprintf(buf, sizeof(buf), format, params);
+    fprintf(fm._file, "%s", buf);
 
     va_end(params);
     fflush(fm._file);
@@ -410,6 +437,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     logname += L".log";
     file_manager_t log(_wfopen(logname.c_str(), L"wt"));
 
+    fmLog(log, L"Krun version: %s\n", VERSION);
     fmLog(log, L"EXE: {%s}\n", _gameExe.c_str());
     ExecuteProcess(_gameExe, log);
     fmLog(log, L"Launcher is finished.\n");

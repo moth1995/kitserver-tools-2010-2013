@@ -65,112 +65,136 @@
 
 <!-- ad top -->
 <img style="border:0;align:left;display:inline;float:right" src="kslogo.png"/>
-<h3>1. Introduction</h3>
+<h3>1. Введение</h3>
 <p>
-Kitserver 11 is an add-on program for Pro Evolution Soccer 2011 (and Pro Evolution Soccer 2011 DEMO). It is a loader and manager for various modules, where
-each module is built as a (typically) independent DLL containing logic to 
-enhance the game in particular aspect. While originally the Kitserver was 
-developed to "serve" kits for Pro Evolution Soccer 3, a lot more functionality 
-has been added over the years.<br />
-Below is a quick summary of the available features. Follow the link in the left column to get more details about a particular module.
+Китсервер 11 - это программа-дополнение для Pro Evolution Soccer 2011 
+(и Pro Evolution Soccer 2011 DEMO). Программа состоит из отдельных
+модулей DLL, каждый из которых улучшает/изменяет игру в той или иной
+мере. Изначально (в 2003 году), Китсервер был создан чтобы добавлять
+в игру дополнительные формы (по-английски: "kits"), но, со временем,
+появились новые модули, предназначенные для изменения других
+аспектов игры. Ниже приведена краткая сводная таблица, содержащая 
+ссылки на более подробную информацию о каждом модуле.
 </p>
 
 <p>
-If you are new to Kitserver, please make sure you read the
-<a href="#install">installation instructions</a>.
+Если Вы впервые решили освоить Китсервер, то просьба внимательно
+ознакомиться с <a href="#install">инструкцией по установке</a>.
 </p>
 
 <p>
 <table>
     <tr><td><a href="#afs2fs">AFS2FS 11.0.0</a></td>
         <th><b>afs2fs.dll</b></th>
-        <td>Manage AFS (.img) game content using files and folders: much easier and quicker to install/remove patches, without the need modify *.img files.</td>
+        <td>Дает возможность огранизовать игровую "начинку" в иерархию папок и
+        файлов, что удобно для установки/удаления патчей, без необходиости
+        модификации *.img (AFS) файлов</td>
     </tr>
     <tr><td><a href="#kserv">Kserv 11.0.2</a></td>
         <th><b>kserv.dll</b></th>
-        <td>Organize your kits into GDB, and assign each team its own kits.</td>
+        <td>Любая команда может получить реальную форму, включая
+        так называемые "нелицензионные". Удобная организация форм
+        в структуру GDB</td>
     </tr>
     <tr><td><a href="#lodmixer">LOD Mixer 11.0.0</a></td>
         <th><b>lodmixer.dll</b></th>
-        <td>Fine-tune LOD configuration for players and referees.</span>
-        </td>
+        <td>Настройка LOD (уровень детализации) для игроков и судей</td>
     </tr>
     <tr><td><a href="#speeder">Speeder module 11.0.0</a></td>
         <th><b>speeder.dll</b></th>
-        <td>Increase or decrease gameplay speed.</td>
+        <td>Настройка скорости игры: замедление/ускорение</td>
     </tr>
     <tr><td><a href="#sides">Sides module 11.0.0</a></td>
         <th><b>sides.dll</b></th>
-        <td>Allow free side selection during matches.</td>
+        <td>Свободный выбор команды во время матчей</td>
     </tr>
 </table>
 </p>
 
 <a name="install">
-<p><a class="backlink" href="#">Top</a></p>
-<h3>2. Installation / Removal</h3>
+<p><a class="backlink" href="#">Наверх</a></p>
+<h3>2. Инсталляция / Деинсталляция</h3>
 </a>
 
-<h5>2.1. Install</h5>
+<h5>2.1. Установка</h5>
 
 <p>
-With XP and Vista, and now Windows 7 having more emphasis and enforcement 
-of file ownership and different user rights, and promoting the use of 
-"Standard User" accounts, the installation routine of Kitserver has changed. 
-If you are a "seasoned" kitserver user, please read this carefully, because it
-will save you a lot of unnecessary hair-pulling.
+В связи с тем, что в современных системах Windows: XP, Vista и Windows 7,
+все большее внимание уделяется безопасности и рекоммендуется использование
+"стандартных" (а не административных) аккаунтов для ежедневной работы, 
+установка и использование Китсервера была изменена по сравнению с версиями 
+прошлого и предыдущих годов. Если Вы уже использовали Китсервер с более 
+ранними версиями Pro Evolution Soccer, то пожалуйста внимательно 
+ознакомьтесь с изменениями.
 </p>
 
 <img src="installer.png"/>
 
-<p>In many cases, following the 3 steps, as outlined by the message in the
-installer window, will be all that you need to do. If so, then great, go on
-and enjoy the game with new features that Kitserver adds. :)</p>
-
-<p>You can leave the default directory as specified by the installer, or 
-you can put in your own. The important thing is that you choose a folder
-that you have full ownership of. (Your HOME directory is one good example 
-of that. Another good candidates are: "My Documents" folder or Desktop).
-This is particularly important on Vista, because this way we sidestep all
-the nasty surprises of Vista File Virtualization. Also, this makes
-sure that <b>you will NOT need administrative privileges</b> to run the 
-game under the control of Kitserver. 
+<p>
+В наиболее типичной ситуации, Вы можете просто пройти по шагам
+"быстрой" установки, и начать играть в PES2011 с Китсервером. Вот краткий
+перевод текста в окне инстяллятора:
 </p>
 
-<p>Once installer unpacks the files into the folder of your choice, go there.
-You should see a folder named <b>Kitserver11</b>. Open it, and you should see 
-the following files:</p>
+<ol>
+<li>Выберете папку куда будут распакованы файлы Китсервера, и
+нажмите кнопку <b>Extract</b>.</li>
+<li>В Windows Explorer откройте эту папку и запустите программу
+конфигурации Китсервера - <b>config.exe</b>. Сделайте необходимые
+изменения (можно все оставить, как есть) и нажмите кнопку
+<b>Save</b>. Таким образом создастся файл config.txt, необходимый
+для работы Китсервера.</li>
+<li>Чтобы начать игру, запустите <b>krun.exe</b>.</li>
+</ol>
+
+<p>Вы можете оставить имя папки, как предлагается по-умолчанию, или
+выбрать другую. Важно выбрать такую папку, к которой у Вас имеется
+полный доступ. Например, "Мои Документы" или "Рабочий стол" - обе
+эти папку отлично подойдут. Полноправный доступ особенно важен если 
+у Вас Windows Vista, в которой используется так называемся система
+виртуализации файлов (File Virtualization), при использования которой
+операционная система "делает вид" что позволяет Вам делать изменения
+в файлах программ, а на самом деле прячет эти файлы в других папках.
+Лучше с этим не связываться, если Вам еще дорога Ваша нервная система.
+Кроме того использования своей папки позволит Вам <b>избежать необходимости
+использования администраторских прав доступа</b>.
+
+<p>После того как инсталлятор распаковал файлы Китсервера в выбранную Вами
+папку, откройте ее. Там должна находиться папка <b>Kitserver11</b>, а внутри
+нее все должо выглядеть примерно так:
+</p>
 
 <img src="layout1.png"/>
 
-<p>Next step is to make sure you have a file called <b>config.txt</b>.<br />
-If you are installing Kitserver 11 for the first time, you probably do not
-have an existing config.txt. In that case, just run the 
-<a href="#configtool">configuration tool</a> program, called <b>config.exe</b>,
-press [Save] button, and it will create a config.txt file for you.
+<p>Теперь необходимо убедиться что в папке Kitserver11 есть файл 
+<b>config.txt</b>. Если вы впервые устанавливаете Kitserver 11, то скорее
+всего у Вас нет уже существующего конфигурационного файла. В этом случае
+просто запустите <a href="#config">конфигурационную утилиту</a>,
+которая называется <b>config.exe</b>, нажмите кнопку [Save] и файл
+config.txt будет создан.
 </p>
 
-<p>If, however, you are upgrading from previous version of Kitserver, then
-you already have an existing config.txt, which you probably will want to 
-re-use. (For instance, it contains your carefully configured LOD settings,
-which you definitely don't want to lose!). If that's the case, then you will
-need to do the following: 
+<p>Если Вы уже ранее пользовались Китсервером, то у Вас наверняка
+уже есть ранее созданный файл config.txt, c настройками, которые Вы
+захотите сохранить скорее всего. (Например, там настройки LOD,
+найденные долгим путем проб и ошибок.) В этом случае, необходимо сделать
+следующие шаги:
 
 <ol>
-    <li>copy your existing config.txt from your old kitserver installation
-    into the new Kitserver root folder (Kitserver11).
-    <li>open it with Notepad or other text editor of your choice, and insert the
-    following line to the [kload] section:
+    <li>Скопируйте config.txt из предыдущей версии китсервера в папку
+    Kitserver11.
+    <li>Откройте его в Блокноте (Notepad) или другом текстовом редакторе,
+    и если там нет модуля kserv.dll, добавьте его в секцию [kload]:
 
     <pre>dll = kserv.dll</pre>
 
-    right after <b>dll = afsio.dll</b>. <span class="note">It is important
-        that kserv.dll is listed <b>above</b> afs2fs.dll. Otherwise you will not
-        see GDB kits, if you also have BINs with kits for the same team in
-        your "img" folders (handled by afs2fs)</span>
+    после <b>dll = afsio.dll</b>. <span class="note">Важно, чтобы
+    kserv.dll была <b>выше</b>, чем afs2fs.dll. Иначе, те формы
+    из GDB, которые "пересекаются" с формами в BIN-файлах, загружаемых
+    модулем afs2fs, не будут видны.</span>
     <br />
     <br />
-    So it should look like this, if everything is done correctly:
+    Порядок модулей должен быть следующим:
     <pre>
 dll = afsio.dll
 dll = kserv.dll
@@ -183,53 +207,50 @@ dll = lodmixer.dll
 </ol>
 </p>
 
-<p>So now you have the <b>config.txt</b> file, and we are ready to launch
-the game under the "guidance" of Kitserver. To do that, we are going to
-use a new utility, included with Kitserver11 - called <b>krun.exe</b>. Just double-click on krun.exe and it should launch the game. (It determines the location of your game install automatically, by reading the Windows registry).
+<p>Итак, теперь у нас есть <b>config.txt</b>, и можно начинать игру.
+Для этого воспользуемся новой утилитой, добавленной в состав Китсервера -
+<b>krun.exe</b>, которая описана более подробно в следующем разделе.
 </p>
 
-<h5>2.2. krun.exe - Kitserver Game Launcher</h5>
+<h5>2.2. krun.exe - Утилита запуска игры</h5>
 
 <p>
-With Kitserver 11.0.0, a new tool is introduced: <b>krun.exe - Kitserver 
-Game Launcher</b>. This is the tool that you will use to run the game under
-the control of Kitserver.
+Как уже упоминалось выше, программка <b>krun.exe</b> предназначена для
+запуска игры вместе с Китсервером. По-умолчанию, krun попытается определить
+в какой папке у Вас установлена игра, используя информацию в реестре 
+Windows, и потом запустит PES2011.exe, находящийся в этой папке. Во многих 
+случаях, это именно то что нужно.
 </p>
 
-<p>By default, krun will consult your Windows registry, to find out
-where you have the game installed, and try to launch an executable from that
-folder, called PES2011.exe. In most typical scenario, this is exactly what 
-you want :)
+<p>Однако, есть ситуации, в которых Вам нужно использовать игровой 
+экзешник, названный по-другому, и находящийся совсем в другом месте.
+Например, это возможно, если у Вас установлен патч, в состав которого
+включен собственный EXE. Для определенности, предположим, что вы хотите
+запустить игру, использую такой файл: 
+<b>C:\myPesPatch\PES2011_patched.exe</b>.
 </p>
 
-<p>However, it may be the case that you have a more elaborate setup. Maybe 
-you have alternative EXEs installed, perhaps those that came from a 
-community-created patch or patches. So let's
-say instead of PES2011.exe from your game folder, you want to launch the game
-using this exe: <b>C:\myPesPatch\PES2011_patched.exe</b>.
-</p>
-
-<p>This is also possible to do with krun tool: you just need to create a
-configuration file for it, which contains the full pathname of the exe. We
-make a text file called <b>krun-config.txt</b>, which now has the format
-similar to that of config.txt. You will need to have a [krun] section in it,
-and the option to specify EXE file is called <b>exe</b>. Here is an example
-of such file:
+<p>Такое тоже возможно осуществить, используя утилиту krun: Вам просто
+понадобится создать конфигурационный файл с именем <b>krun-config.txt</b>,
+и добавить туда секцию [krun], в которой определить опцию "exe". Формат
+этого конфигурационного файла идентичен формату config.txt, и так же, как 
+и config.txt, должен быть сохранен в кодировке UTF-8. Вот пример такого 
+файла:
 
 <pre>
 [krun]
 exe = "c:\myPesPatch\PES2011_patched.exe"
 </pre>
 
-<div class="note">IMPORTANT: if the path to or the filename of your EXE 
-contains a non-ANSI character, you MUST save the file in UTF-8 encoding.
-Otherwise it will not be read correctly.
+<div class="note">ОЧЕНЬ ВАЖНО: обратите внимание на кодировку. Если
+в имени файла или пути к нему используется кириллица, или другой алфавит,
+выходящий за рамки 0-127 (ANSI) символов, то ОБЯЗАТЕЛЬНО нужно сохранить
+файл krun-conig.txt в кодировке UTF-8.
 </div>
 
 <p>
-That's it. Now when you double-click on <b>krun.exe</b>, instead of reading
-the location of the game from registry, it will launch the EXE that is 
-specified in <b>krun-config.txt</b>.
+Теперь все готово. Двойной щелчок мышью по <b>krun.exe</b> и игра должна
+запуститься с тем экзешником, который указан в Вашем <b>krun-config.txt</b>.
 </p>
 
 <h5>Renaming/copying krun.exe</h5>

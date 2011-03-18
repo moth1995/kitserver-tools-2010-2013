@@ -9,7 +9,8 @@
 //#define WIN_HEIGHT 315
 //#define WIN_HEIGHT 310
 //#define WIN_HEIGHT 690
-#define WIN_HEIGHT 660
+//#define WIN_HEIGHT 660
+#define WIN_HEIGHT 710
 
 extern HWND g_lodListControl[5];          // lod lists
 extern HWND g_crowdCheckBox;              // crowd

@@ -90,7 +90,7 @@ void modifySettings()
         getResolution(width,height);
         float ar = (_lmconfig.screen.aspectRatio > FLOAT_ZERO) ?
             _lmconfig.screen.aspectRatio :  // manual
-            float(width) / float(height);   // automatic
+            0.0f; //float(width) / float(height);   // automatic
 
         setAspectRatio(ar, _lmconfig.screen.aspectRatio > FLOAT_ZERO);
     }
@@ -290,6 +290,9 @@ void initLodMixer()
         if (fptr) SET(fptr, _lmconfig.lod.lodRefInplay);
 
         LOG(L"LOD levels set");
+
+        // aspect ratio
+        modifySettings();
     }
 
     LOG(L"Initialization complete.");
@@ -465,6 +468,7 @@ void setAspectRatio(float aspectRatio, bool manual)
     if (aspectRatio <= FLOAT_ZERO) // safety-check
         return;
 
+    /*
     if (fabs(aspectRatio - 1.33333) < fabs(aspectRatio - 1.77777)) {
         // closer to 4:3
         *(DWORD*)data[WIDESCREEN_FLAG] = 0;
@@ -480,6 +484,17 @@ void setAspectRatio(float aspectRatio, bool manual)
         }
         LOG(L"Widescreen mode: yes");
     }
+    */
+
+    if (VirtualProtect(
+            (BYTE*)data[RATIO_4on3], 4, newProtection, &protection)) {
+        *(float*)data[RATIO_4on3] = aspectRatio;
+    }
+    if (VirtualProtect(
+            (BYTE*)data[RATIO_16on9], 4, newProtection, &protection)) {
+        *(float*)data[RATIO_16on9] = aspectRatio;
+    }
+
     LOG(L"Aspect ratio: %0.5f", aspectRatio);
     LOG(L"Aspect ratio type: %s", (manual)?L"manual":L"automatic");
 }

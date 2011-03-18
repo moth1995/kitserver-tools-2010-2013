@@ -255,11 +255,10 @@ bool BuildControls(HWND parent)
     int i;
 	style = WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX;
 
-    /*
     x = spacer;
 	HWND staticCrowdBorderTopControl = CreateWindowEx(
 			xstyle, L"Static", L"", WS_CHILD | WS_VISIBLE | SS_ETCHEDFRAME,
-			x, y, borW, butH*2+spacer*3,
+			x, y, borW, butH*1+spacer*2,
 			parent, NULL, NULL, NULL);
 
     y += spacer;
@@ -273,6 +272,7 @@ bool BuildControls(HWND parent)
     editH = statH + 6;
     x += spacer*2 + 250;
 
+    /*
 	style = WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON;
     butW = 90;
 	g_arRadio1 = CreateWindowEx(
@@ -283,13 +283,15 @@ bool BuildControls(HWND parent)
     //EnableWindow(g_arRadio1, FALSE);
 
     y += spacer + butH;
+    */
     butW = 78;
 	g_arRadio2 = CreateWindowEx(
 			xstyle, L"button", L"Manual", style,
 			x, y, butW, butH,
 			parent, NULL, NULL, NULL);
     SendMessage(g_arRadio2, WM_SETFONT, (WPARAM)hObj, true);
-    //EnableWindow(g_arRadio2, FALSE);
+    SendMessage(g_arRadio2, BM_SETCHECK, BST_CHECKED, 0);
+    EnableWindow(g_arRadio2, FALSE);
    
     x += spacer*2 + butW;
 	style = WS_CHILD | WS_VISIBLE | ES_LEFT;
@@ -304,6 +306,7 @@ bool BuildControls(HWND parent)
 
     style = WS_CHILD | WS_VISIBLE;
     y += spacer*3 + butH;
+    /*
 
     x = spacer;
 	HWND staticWeatherBorderTopControl = CreateWindowEx(

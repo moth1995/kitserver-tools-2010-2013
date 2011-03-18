@@ -328,13 +328,16 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 {
                     bool checked = SendMessage(g_arCheckBox,BM_GETCHECK,0,0);
                     EnableWindow(g_arRadio1, checked);
-                    EnableWindow(g_arRadio2, checked);
+                    EnableWindow(g_arRadio2, false);
+                    /*
                     if (checked) {
                         bool checked1 = SendMessage(g_arRadio2,BM_GETCHECK,0,0);
                         EnableWindow(g_arEditControl, checked1);
                     } else {
                         EnableWindow(g_arEditControl, false);
                     }
+                    */
+                    EnableWindow(g_arEditControl, checked);
                 }
 				else if ((HWND)lParam == g_arRadio1)
                 {
@@ -942,9 +945,14 @@ Problem saving Kitserver configuration info this file:\n\
 void UpdateControls(LMCONFIG& cfg)
 {
     // Aspect Ratio
+    //temp:
+    SendMessage(g_arRadio2, BM_SETCHECK, BST_CHECKED, 0);
+    EnableWindow(g_arRadio2, false);
+    EnableWindow(g_arEditControl, true);
+    //end-temp
     SendMessage(g_arCheckBox, BM_SETCHECK, BST_CHECKED, 0);
     EnableWindow(g_arRadio1, true);
-    EnableWindow(g_arRadio2, true);
+    //EnableWindow(g_arRadio2, true);
     if (!cfg.aspectRatioCorrectionEnabled) 
     {
         SendMessage(g_arCheckBox, BM_SETCHECK, BST_UNCHECKED, 0);
@@ -953,8 +961,8 @@ void UpdateControls(LMCONFIG& cfg)
         EnableWindow(g_arEditControl, false);
     }
     SendMessage(g_arRadio1, BM_SETCHECK, BST_CHECKED, 0);
-    SendMessage(g_arRadio2, BM_SETCHECK, BST_UNCHECKED, 0);
-    EnableWindow(g_arEditControl, false);
+    //SendMessage(g_arRadio2, BM_SETCHECK, BST_UNCHECKED, 0);
+    //EnableWindow(g_arEditControl, false);
     if (cfg.screen.aspectRatio > 0.0f)
     {
         SendMessage(g_arRadio1, BM_SETCHECK, BST_UNCHECKED, 0);
@@ -1351,11 +1359,10 @@ void UpdateConfig(LMCONFIG& cfg)
     wchar_t buf[40] = {0};
 
     // Aspect ratio
-    bool arChecked = SendMessage(g_arCheckBox, BM_GETCHECK, 0, 0);
-    //_setConfig("lodmixer", "aspect-ratio.correction.enabled", 
-    //        (arChecked)?wstring(L"1"):wstring(L"0"));
-    _removeConfig("lodmixer", "aspect-ratio.correction.enabled");
     _removeConfig("lodmixer", "screen.aspect-ratio");
+    bool arChecked = SendMessage(g_arCheckBox, BM_GETCHECK, 0, 0);
+    _setConfig("lodmixer", "aspect-ratio.correction.enabled", 
+            (arChecked)?wstring(L"1"):wstring(L"0"));
     if (arChecked)
     {
         bool manual = SendMessage(g_arRadio2, BM_GETCHECK, 0, 0);
@@ -1628,8 +1635,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
         readConfig(CFG_SAMPLE_FILE); // then try sample config
     //_getConfig("lodmixer", "screen.width", DT_DWORD, 1, lodmixerConfig);
     //_getConfig("lodmixer", "screen.height", DT_DWORD, 2, lodmixerConfig);
-    //_getConfig("lodmixer", "screen.aspect-ratio", DT_FLOAT, 3, lodmixerConfig);
-    //_getConfig("lodmixer", "aspect-ratio.correction.enabled", DT_DWORD, 6, lodmixerConfig);
+    _getConfig("lodmixer", "screen.aspect-ratio", DT_FLOAT, 3, lodmixerConfig);
+    _getConfig("lodmixer", "aspect-ratio.correction.enabled", DT_DWORD, 6, lodmixerConfig);
     _getConfig("sides", "free.select", DT_DWORD, 7, lodmixerConfig);
     _getConfig("lodmixer", "lod.check1", DT_DWORD, 8, lodmixerConfig);
     //_getConfig("camera", "angle", DT_DWORD, 9, lodmixerConfig);

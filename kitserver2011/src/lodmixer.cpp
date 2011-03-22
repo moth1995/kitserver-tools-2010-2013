@@ -50,6 +50,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 void initLodMixer();
 void lodmixerConfig(char* pName, const void* pValue, DWORD a);
 void modifySettings();
+BYTE getLB();
 void getResolution(DWORD& width, DWORD& height);
 void setResolution(DWORD width, DWORD height);
 void setAspectRatio(float aspectRatio, bool manual);
@@ -88,11 +89,23 @@ void modifySettings()
     {
         DWORD width = 0, height = 0;
         getResolution(width,height);
-        float ar = (_lmconfig.screen.aspectRatio > FLOAT_ZERO) ?
-            _lmconfig.screen.aspectRatio :  // manual
-            0.0f; //float(width) / float(height);   // automatic
 
-        setAspectRatio(ar, _lmconfig.screen.aspectRatio > FLOAT_ZERO);
+        bool isManual = _lmconfig.screen.aspectRatio > FLOAT_ZERO;
+        if (isManual) {
+            float ar = _lmconfig.screen.aspectRatio;
+            setAspectRatio(ar, true);
+        }
+        else {
+            BYTE lb = getLB();
+            if (lb == 0) { 
+                float ar = float(width) / float(height);
+                setAspectRatio(ar, false);
+
+            }
+            else {
+                LOG(L"LB-check detected. Automatic correction disabled");
+            }
+        }
     }
 }
 
@@ -157,8 +170,9 @@ void initLodMixer()
         } 
     }
 
-    HookCallPoint(code[C_SETTINGS_READ], lodAtSettingsReadPoint, 6, 0, true);
-    HookCallPoint(code[C_SETTINGS_RESET], lodAtSettingsResetPoint, 6, 0, true);
+    //HookCallPoint(code[C_SETTINGS_READ], lodAtSettingsReadPoint, 6, 0, true);
+    //HookCallPoint(code[C_SETTINGS_RESET], lodAtSettingsResetPoint, 6, 0, true);
+    HookCallPoint(code[C_SETTINGS_READ], lodAtSettingsReadPoint, 6, 1, false);
     if (!_lmconfig.videoCheckEnabled)
     {
         if (code[C_VIDEO_CHECK1]!=0)
@@ -292,7 +306,7 @@ void initLodMixer()
         LOG(L"LOD levels set");
 
         // aspect ratio
-        modifySettings();
+        //modifySettings();
     }
 
     LOG(L"Initialization complete.");
@@ -431,6 +445,15 @@ void lodmixerConfig(char* pName, const void* pValue, DWORD a)
 	}
 }
 
+BYTE getLB() 
+{
+    DWORD addr = data[SCREEN_WIDTH];
+    if (addr) {
+        return *(BYTE*)(addr-1);
+    }
+    return 0;
+}
+
 void getResolution(DWORD& width, DWORD& height)
 {
 	DWORD protection;
@@ -468,24 +491,26 @@ void setAspectRatio(float aspectRatio, bool manual)
     if (aspectRatio <= FLOAT_ZERO) // safety-check
         return;
 
-    /*
     if (fabs(aspectRatio - 1.33333) < fabs(aspectRatio - 1.77777)) {
         // closer to 4:3
         *(DWORD*)data[WIDESCREEN_FLAG] = 0;
-        if (VirtualProtect((BYTE*)data[RATIO_4on3], 4, newProtection, &protection)) {
+        if (VirtualProtect(
+                (BYTE*)data[RATIO_4on3], 4, newProtection, &protection)) {
             *(float*)data[RATIO_4on3] = aspectRatio;
         }
         LOG(L"Widescreen mode: no");
-    } else {
+    } 
+    else {
         // closer to 16:9
         *(DWORD*)data[WIDESCREEN_FLAG] = 1;
-        if (VirtualProtect((BYTE*)data[RATIO_16on9], 4, newProtection, &protection)) {
+        if (VirtualProtect(
+                (BYTE*)data[RATIO_16on9], 4, newProtection, &protection)) {
             *(float*)data[RATIO_16on9] = aspectRatio;
         }
         LOG(L"Widescreen mode: yes");
     }
-    */
 
+    /*
     if (VirtualProtect(
             (BYTE*)data[RATIO_4on3], 4, newProtection, &protection)) {
         *(float*)data[RATIO_4on3] = aspectRatio;
@@ -494,6 +519,7 @@ void setAspectRatio(float aspectRatio, bool manual)
             (BYTE*)data[RATIO_16on9], 4, newProtection, &protection)) {
         *(float*)data[RATIO_16on9] = aspectRatio;
     }
+    */
 
     LOG(L"Aspect ratio: %0.5f", aspectRatio);
     LOG(L"Aspect ratio type: %s", (manual)?L"manual":L"automatic");

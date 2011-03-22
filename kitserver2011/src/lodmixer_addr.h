@@ -12,18 +12,30 @@ enum {
     C_LODCHECK_1,
 };
 
-#define NOCODEADDR {0,0,0,0,0,0,0},
+#define NOCODEADDR {0,0,0,0,0,0,0}
 DWORD codeArray[][CODELEN] = { 
     // PES2011 demo
-    NOCODEADDR
+    NOCODEADDR,
     // PES2011 
-    NOCODEADDR
+    NOCODEADDR,
     // PES2011 v1.01 
-    NOCODEADDR
+    {
+        0, 0,
+        0x11233d3, 0, 0, 0,
+        0,
+    },
     // PES2011 v1.02 
-    NOCODEADDR
+    {
+        0, 0,
+        0x1123533, 0, 0, 0,
+        0,
+    },
     // PES2011 v1.03 
-    NOCODEADDR
+    {
+        0, 0,
+        0x1123573, 0, 0, 0,
+        0,
+    },
 };
 
 #define DATALEN 11
@@ -49,21 +61,21 @@ DWORD dataArray[][DATALEN] = {
     },*/
     // PES2011 v1.01
     {
-        0, 0, 0,
+        0x19403c8, 0x19403cc, 0x19403d0,
         0x143e304, 0x1441120,
         0x15a2dd0, 0x15a2e18,
         0x1535760, 0x1535788, 
     },
     // PES2011 v1.02
     {
-        0, 0, 0,
+        0x19403c0, 0x19403c4, 0x19403c8,
         0x143e30c, 0x1441128,
         0x15a2dd0, 0x15a2e18,
         0x1535760, 0x1535788, 
     },
     // PES2011 v1.03
     {
-        0, 0, 0,
+        0x19403c0, 0x19403c4, 0x19403c8,
         0x143e30c, 0x1441128,
         0x15a2dd0, 0x15a2e18,
         0x1535760, 0x1535788, 

@@ -103,7 +103,8 @@ void modifySettings()
 
             }
             else {
-                LOG(L"LB-check detected. Automatic correction disabled");
+                LOG(L"Letter-boxing detected. "
+                    L"Automatic AR-correction disabled");
             }
         }
     }

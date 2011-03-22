@@ -47,7 +47,18 @@ nice 'TV-broadcasting'-type views.\n\
 \n\
 */
 char* _help = 
-"About Free Sides Select: in cup modes (League/Cup, ML, UEFA CL)\n\
+"Enabling aspect ratio correction will allow you to play with \n\
+round ball and correct proportions on any resolution. You can \n\
+either let LOD mixer calculate it automatically at run-time \n\
+based on the resolution, or set it manually here.\n\
+\n\
+Enforcing particular resolution is also possible. If you play in \n\
+a windowed mode, any resolution will work. But for full-screen, \n\
+only those that are REALLY supported by your videocard will be\n\
+in full-screen. Unsupported resolutions will switch back to\n\
+windowed mode.\n\
+\n\
+About Free Sides Select: in cup modes (League/Cup, ML, UEFA CL)\n\
 PES 2011 doesn't allow human players to control both teams,\n\
 unless both of their selected teams are playing against each other\n\
 in the match. Now you can remove that limitation. So, even\n\
@@ -328,16 +339,13 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 {
                     bool checked = SendMessage(g_arCheckBox,BM_GETCHECK,0,0);
                     EnableWindow(g_arRadio1, checked);
-                    EnableWindow(g_arRadio2, false);
-                    /*
+                    EnableWindow(g_arRadio2, checked);
                     if (checked) {
                         bool checked1 = SendMessage(g_arRadio2,BM_GETCHECK,0,0);
                         EnableWindow(g_arEditControl, checked1);
                     } else {
                         EnableWindow(g_arEditControl, false);
                     }
-                    */
-                    EnableWindow(g_arEditControl, checked);
                 }
 				else if ((HWND)lParam == g_arRadio1)
                 {
@@ -945,14 +953,9 @@ Problem saving Kitserver configuration info this file:\n\
 void UpdateControls(LMCONFIG& cfg)
 {
     // Aspect Ratio
-    //temp:
-    SendMessage(g_arRadio2, BM_SETCHECK, BST_CHECKED, 0);
-    EnableWindow(g_arRadio2, false);
-    EnableWindow(g_arEditControl, true);
-    //end-temp
     SendMessage(g_arCheckBox, BM_SETCHECK, BST_CHECKED, 0);
     EnableWindow(g_arRadio1, true);
-    //EnableWindow(g_arRadio2, true);
+    EnableWindow(g_arRadio2, true);
     if (!cfg.aspectRatioCorrectionEnabled) 
     {
         SendMessage(g_arCheckBox, BM_SETCHECK, BST_UNCHECKED, 0);
@@ -961,8 +964,8 @@ void UpdateControls(LMCONFIG& cfg)
         EnableWindow(g_arEditControl, false);
     }
     SendMessage(g_arRadio1, BM_SETCHECK, BST_CHECKED, 0);
-    //SendMessage(g_arRadio2, BM_SETCHECK, BST_UNCHECKED, 0);
-    //EnableWindow(g_arEditControl, false);
+    SendMessage(g_arRadio2, BM_SETCHECK, BST_UNCHECKED, 0);
+    EnableWindow(g_arEditControl, false);
     if (cfg.screen.aspectRatio > 0.0f)
     {
         SendMessage(g_arRadio1, BM_SETCHECK, BST_UNCHECKED, 0);
@@ -1633,8 +1636,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
     if (!readConfig(CFG_FILE))       // try config.txt - if not there
         readConfig(CFG_SAMPLE_FILE); // then try sample config
-    //_getConfig("lodmixer", "screen.width", DT_DWORD, 1, lodmixerConfig);
-    //_getConfig("lodmixer", "screen.height", DT_DWORD, 2, lodmixerConfig);
+    _getConfig("lodmixer", "screen.width", DT_DWORD, 1, lodmixerConfig);
+    _getConfig("lodmixer", "screen.height", DT_DWORD, 2, lodmixerConfig);
     _getConfig("lodmixer", "screen.aspect-ratio", DT_FLOAT, 3, lodmixerConfig);
     _getConfig("lodmixer", "aspect-ratio.correction.enabled", DT_DWORD, 6, lodmixerConfig);
     _getConfig("sides", "free.select", DT_DWORD, 7, lodmixerConfig);

@@ -45,7 +45,7 @@ typedef struct _LMCONFIG {
     bool aspectRatioCorrectionEnabled;
     bool controllerCheckEnabled;
     bool lodCheck1;
-    bool videoCheckEnabled;
+    int pictureQuality;
 } LMCONFIG;
 
 #define DEFAULT_WIDTH 0
@@ -94,5 +94,5 @@ typedef struct _LMCONFIG {
 #define GAME_DEFAULT_LOD_20 0.010f
 #define DEFAULT_CONTROLLER_CHECK_ENABLED false
 #define DEFAULT_LODCHECK1 true
-#define DEFAULT_VIDEO_CHECK_ENABLED false
+#define DEFAULT_PICTURE_QUALITY -1
 

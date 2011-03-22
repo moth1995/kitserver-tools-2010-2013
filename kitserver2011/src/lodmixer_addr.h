@@ -5,14 +5,12 @@ BYTE allowedGames[] = {
     gvPES2011v103,
 };
 
-#define CODELEN 7
+#define CODELEN 3
 enum {
-	C_SETTINGS_CHECK, C_MODE_CHECK,
-    C_SETTINGS_READ, C_SETTINGS_RESET, C_VIDEO_CHECK1, C_VIDEO_CHECK2, 
-    C_LODCHECK_1,
+    C_SETTINGS_READ, C_QUALITY_CHECK, C_QUALITY_CHECK_2,
 };
 
-#define NOCODEADDR {0,0,0,0,0,0,0}
+#define NOCODEADDR {0,0,0}
 DWORD codeArray[][CODELEN] = { 
     // PES2011 demo
     NOCODEADDR,
@@ -20,21 +18,15 @@ DWORD codeArray[][CODELEN] = {
     NOCODEADDR,
     // PES2011 v1.01 
     {
-        0, 0,
-        0x11233d3, 0, 0, 0,
-        0,
+        0x11233d3, 0x112659a, 0x1126254,
     },
     // PES2011 v1.02 
     {
-        0, 0,
-        0x1123533, 0, 0, 0,
-        0,
+        0x1123533, 0x11266fa, 0x11263b4,
     },
     // PES2011 v1.03 
     {
-        0, 0,
-        0x1123573, 0, 0, 0,
-        0,
+        0x1123573, 0x112673a, 0x11263f4,
     },
 };
 
@@ -52,13 +44,6 @@ DWORD dataArray[][DATALEN] = {
     NODATAADDR,
     // PES2011 
     NODATAADDR,
-    /*// PES2010 1.3
-    {
-        0x19423e0, 0x19423e4, 0x19423e8,
-        0x129adcc, 0x129dd84,
-        0x1643f90, 0x1643fd8, 
-        0x15e1360, 0x15e1388,
-    },*/
     // PES2011 v1.01
     {
         0x19403c8, 0x19403cc, 0x19403d0,

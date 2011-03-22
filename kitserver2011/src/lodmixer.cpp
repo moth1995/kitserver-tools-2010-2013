@@ -42,7 +42,7 @@ LMCONFIG _lmconfig = {
     DEFAULT_ASPECT_RATIO_CORRECTION_ENABLED,
     DEFAULT_CONTROLLER_CHECK_ENABLED,
     DEFAULT_LODCHECK1,
-    DEFAULT_VIDEO_CHECK_ENABLED,
+    DEFAULT_PICTURE_QUALITY,
 };
 
 EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved);
@@ -107,6 +107,40 @@ void modifySettings()
                     L"Automatic AR-correction disabled");
             }
         }
+
+        // Enforce picture quality
+        if (_lmconfig.pictureQuality != -1 && data[WIDESCREEN_FLAG]) {
+            DWORD* pPictureQuality = (DWORD*)(data[WIDESCREEN_FLAG]+4);
+            *pPictureQuality = _lmconfig.pictureQuality;
+
+            // disable quality check 1
+            BYTE* pCode = (BYTE*)code[C_QUALITY_CHECK];
+            if (pCode) {
+                DWORD protection;
+                DWORD newProtection = PAGE_EXECUTE_READWRITE;
+
+                if (VirtualProtect(pCode, 4, newProtection, &protection)) {
+                    *(pCode+1) = 0xc0;  
+                }
+                else {
+                    LOG(L"Unable to disable quality check #1.");
+                }
+            }
+
+            // disable quality check 2
+            pCode = (BYTE*)code[C_QUALITY_CHECK_2];
+            if (pCode) {
+                DWORD protection;
+                DWORD newProtection = PAGE_EXECUTE_READWRITE;
+
+                if (VirtualProtect(pCode, 8, newProtection, &protection)) {
+                    memcpy(pCode, "\x33\xc0\x90\x90\x90", 5);
+                }
+                else {
+                    LOG(L"Unable to disable quality check #2.");
+                }
+            }
+        }
     }
 }
 
@@ -153,116 +187,12 @@ void initLodMixer()
     getConfig("lodmixer", "lod.active.player.fk.s3", DT_FLOAT, 29,
             lodmixerConfig);
 
-    getConfig("lodmixer", "video.check.enabled", DT_DWORD, 23, lodmixerConfig);
+    getConfig("lodmixer", "picture.quality", DT_DWORD, 23, lodmixerConfig);
 
-    BYTE* bptr = (BYTE*)code[C_SETTINGS_CHECK];
-    DWORD protection;
-    DWORD newProtection = PAGE_EXECUTE_READWRITE;
-    if (bptr)
-    {
-        if (VirtualProtect(bptr, 6, newProtection, &protection)) {
-            /* CALL */
-            bptr[0] = 0xe8;
-            DWORD* ptr = (DWORD*)(code[C_SETTINGS_CHECK] + 1);
-            ptr[0] = (DWORD)modifySettings - (DWORD)(code[C_SETTINGS_CHECK] + 5);
-            /* NOP */ 
-            bptr[5] = 0x90;
-            LOG(L"Settings check disabled. Settings overwrite enabled.");
-        } 
-    }
+    HookCallPoint(
+        code[C_SETTINGS_READ], lodAtSettingsReadPoint, 6, 1, false);
 
-    //HookCallPoint(code[C_SETTINGS_READ], lodAtSettingsReadPoint, 6, 0, true);
-    //HookCallPoint(code[C_SETTINGS_RESET], lodAtSettingsResetPoint, 6, 0, true);
-    HookCallPoint(code[C_SETTINGS_READ], lodAtSettingsReadPoint, 6, 1, false);
-    if (!_lmconfig.videoCheckEnabled)
-    {
-        if (code[C_VIDEO_CHECK1]!=0)
-        {
-            bptr = (BYTE*)code[C_VIDEO_CHECK1];
-            if (VirtualProtect(bptr, 6, newProtection, &protection)) {
-                if (0)//(getPesInfo()->gameVersion >= gvPES2010demo)
-                {
-                    /* jmp */  memcpy(bptr,"\xe9\xd1\x00\x00\x00",5);
-                    /* nop */  bptr[5] = 0x90;
-                }
-                else
-                {
-                    /* jmp */  memcpy(bptr,"\xe9\x5d\x01\x00\x00",5);
-                    /* nop */  bptr[5] = 0x90;
-                }
-                LOG(L"video check 1 bypassed");
-            }
-        }
-        if (code[C_VIDEO_CHECK2]!=0)
-        {
-            bptr = (BYTE*)code[C_VIDEO_CHECK2];
-            if (VirtualProtect(bptr, 4, newProtection, &protection)) {
-                if (0)//getPesInfo()->gameVersion >= gvPES2010demo)
-                {
-                    /* jmp */  memcpy(bptr,"\xe9\xb0\x00\x00\x00",5);
-                    /* nop */  bptr[5] = 0x90;
-                }
-                else
-                {
-                    /* jmp */  memcpy(bptr,"\xe9\xaf\x00\x00\x00",5);
-                    /* nop */  bptr[5] = 0x90;
-                }
-                LOG(L"video check 2 bypassed");
-            }
-        }
-    }
-
-    if (_lmconfig.controllerCheckEnabled)
-    {
-        bptr = (BYTE*)code[C_MODE_CHECK];
-        if (0)//bptr && getPesInfo()->gameVersion < gvPES2009demo)
-        {
-            // need to insert a bit of code, to handle the special
-            // case of Exhibition Mode. 61 bytes before C_MODE_CHECK is a good place.
-            BYTE* codeInsert = bptr - 61;
-            if (VirtualProtect(bptr, 4, newProtection, &protection)) {
-                BYTE patch[] = {0xeb,0xc1}; // jmp short "TO_TEST_ECX"
-                memcpy(bptr, patch, sizeof(patch));
-                if (VirtualProtect(codeInsert, 12, newProtection, &protection)) {
-                    BYTE patch2[] = {
-                        0x85,0xc9,  // test ecx,ecx
-                        0x74,0x03,  // je short "TO_XOR_EBX"
-                        0x33,0xc9,  // xor ecx,ecx
-                        0x41,       // inc ecx
-                        0x33,0xdb,  // xor ebx,ebx  - the command that was replaced with jmp
-                        0xeb,0x34,  // jmp short "BACK_TO_AFTER_JMP"
-                    };
-                    memcpy(codeInsert, patch2, sizeof(patch2));
-                    LOG(L"Mode check disabled for controller selection.");
-                }
-            } 
-        }
-        else if (0)//(bptr && getPesInfo()->gameVersion < gvPES2010)
-        {
-            // PES2009: use callpoint
-            HookCallPoint(code[C_MODE_CHECK], lodAtModeCheckCallPoint, 6, 1);
-            LOG(L"Mode check disabled for controller selection.");
-        }
-        else if (bptr)
-        {
-            // PES2010: use callpoint
-            HookCallPoint(code[C_MODE_CHECK], 
-                    lodAtModeCheckCallPoint2010, 6, 1);
-            LOG(L"Mode check disabled for controller selection.");
-        }
-    }
-
-    if (!_lmconfig.lodCheck1)
-    {
-        bptr = (BYTE*)code[C_LODCHECK_1];
-        if (bptr && VirtualProtect(bptr, 4, newProtection, &protection)) {
-            bptr[0] = 0x90;  // nop
-            bptr[1] = 0x90;  // nop
-            LOG(L"LOD check: lowest lod level disabled.");
-        }
-    }
-
-    if (1)//getPesInfo()->gameVersion >= gvPES2010demo)
+    if (1)
     {
         // LOD modifications
         float* fptr =(float*)data[LOD_PLAYERS_TABLE1];
@@ -305,9 +235,6 @@ void initLodMixer()
         if (fptr) SET(fptr, _lmconfig.lod.lodRefInplay);
 
         LOG(L"LOD levels set");
-
-        // aspect ratio
-        //modifySettings();
     }
 
     LOG(L"Initialization complete.");
@@ -316,6 +243,8 @@ void initLodMixer()
 
 void lodmixerConfig(char* pName, const void* pValue, DWORD a)
 {
+    int pq = DEFAULT_PICTURE_QUALITY;
+
 	switch (a) {
 		case 1:	// width
 			_lmconfig.screen.width = *(DWORD*)pValue;
@@ -409,9 +338,12 @@ void lodmixerConfig(char* pName, const void* pValue, DWORD a)
                     _lmconfig.lod.lodPlayersMiscS3);
             break;
         case 23: // video.check.skipped
-            _lmconfig.videoCheckEnabled = *(DWORD*)pValue != 0;
-            LOG(L"video.check.enabled = %d", 
-                    _lmconfig.videoCheckEnabled);
+            pq = *(int*)pValue;
+            if (pq == 0 || pq == 1 || pq == 2) {
+                _lmconfig.pictureQuality = pq;
+            }
+            LOG(L"picture.quality = %d", 
+                    _lmconfig.pictureQuality);
             break;
         case 24: // lod.active.player.ck.s1
             _lmconfig.lod.lodActivePlayerCKs1 = *(float*)pValue;

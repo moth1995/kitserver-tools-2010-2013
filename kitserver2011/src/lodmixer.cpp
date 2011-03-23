@@ -107,38 +107,39 @@ void modifySettings()
                     L"Automatic AR-correction disabled");
             }
         }
+    }
 
+
+    if (_lmconfig.pictureQuality != -1 && data[WIDESCREEN_FLAG]) {
         // Enforce picture quality
-        if (_lmconfig.pictureQuality != -1 && data[WIDESCREEN_FLAG]) {
-            DWORD* pPictureQuality = (DWORD*)(data[WIDESCREEN_FLAG]+4);
-            *pPictureQuality = _lmconfig.pictureQuality;
+        DWORD* pPictureQuality = (DWORD*)(data[WIDESCREEN_FLAG]+4);
+        *pPictureQuality = _lmconfig.pictureQuality;
 
-            // disable quality check 1
-            BYTE* pCode = (BYTE*)code[C_QUALITY_CHECK];
-            if (pCode) {
-                DWORD protection;
-                DWORD newProtection = PAGE_EXECUTE_READWRITE;
+        // disable quality check 1
+        BYTE* pCode = (BYTE*)code[C_QUALITY_CHECK];
+        if (pCode) {
+            DWORD protection;
+            DWORD newProtection = PAGE_EXECUTE_READWRITE;
 
-                if (VirtualProtect(pCode, 4, newProtection, &protection)) {
-                    *(pCode+1) = 0xc0;  
-                }
-                else {
-                    LOG(L"Unable to disable quality check #1.");
-                }
+            if (VirtualProtect(pCode, 4, newProtection, &protection)) {
+                *(pCode+1) = 0xc0;  
             }
+            else {
+                LOG(L"Unable to disable quality check #1.");
+            }
+        }
 
-            // disable quality check 2
-            pCode = (BYTE*)code[C_QUALITY_CHECK_2];
-            if (pCode) {
-                DWORD protection;
-                DWORD newProtection = PAGE_EXECUTE_READWRITE;
+        // disable quality check 2
+        pCode = (BYTE*)code[C_QUALITY_CHECK_2];
+        if (pCode) {
+            DWORD protection;
+            DWORD newProtection = PAGE_EXECUTE_READWRITE;
 
-                if (VirtualProtect(pCode, 8, newProtection, &protection)) {
-                    memcpy(pCode, "\x33\xc0\x90\x90\x90", 5);
-                }
-                else {
-                    LOG(L"Unable to disable quality check #2.");
-                }
+            if (VirtualProtect(pCode, 8, newProtection, &protection)) {
+                memcpy(pCode, "\x33\xc0\x90\x90\x90", 5);
+            }
+            else {
+                LOG(L"Unable to disable quality check #2.");
             }
         }
     }

@@ -3,17 +3,45 @@
 #ifndef _PLAYER_H
 #define _PLAYER_H
 
+#define SPECIAL_FACE 0x20
+#define SPECIAL_HAIR 0x40
+
 typedef struct _PLAYER_INFO
 {
     DWORD id;
+    BYTE unknown1[0x2e];
     char name[0x2e];
-    BYTE unknown1[0x3c];
-    BYTE unknown2;
-    BYTE faceHairMask;
-    BYTE unknown3[0x34];
-    BYTE country;
+    char name2[0x10];
+    DWORD id_again;
+    BYTE unknown2[0x33];
+    BYTE specialHair;
+    DWORD faceHairBits;
+    BYTE unknown3[0x2c];
+    WORD nationality;
+    BYTE specialFace;
     BYTE unknown4;
-    WORD padding;
+    DWORD unknown5;
+    DWORD unknown6;
+
 } PLAYER_INFO;
+
+/*****************************************
+ * Face/Hair bits:
+ *
+ * 00-10 : (11) hair id (bin-number - 131 + 1)
+ * 11-14 :  (4) hair flags
+ * 15-25 : (11) face id (bin-number - 3705 + 1)
+ * 26-29 :  (4) face flags
+ * 30-31 :  (2) unknown
+ *
+ */
+
+int GetHairId(PLAYER_INFO* p);
+int GetFaceId(PLAYER_INFO* p);
+
+bool IsSpecialHair(PLAYER_INFO* p);
+bool IsSpecialFace(PLAYER_INFO* p);
+void SetSpecialHair(PLAYER_INFO* p);
+void SetSpecialFace(PLAYER_INFO* p);
 
 #endif

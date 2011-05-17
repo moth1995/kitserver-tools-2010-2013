@@ -12,11 +12,9 @@
 #include "fserv.h"
 #include "fserv_addr.h"
 #include "dllinit.h"
-#include "pngdib.h"
 #include "configs.h"
 #include "configs.hpp"
 #include "utf8.h"
-#include "replay.h"
 #include "player.h"
 
 #define lang(s) getTransl("fserv",s)
@@ -26,22 +24,11 @@
 #include <hash_map>
 #include <wchar.h>
 
-#define SWAPBYTES(dw) \
-    ((dw<<24 & 0xff000000) | (dw<<8  & 0x00ff0000) | \
-    (dw>>8  & 0x0000ff00) | (dw>>24 & 0x000000ff))
-
 //#define CREATE_FLAGS FILE_FLAG_SEQUENTIAL_SCAN | FILE_FLAG_NO_BUFFERING
 #define CREATE_FLAGS 0
 
 #define FIRST_FACE_SLOT 20000
 #define NUM_SLOTS 65536
-
-#define UNIQUE_FACE 0x10
-#define SCAN_FACE   0x20
-#define UNIQUE_HAIR 0x40
-#define CLEAR_UNIQUE_FACE 0xef
-#define CLEAR_SCAN_FACE   0xdf
-#define CLEAR_UNIQUE_HAIR 0xbf
 
 #define NETWORK_MODE 4
 #define MAX_PLAYERS 5460
@@ -59,14 +46,27 @@ public:
 
 fserv_config_t _fserv_config;
 
+class player_facehair_t
+{
+public:
+    BYTE specialFace;
+    BYTE specialHair;
+    DWORD faceHairBits;
+
+    player_facehair_t(PLAYER_INFO* p) :
+        specialFace(p->specialFace),
+        specialHair(p->specialHair),
+        faceHairBits(p->faceHairBits)
+    {}
+};
+
 // GLOBALS
 hash_map<DWORD,wstring> _player_face;
 hash_map<DWORD,wstring> _player_hair;
 hash_map<DWORD,WORD> _player_face_slot;
 hash_map<DWORD,WORD> _player_hair_slot;
-list<DWORD> _non_unique_face;
-list<DWORD> _non_unique_hair;
-list<DWORD> _scan_face;
+
+hash_map<DWORD,player_facehair_t> _saved_facehair;
 
 wstring* _fast_bin_table[NUM_SLOTS-FIRST_FACE_SLOT];
 
@@ -128,7 +128,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 			return false;
 		}
 
-        CHECK_KLOAD(MAKELONG(4,7));
+        //CHECK_KLOAD(MAKELONG(0,11));
 
 		copyAdresses();
 		hookFunction(hk_D3D_CreateDevice, initModule);
@@ -514,106 +514,11 @@ void fservWriteEditData(LPCVOID data, DWORD size)
 
     // restore face/hair settings
     PLAYER_INFO* players = (PLAYER_INFO*)((BYTE*)data + 0x120);
-    for (list<DWORD>::iterator it = _non_unique_face.begin();
-            it != _non_unique_face.end();
-            it++)
-    {
-        //LOG(L"Restoring face-type flags for %d (id=%d)", 
-        //        *it, players[*it].id);
-        players[*it].faceHairMask &= CLEAR_UNIQUE_FACE;
-    }
-    for (list<DWORD>::iterator it = _non_unique_hair.begin();
-            it != _non_unique_hair.end();
-            it++)
-    {
-        //LOG(L"Restoring hair-type flags for %d (id=%d)",
-        //        *it, players[*it].id);
-        players[*it].faceHairMask &= CLEAR_UNIQUE_HAIR;
-    }
-    for (list<DWORD>::iterator it = _scan_face.begin();
-            it != _scan_face.end();
-            it++)
-    {
-        //LOG(L"Restoring scan-type flags for %d (id=%d)",
-        //        *it, players[*it].id);
-        players[*it].faceHairMask |= SCAN_FACE;
-    }
-}
-
-/**
- * write data callback
- */
-void fservWriteReplayData(LPCVOID data, DWORD size)
-{
-    LOG(L"Restoring face/hair settings");
-
-    // restore face/hair settings
-    REPLAY_PLAYER_INFO* players = (REPLAY_PLAYER_INFO*)((BYTE*)data + 0x1c0);
-    for (int i=0; i<22; i++)
-    {
-        wchar_t* name = Utf8::ansiToUnicode(players[i].name);
-        LOG(L"player {%s}, padding=%04x", name, players[i].padding);
-        Utf8::free(name);
-
-        WORD idx = players[i].padding;
-        if (idx != 0)
-        {
-            for (list<DWORD>::iterator it = _non_unique_face.begin();
-                    it != _non_unique_face.end();
-                    it++)
-                if (*it == idx)
-                {
-                    players[i].faceHairMask &= CLEAR_UNIQUE_FACE;
-                    break;
-                }
-            for (list<DWORD>::iterator it = _non_unique_hair.begin();
-                    it != _non_unique_hair.end();
-                    it++)
-                if (*it == idx)
-                {
-                    players[i].faceHairMask &= CLEAR_UNIQUE_HAIR;
-                    break;
-                }
-            for (list<DWORD>::iterator it = _scan_face.begin();
-                    it != _scan_face.end();
-                    it++)
-                if (*it == idx)
-                {
-                    players[i].faceHairMask |= SCAN_FACE;
-                    break;
-                }
-        }
-    }
-}
-
-/**
- * read data callback
- */
-void fservReadReplayData(LPCVOID data, DWORD size)
-{
-    LOG(L"Setting face/hair settings");
-
-    // set face/hair settings
-    REPLAY_PLAYER_INFO* players = (REPLAY_PLAYER_INFO*)((BYTE*)data + 0x1c0);
-    for (int i=0; i<22; i++)
-    {
-        wchar_t* name = Utf8::ansiToUnicode(players[i].name);
-        LOG(L"player {%s}, padding=%04x", name, players[i].padding);
-        Utf8::free(name);
-
-        WORD idx = players[i].padding;
-        if (idx != 0)
-        {
-            DWORD faceSlot = 0, hairSlot = 0;
-            GetSlotsByPlayerIndex(idx, faceSlot, hairSlot);
-            if (faceSlot >= FIRST_FACE_SLOT && faceSlot < NUM_SLOTS)
-            {
-                players[i].faceHairMask |= UNIQUE_FACE;
-                players[i].faceHairMask &= CLEAR_SCAN_FACE;
-            }
-            if (hairSlot >= FIRST_FACE_SLOT && hairSlot < NUM_SLOTS)
-                players[i].faceHairMask |= UNIQUE_HAIR;
-        }
+    hash_map<DWORD,player_facehair_t>::iterator it;
+    for (it = _saved_facehair.begin(); it != _saved_facehair.end(); it++) {
+        players[it->first].specialHair = it->second.specialHair;
+        players[it->first].specialFace = it->second.specialFace;
+        players[it->first].faceHairBits = it->second.faceHairBits;
     }
 }
 

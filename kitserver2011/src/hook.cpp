@@ -106,7 +106,7 @@ BOOL WINAPI hookReadFile(
 );
 
 typedef DWORD (*COPYDATA_PROC)(DWORD dest, DWORD src, DWORD len);
-COPYDATA_PROC _org_copyData2 = NULL;
+DWORD _org_copy;
 
 void NextPage();
 
@@ -116,9 +116,10 @@ KEXPORT void enterUniformSelect();
 KEXPORT void exitUniformSelect();
 list<UNIFORM_SELECT_EVENT_CALLBACK> _uniformSelectEventCallbacks;
 
-void hookAtCopyEditDataCallPoint();
+void hookAtCopyEditDataCallPoint1();
+void hookAtCopyEditDataCallPoint2();
 void hookCopyPlayerData(PLAYER_INFO* players, int place, bool writeList=true);
-DWORD hookAtCopyEditData2(DWORD dest, DWORD src, DWORD len);
+void hookAtCopyEditData(DWORD dest, int place);
 list<COPY_PLAYER_DATA_CALLBACK> _copyPlayerDataCallbacks;
 
 list<READ_DATA_CALLBACK> _writeEditDataCallbacks;
@@ -438,9 +439,11 @@ HRESULT STDMETHODCALLTYPE newCreateDevice(IDirect3D9* self, UINT Adapter,
     HookCallPoint(code[C_EXIT_UNIFORM_SELECT], 
             exitUniformSelectCallPoint, 6, 0);
 
-    HookCallPoint(code[C_COPY_DATA], hookAtCopyEditDataCallPoint, 6, 1);
-    _org_copyData2 = (COPYDATA_PROC)GetTargetAddress(code[C_COPY_DATA2]);
-    HookCallPoint(code[C_COPY_DATA2], hookAtCopyEditData2, 0, 0);
+    _org_copy = GetTargetAddress(code[C_COPY_DATA]);
+    HookCallPoint(
+        code[C_COPY_DATA], hookAtCopyEditDataCallPoint1, 6, 0);
+    HookCallPoint(
+        code[C_COPY_DATA2], hookAtCopyEditDataCallPoint2, 6, 1);
 
 	CALLCHAIN_BEGIN(hk_D3D_CreateDevice, it) {
 		PFNCREATEDEVICEPROC NextCall = (PFNCREATEDEVICEPROC)*it;
@@ -1677,19 +1680,26 @@ void hookCopyPlayerData(PLAYER_INFO* players, int place, bool writeList)
         (*it)(players, place, writeList);
 }
 
-void hookAtCopyEditData(PLAYER_INFO* players, DWORD size)
+void hookAtCopyEditData(DWORD dest, int place)
 {
-    if (size != 0x12a9cc)
-        return;  // not edit-data
-
-    hookCopyPlayerData(players, 1);
+    DWORD* pData = (DWORD*)data[PLAYERDATA];
+    if (pData && *pData == dest-8) {
+        // copying player data
+        LOG(L"data copy: player data loaded (place=%d)", place);
+        hookCopyPlayerData((PLAYER_INFO*)dest, place);
+    }
 }
 
-void hookAtCopyEditDataCallPoint()
+void hookAtCopyEditDataCallPoint1()
 {
     __asm {
-        mov ecx,dword ptr ds:[esi+0xc] // execute replaced code
-        mov edx,dword ptr ds:[esi+8] // ...
+        mov eax,dword ptr ss:[esp+0x0c]
+        push eax
+        mov eax,dword ptr ss:[esp+0x0c]
+        push eax
+        mov eax,dword ptr ss:[esp+0x0c]
+        push eax
+        call _org_copy
         pushfd 
         push ebp
         push eax
@@ -1698,10 +1708,10 @@ void hookAtCopyEditDataCallPoint()
         push edx
         push esi
         push edi
-        push ecx // param: size
-        push eax // param: src
+        push 1    // param: place
+        push eax  // param: dest
         call hookAtCopyEditData
-        add esp,0x08     // pop parameters
+        add esp,8 // pop params
         pop edi
         pop esi
         pop edx
@@ -1710,19 +1720,41 @@ void hookAtCopyEditDataCallPoint()
         pop eax
         pop ebp
         popfd
+        add esp,0x0c
         retn
     }
 }
 
-DWORD hookAtCopyEditData2(DWORD dest, DWORD src, DWORD len)
+void hookAtCopyEditDataCallPoint2()
 {
-    DWORD result = _org_copyData2(dest, src, len);
-    DWORD *data_ptr = (DWORD*)data[EDIT_DATA_PTR];
-    if (data_ptr && dest==(*data_ptr)+4) // player data being modified
-    {
-        LOG(L"data copy: default player data loaded");
-        hookCopyPlayerData((PLAYER_INFO*)dest, 2);
+    __asm {
+        pushfd 
+        push ebp
+        push eax
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push 2    // param: place
+        push eax  // param: dest
+        call hookAtCopyEditData
+        add esp,8 // pop params
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        pop eax
+        pop ebp
+        popfd
+        push eax
+        mov eax,dword ptr ss:[esp+4] // move return address
+        mov dword ptr ss:[esp+0x10],eax
+        pop eax
+        add esp,0x0c                  // execute replaced code
+        cmp eax,dword ptr ss:[esi+8]  // ...
+        retn
     }
-    return result;
 }
 

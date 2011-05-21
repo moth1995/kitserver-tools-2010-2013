@@ -8,7 +8,7 @@ BYTE allowedGames[] = {
 
 #define CODELEN 3
 enum { 
-    C_CHECK_FACE_AND_HAIR_ID, C_COPY_DATA, C_COPY_DATA2,
+    C_CHECK_FACE_AND_HAIR_ID, C_CHECK_FACE_ID, C_CHECK_HAIR_ID,
 };
 
 #define NOCODEADDR {0,0,0}
@@ -22,31 +22,9 @@ DWORD codeArray[][CODELEN] = {
     // PES2011 v1.02
     NOCODEADDR,
     // PES2011 v1.03
-    //NOCODEADDR, // 0x109e2b3
-    0, 0x4b974a, 0, //0x4b97a8,
-
-    /*
-    // PES2008 DEMO
-    NOCODEADDR,
-    // [Settings] PES2008 PC DEMO
-    NOCODEADDR,
-    // PES2008
-    {
-        0xb6efcf, 0xc96248, 0x41433f,
-    },
-    // [Settings] PES2008 PC
-    NOCODEADDR,
-    NOCODEADDR,
-    // PES2008 1.10
-    {
-        0xb6edef, 0xc97bd8, 0x413e8f,
-    },
-    NOCODEADDR,
-    // PES2008 1.20
     { 
-        0xb734cf, 0xc99b28, 0x414caf,
+        0x10dc946, 0x10d50e7, 0x119e035,
     },
-    */
 };
 
 #define DATALEN 2 

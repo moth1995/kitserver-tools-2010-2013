@@ -28,7 +28,7 @@
 //#define CREATE_FLAGS FILE_FLAG_SEQUENTIAL_SCAN | FILE_FLAG_NO_BUFFERING
 #define CREATE_FLAGS 0
 
-#define FIRST_FACE_SLOT 20000
+#define FIRST_FACE_SLOT 10000
 #define NUM_SLOTS 65536
 
 #define NETWORK_MODE 4
@@ -273,6 +273,7 @@ void InitMaps()
         }
     }
 
+    /*
     DWORD nextSlotPair = FIRST_FACE_SLOT/2;
 
     // assign slots
@@ -334,6 +335,7 @@ void InitMaps()
     // initialize total number of BINs
     _num_slots = nextSlotPair*2;
     LOG(L"_num_slots = %d",_num_slots);
+    */
 }
 
 int GetHairIdRaw(DWORD faceHairBits)
@@ -437,6 +439,10 @@ void fservCopyPlayerData(PLAYER_INFO* players, int place, bool writeList)
     hash_map<int,bool> facesUsed;
 
     _saved_facehair.clear();
+    
+    _player_face_slot.clear();
+    _player_hair_slot.clear();
+    ZeroMemory(_fast_bin_table, sizeof(_fast_bin_table));
 
     multimap<string,DWORD> mm;
     for (WORD i=0; i<MAX_PLAYERS; i++)
@@ -446,6 +452,21 @@ void fservCopyPlayerData(PLAYER_INFO* players, int place, bool writeList)
         }
         if (players[i].name[0] == '\0') {
             continue;  // no player at this player slot
+        }
+
+        // assign slots
+        hash_map<DWORD,wstring>::iterator sit;
+        sit = _player_face.find(players[i].id);
+        if (sit != _player_face.end()) {
+            DWORD slot = FIRST_FACE_SLOT + i*2;
+            _fast_bin_table[slot - FIRST_FACE_SLOT] = &sit->second;
+            _player_face_slot.insert(pair<DWORD,WORD>(sit->first,slot));
+        }
+        sit = _player_hair.find(players[i].id);
+        if (sit != _player_hair.end()) {
+            DWORD slot = FIRST_FACE_SLOT + i*2 + 1;
+            _fast_bin_table[slot - FIRST_FACE_SLOT] = &sit->second;
+            _player_hair_slot.insert(pair<DWORD,WORD>(sit->first,slot));
         }
 
         // save original info
@@ -766,9 +787,9 @@ void fservReadReplayData(LPCVOID data, DWORD size)
                 // do not currently have any players mapped
                 // to that slot ==> clear extended bits
                 *pFaceHairBits = *pFaceHairBits & CLEAR_EXTENDED_FACE_BITS;
-                faceId = GetFaceIdRaw(*pFaceHairBits);
-                LOG(L"faceId: %d", faceId);
-                if (faceId > MAX_FACE_ID) {
+                //faceId = GetFaceIdRaw(*pFaceHairBits);
+                //LOG(L"faceId: %d", faceId);
+                if (1){//faceId > MAX_FACE_ID) {
                     // cannot go beyond 1500 in this case
                     SetSpecialFaceBits(pFaceHairBits, MANEKEN_ID);
                 }
@@ -789,9 +810,9 @@ void fservReadReplayData(LPCVOID data, DWORD size)
                 // do not currently have any players mapped
                 // to that slot ==> clear extended bits
                 *pFaceHairBits = *pFaceHairBits & CLEAR_EXTENDED_HAIR_BITS;
-                hairId = GetHairIdRaw(*pFaceHairBits);
-                LOG(L"hairId: %d", hairId);
-                if (hairId > MAX_HAIR_ID) {
+                //hairId = GetHairIdRaw(*pFaceHairBits);
+                //LOG(L"hairId: %d", hairId);
+                if (1){//hairId > MAX_HAIR_ID) {
                     // cannot go beyond 1500 in this case
                     SetSpecialHairBits(pFaceHairBits, MANEKEN_ID);
                 }

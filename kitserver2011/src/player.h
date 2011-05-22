@@ -55,5 +55,8 @@ const DWORD FIRST_FACE_BIN = 131;
 //#define CLEAR_FACE_FLAGS 0xc3ffffff
 #define CLEAR_HAIR_MASK  0xffff8000
 #define CLEAR_FACE_MASK  0xc0007fff
+#define CLEAR_EXTENDED_BITS 0xc3ff87ff
+#define CLEAR_EXTENDED_FACE_BITS 0xc3ffffff
+#define CLEAR_EXTENDED_HAIR_BITS 0xffff87ff
 
 #endif

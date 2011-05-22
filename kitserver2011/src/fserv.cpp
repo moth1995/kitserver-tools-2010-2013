@@ -16,6 +16,7 @@
 #include "configs.hpp"
 #include "utf8.h"
 #include "player.h"
+#include "replay.h"
 
 #define lang(s) getTransl("fserv",s)
 
@@ -31,6 +32,10 @@
 #define NUM_SLOTS 65536
 
 #define NETWORK_MODE 4
+
+#define MAX_FACE_ID 1500
+#define MAX_HAIR_ID 1500
+#define MANEKEN_ID 948
 
 // VARIABLES
 HINSTANCE hInst = NULL;
@@ -186,8 +191,8 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     afsioAddCallback(fservGetFileInfo);
     addCopyPlayerDataCallback(fservCopyPlayerData);
 
-    //addReadReplayDataCallback(fservReadReplayData);
-    //addWriteReplayDataCallback(fservWriteReplayData);
+    addReadReplayDataCallback(fservReadReplayData);
+    addWriteReplayDataCallback(fservWriteReplayData);
     addWriteEditDataCallback(fservWriteEditData);
 
     // initialize face/hair map
@@ -365,17 +370,15 @@ int GetFaceId(PLAYER_INFO* p)
     return -1;
 }
 
-int GetHairBin(PLAYER_INFO* p)
+int GetHairBin(int hairId)
 {
-    int hairId = GetHairId(p);
     if (hairId != -1)
         return hairId + FIRST_HAIR_BIN - 1;
     return -1;
 }
 
-int GetFaceBin(PLAYER_INFO* p)
+int GetFaceBin(int faceId)
 {
-    int faceId = GetFaceId(p);
     if (faceId != -1)
         return faceId + FIRST_FACE_BIN - 1;
     return -1;
@@ -391,19 +394,27 @@ bool IsSpecialFace(PLAYER_INFO* p)
     return (p->specialFace & SPECIAL_FACE) != 0;
 }
 
+void SetSpecialFaceBits(DWORD* pFaceHairBits, int faceId)
+{
+    *pFaceHairBits &= CLEAR_FACE_MASK;
+    *pFaceHairBits |= ((faceId << 15) & 0x3fff0000);
+}
+
+void SetSpecialHairBits(DWORD* pFaceHairBits, int hairId)
+{
+    *pFaceHairBits &= CLEAR_HAIR_MASK;
+    *pFaceHairBits |= (hairId & 0x00007fff);
+}
+
 void SetSpecialHair(PLAYER_INFO* p, int hairId)
 {
-    p->faceHairBits &= CLEAR_HAIR_MASK;
-    //p->faceHairBits |= (hairId & 0x000007ff);
-    p->faceHairBits |= (hairId & 0x00007fff);
+    SetSpecialHairBits(&p->faceHairBits, hairId);
     p->specialHair |= SPECIAL_HAIR;
 }
 
 void SetSpecialFace(PLAYER_INFO* p, int faceId)
 {
-    p->faceHairBits &= CLEAR_FACE_MASK;
-    //p->faceHairBits |= ((faceId & 0x000007ff) << 15);
-    p->faceHairBits |= ((faceId << 15) & 0x3fff0000);
+    SetSpecialFaceBits(&p->faceHairBits, faceId);
     p->specialFace |= SPECIAL_FACE;
 }
 
@@ -443,7 +454,7 @@ void fservCopyPlayerData(PLAYER_INFO* players, int place, bool writeList)
             pair<DWORD,player_facehair_t>(i, facehair));
 
         // clear out extra bits
-        players[i].faceHairBits &= 0xc3ff87ff;
+        players[i].faceHairBits &= CLEAR_EXTENDED_BITS;
         
         hash_map<DWORD,WORD>::iterator it = 
             _player_face_slot.find(players[i].id);
@@ -517,8 +528,8 @@ void fservCopyPlayerData(PLAYER_INFO* players, int place, bool writeList)
         hairId = GetHairIdRaw(players[i].faceHairBits);
         LOG(L"Player (%d): faceHairBits: %08x", i, players[i].faceHairBits);
 
-        int faceBin = GetFaceBin(&players[i]);
-        int hairBin = GetHairBin(&players[i]);
+        int faceBin = GetFaceBin(faceId);
+        int hairBin = GetHairBin(hairId);
         wchar_t* nameBuf = Utf8::utf8ToUnicode((BYTE*)players[i].name);
         LOG(L"Player (%d): id=%d (id_again=%d): %s (f:%d, h:%d)", 
                 i, players[i].id, players[i].id_again, nameBuf,
@@ -721,12 +732,85 @@ void fservWriteEditData(LPCVOID data, DWORD size)
     LOG(L"Restoring face/hair settings");
 
     // restore face/hair settings
-    PLAYER_INFO* players = (PLAYER_INFO*)((BYTE*)data + 0x120);
+    PLAYER_INFO* players = (PLAYER_INFO*)((BYTE*)data + 0x1a0);
     hash_map<DWORD,player_facehair_t>::iterator it;
     for (it = _saved_facehair.begin(); it != _saved_facehair.end(); it++) {
         players[it->first].specialHair = it->second.specialHair;
         players[it->first].specialFace = it->second.specialFace;
         players[it->first].faceHairBits = it->second.faceHairBits;
     }
+}
+
+void fservReadReplayData(LPCVOID data, DWORD size)
+{
+    LOG(L"Reading replay data:");
+    REPLAY_DATA* replay = (REPLAY_DATA*)data;
+    // check faceId/hairId for players
+    // if we have the extended slots mapped, then ok
+    // --> otherwise, clear the corresponding bits
+    for (int i=0; i<22; i++) {
+        // debug
+        wchar_t* wname = Utf8::utf8ToUnicode(
+            (BYTE*)(replay->payload.players[i].name));
+        LOG(L"Player #%02d: %s", i, wname);
+        Utf8::free(wname);
+
+        DWORD* pFaceHairBits = &replay->payload.players[i].faceHairBits;
+
+        int faceId = GetFaceIdRaw(*pFaceHairBits);
+        int faceBin = GetFaceBin(faceId);
+        LOG(L"faceBin: %d", faceBin);
+        if (faceBin >= FIRST_FACE_SLOT) {
+            // extended bin
+            if (!_fast_bin_table[faceBin - FIRST_FACE_SLOT]) {
+                // do not currently have any players mapped
+                // to that slot ==> clear extended bits
+                *pFaceHairBits = *pFaceHairBits & CLEAR_EXTENDED_FACE_BITS;
+                faceId = GetFaceIdRaw(*pFaceHairBits);
+                LOG(L"faceId: %d", faceId);
+                if (faceId > MAX_FACE_ID) {
+                    // cannot go beyond 1500 in this case
+                    SetSpecialFaceBits(pFaceHairBits, MANEKEN_ID);
+                }
+                LOG(L"nothing mapped to slot: %d. Skipping", faceBin);
+            }
+        }
+        else {
+            // normal bin
+            replay->payload.players[i].faceHairBits 
+                &= CLEAR_EXTENDED_FACE_BITS;
+        }
+        int hairId = GetHairIdRaw(*pFaceHairBits);
+        int hairBin = GetHairBin(hairId);
+        LOG(L"hairBin: %d", hairBin);
+        if (hairBin >= FIRST_FACE_SLOT) {
+            // extended bin
+            if (!_fast_bin_table[hairBin - FIRST_FACE_SLOT]) {
+                // do not currently have any players mapped
+                // to that slot ==> clear extended bits
+                *pFaceHairBits = *pFaceHairBits & CLEAR_EXTENDED_HAIR_BITS;
+                hairId = GetHairIdRaw(*pFaceHairBits);
+                LOG(L"hairId: %d", hairId);
+                if (hairId > MAX_HAIR_ID) {
+                    // cannot go beyond 1500 in this case
+                    SetSpecialHairBits(pFaceHairBits, MANEKEN_ID);
+                }
+                LOG(L"nothing mapped to slot: %d. Skipping", hairBin);
+            }
+        }
+        else {
+            // normal bin
+            replay->payload.players[i].faceHairBits 
+                &= CLEAR_EXTENDED_HAIR_BITS;
+        }
+    }
+}
+
+void fservWriteReplayData(LPCVOID data, DWORD size)
+{
+    LOG(L"Writing replay data:");
+    REPLAY_DATA* replay = (REPLAY_DATA*)data;
+    // set kitserver signature
+    memcpy(replay->ksSignature, "ks11", 4);
 }
 

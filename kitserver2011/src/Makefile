@@ -147,6 +147,10 @@ afsexport.obj: afsexport.cpp afsreader.h
 afsexport.exe: afsexport.obj afsreader.obj 
 	$(LINK) $(LFLAGS) /out:afsexport.exe afsexport.obj afsreader.obj $(LIBS)
 
+notebook.obj: notebook.cpp notebook.h
+notebook.exe: notebook.obj 
+	$(LINK) $(LFLAGS) /out:notebook.exe notebook.obj $(LIBS)
+
 .cpp.obj:
 	$(CC) $(CFLAGS) -c $(INC) /I $(INCPNGDIB) $<
 

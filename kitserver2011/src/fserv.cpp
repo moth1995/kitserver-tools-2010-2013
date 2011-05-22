@@ -176,7 +176,8 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     getConfig("fserv", "online.enabled", DT_DWORD, 2, fservConfig);
 
     HookCallPoint(code[C_CHECK_FACE_AND_HAIR_ID], 
-            fservAtFaceHairCallPoint, 6, 27);
+            fservAtFaceHairCallPoint, 3, 27);
+            //fservAtFaceHairCallPoint, 6, 27);
 
     PatchCode(code[C_CHECK_HAIR_ID], "\x8b\xfe\x90\x90\x90");
     PatchCode(code[C_CHECK_FACE_ID], "\x8b\xc8\x90\x90\x90");
@@ -332,19 +333,23 @@ void InitMaps()
 
 int GetHairIdRaw(DWORD faceHairBits)
 {
-    return faceHairBits & 0x000007ff;
+    //return faceHairBits & 0x000007ff;
+    return faceHairBits & 0x00007fff;
 }
 
 int GetFaceIdRaw(DWORD faceHairBits)
 {
-    return (faceHairBits >> 15) & 0x000007ff;
+    //return (faceHairBits >> 15) & 0x000007ff;
+    return (faceHairBits >> 15) & 0x00007fff;
 }
 
 int GetHairId(PLAYER_INFO* p)
 {
     if (IsSpecialHair(p)) {
         // 11 bits [0-10]
-        return p->faceHairBits & 0x000007ff;
+        //return p->faceHairBits & 0x000007ff;
+        // use 15 bits [0-15]
+        return p->faceHairBits & 0x00007fff;
     }
     return -1;
 }
@@ -353,7 +358,9 @@ int GetFaceId(PLAYER_INFO* p)
 {
     if (IsSpecialFace(p)) {
         // 11 bits: [15-25]
-        return (p->faceHairBits >> 15) & 0x000007ff;
+        //return (p->faceHairBits >> 15) & 0x000007ff;
+        // use 15 bits: [15-30]
+        return (p->faceHairBits >> 15) & 0x00007fff;
     }
     return -1;
 }
@@ -387,20 +394,22 @@ bool IsSpecialFace(PLAYER_INFO* p)
 void SetSpecialHair(PLAYER_INFO* p, int hairId)
 {
     p->faceHairBits &= CLEAR_HAIR_MASK;
-    p->faceHairBits |= (hairId & 0x000007ff);
+    //p->faceHairBits |= (hairId & 0x000007ff);
+    p->faceHairBits |= (hairId & 0x00007fff);
     p->specialHair |= SPECIAL_HAIR;
 }
 
 void SetSpecialFace(PLAYER_INFO* p, int faceId)
 {
     p->faceHairBits &= CLEAR_FACE_MASK;
-    p->faceHairBits |= ((faceId & 0x000007ff) << 15);
+    //p->faceHairBits |= ((faceId & 0x000007ff) << 15);
+    p->faceHairBits |= ((faceId << 15) & 0x3fff0000);
     p->specialFace |= SPECIAL_FACE;
 }
 
 void fservCopyPlayerData(PLAYER_INFO* players, int place, bool writeList)
 {
-    afsioExtendSlots(0x0c, 40000);
+    afsioExtendSlots(0x0c, 45000);
 
     if (place==2)
     {
@@ -416,6 +425,8 @@ void fservCopyPlayerData(PLAYER_INFO* players, int place, bool writeList)
     hash_map<int,bool> hairsUsed;
     hash_map<int,bool> facesUsed;
 
+    _saved_facehair.clear();
+
     multimap<string,DWORD> mm;
     for (WORD i=0; i<MAX_PLAYERS; i++)
     {
@@ -426,39 +437,41 @@ void fservCopyPlayerData(PLAYER_INFO* players, int place, bool writeList)
             continue;  // no player at this player slot
         }
 
-        /*
+        // save original info
+        player_facehair_t facehair(&players[i]);
+        _saved_facehair.insert(
+            pair<DWORD,player_facehair_t>(i, facehair));
+
+        // clear out extra bits
+        players[i].faceHairBits &= 0xc3ff87ff;
+        
         hash_map<DWORD,WORD>::iterator it = 
             _player_face_slot.find(players[i].id);
         if (it != _player_face_slot.end())
         {
-            players[i].padding = i; // player index
-            
-            //LOG(L"player #%d assigned slot (face) #%d",
-            //        players[i].id,it->second);
+            LOG(L"player #%d assigned slot (face) #%d",
+                    players[i].id,it->second);
             // if not unique face, remember that for later restoring
-            if (!(players[i].faceHairMask & UNIQUE_FACE))
-                _non_unique_face.push_back(i);
-            if (players[i].faceHairMask & SCAN_FACE)
-                _scan_face.push_back(i);
-            // adjust flags
-            players[i].faceHairMask |= UNIQUE_FACE;
-            players[i].faceHairMask &= CLEAR_SCAN_FACE;
+            //if (!(IsSpecialFace(&players[i]))) {
+            //    _non_unique_face.push_back(i);
+            //}
+            // set new face
+            SetSpecialFace(&players[i], it->second - FIRST_FACE_BIN + 1);
         }
         it = _player_hair_slot.find(players[i].id);
         if (it != _player_hair_slot.end())
         {
-            players[i].padding = i; // player index
-
-            //LOG(L"player #%d assigned slot (hair) #%d",
-            //        players[i].id,it->second);
+            LOG(L"player #%d assigned slot (hair) #%d",
+                    players[i].id,it->second);
             // if not unique hair, remember that for later restoring
-            if (!(players[i].faceHairMask & UNIQUE_HAIR))
-                _non_unique_hair.push_back(i);
-            // adjust flag
-            players[i].faceHairMask |= UNIQUE_HAIR;
+            //if (!(IsSpecialHair(&players[i]))) {
+            //    _non_unique_hair.push_back(i);
+            //}
+            // set new hair
+            SetSpecialHair(&players[i], it->second - FIRST_HAIR_BIN + 1);
         }
-        */
 
+        /*
         // TEST: assign Drogba's face/hair to second edited player
         if (players[i].id == 0x100000) {
             //SetSpecialFace(&players[i], 248 - FIRST_FACE_BIN + 1);
@@ -480,14 +493,7 @@ void fservCopyPlayerData(PLAYER_INFO* players, int place, bool writeList)
             //players[i].faceHairBits &= CLEAR_HAIR_FLAGS;
             //players[i].faceHairBits |= ~CLEAR_HAIR_FLAGS;
         }
-
-        int faceBin = GetFaceBin(&players[i]);
-        int hairBin = GetHairBin(&players[i]);
-        wchar_t* nameBuf = Utf8::utf8ToUnicode((BYTE*)players[i].name);
-        LOG(L"Player (%d): id=%d (id_again=%d): %s (f:%d, h:%d)", 
-                i, players[i].id, players[i].id_again, nameBuf,
-                faceBin, hairBin);
-        Utf8::free(nameBuf);
+        */
 
         if (writeList && players[i].name[0]!='\0') {
             string name(players[i].name);
@@ -507,12 +513,17 @@ void fservCopyPlayerData(PLAYER_INFO* players, int place, bool writeList)
             hairsUsed.insert(pair<int,bool>(hairId,true));
         }
         
-        // reshuffle bits
         faceId = GetFaceIdRaw(players[i].faceHairBits);
         hairId = GetHairIdRaw(players[i].faceHairBits);
-        //players[i].faceHairBits = ((faceId&0xffff)<<0x10)|(hairId&0xffff);
-        players[i].faceHairBits &= 0xc3ff87ff;
-        LOG(L"%d: faceHairBits: %08x", i, players[i].faceHairBits);
+        LOG(L"Player (%d): faceHairBits: %08x", i, players[i].faceHairBits);
+
+        int faceBin = GetFaceBin(&players[i]);
+        int hairBin = GetHairBin(&players[i]);
+        wchar_t* nameBuf = Utf8::utf8ToUnicode((BYTE*)players[i].name);
+        LOG(L"Player (%d): id=%d (id_again=%d): %s (f:%d, h:%d)", 
+                i, players[i].id, players[i].id_again, nameBuf,
+                faceBin, hairBin);
+        Utf8::free(nameBuf);
     }
 
     LOG(L"face id range: [%d,%d]", minFaceId, maxFaceId);
@@ -553,14 +564,22 @@ skip:   mov edx,dword ptr ds:[esi+4]
         mov edx,0x7ff
         and ax,dx
         mov word ptr ds:[ecx+4],ax
-        /*
-        mov dx,word ptr ds:[esi+6]
-        mov word ptr ds:[ecx+0x0c],dx
-        mov ax,word ptr ds:[esi+4]
-        mov word ptr ds:[ecx+4],ax
-        */
         popfd
         retn
+doit:
+        // use 15 bits instead of 11
+        // this gives us 32k faces and 32k hairs
+        mov edx,dword ptr ds:[esi+4]
+        shr edx,0x0f
+        and edx,0x7fff
+        mov word ptr ds:[ecx+0x0c],dx
+        mov ax,word ptr ds:[esi+4]
+        mov edx,0x7fff
+        and ax,dx
+        mov word ptr ds:[ecx+4],ax
+        popfd
+        retn
+/*
 doit:   push ebp
         push eax
         push ebx
@@ -581,6 +600,7 @@ doit:   push ebp
         pop ebp
         popfd
         retn
+*/
     }
 }
 
@@ -606,6 +626,8 @@ KEXPORT void fservAtFaceHair(DWORD dest, DWORD src)
     
     //WORD faceId = *(WORD*)(src+6);
     //WORD hairId = *(WORD*)(src+4);
+
+    // make sure we take 15 bits for face and 15 - for hair
     WORD faceId = ((*(DWORD*)(src+4))>>15) & 0x7fff;
     WORD hairId = (*(DWORD*)(src+4)) & 0x7fff;
 

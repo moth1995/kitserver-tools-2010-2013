@@ -28,7 +28,7 @@
 //#define CREATE_FLAGS FILE_FLAG_SEQUENTIAL_SCAN | FILE_FLAG_NO_BUFFERING
 #define CREATE_FLAGS 0
 
-#define FIRST_FACE_SLOT 10000
+#define FIRST_FACE_SLOT 13000
 #define NUM_SLOTS 65536
 
 #define NETWORK_MODE 4
@@ -86,6 +86,11 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
 void fservAtFaceHairCallPoint();
 void fservAtCopyEditDataCallPoint();
 KEXPORT void fservAtFaceHair(DWORD dest, DWORD src);
+
+void fservAtGetFaceBinCallPoint();
+void fservAtGetHairBinCallPoint();
+KEXPORT DWORD fservGetFaceBin(int faceId);
+KEXPORT DWORD fservGetHairBin(int hairId);
 
 void fservConfig(char* pName, const void* pValue, DWORD a);
 bool fservGetFileInfo(DWORD afsId, DWORD binId, HANDLE& hfile, DWORD& fsize);
@@ -180,12 +185,19 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     getConfig("fserv", "debug", DT_DWORD, 1, fservConfig);
     getConfig("fserv", "online.enabled", DT_DWORD, 2, fservConfig);
 
+    _gotFaceBin = code[C_GOT_FACE_BIN];
+    _gotHairBin = code[C_GOT_HAIR_BIN];
+
     HookCallPoint(code[C_CHECK_FACE_AND_HAIR_ID], 
             fservAtFaceHairCallPoint, 3, 27);
             //fservAtFaceHairCallPoint, 6, 27);
 
-    PatchCode(code[C_CHECK_HAIR_ID], "\x8b\xfe\x90\x90\x90");
-    PatchCode(code[C_CHECK_FACE_ID], "\x8b\xc8\x90\x90\x90");
+    //PatchCode(code[C_CHECK_HAIR_ID], "\x8b\xfe\x90\x90\x90");
+    //PatchCode(code[C_CHECK_FACE_ID], "\x8b\xc8\x90\x90\x90");
+    HookCallPoint(code[C_GET_FACE_BIN],
+            fservAtGetFaceBinCallPoint, 6, 4);
+    HookCallPoint(code[C_GET_HAIR_BIN],
+            fservAtGetHairBinCallPoint, 6, 4);
 
     // register callbacks
     afsioAddCallback(fservGetFileInfo);
@@ -582,6 +594,83 @@ void fservCopyPlayerData(PLAYER_INFO* players, int place, bool writeList)
     LOG(L"fservCopyPlayerData() done: players updated.");
 }
 
+void fservAtGetFaceBinCallPoint()
+{
+    __asm {
+        pushfd
+        push ebp
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        movzx eax, word ptr ds:[ebx+0x0c]
+        push eax // param: face id
+        call fservAtGetFaceBin
+        add esp,0x04     // pop parameters
+        cmp eax,FIRST_FACE_SLOT
+        jge fsface
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        pop ebp
+        popfd
+        mov ecx,0x5dc
+        retn
+fsface: pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        pop ebp
+        popfd
+        add eax,0x0c000000
+        mov [esp],_gotFaceBin
+        retn
+}
+
+void fservAtGetHairBinCallPoint()
+{
+    __asm {
+        pushfd
+        push ebp
+        push eax
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        push edi // param: hair id
+        call fservAtGetHairBin
+        add esp,0x04     // pop parameters
+        mov esi,eax
+        cmp esi,FIRST_FACE_SLOT
+        jge fsface
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        pop eax
+        pop ebp
+        popfd
+        cmp si,0x5dc
+        retn
+fsface: pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        pop eax
+        pop ebp
+        popfd
+        add esi,0x0c000000
+        mov [esp],_gotHairBin
+        retn
+}
+
 void fservAtFaceHairCallPoint()
 {
     __asm {
@@ -728,8 +817,8 @@ bool OpenFileIfExists(const wchar_t* filename, HANDLE& handle, DWORD& size)
  */
 bool fservGetFileInfo(DWORD afsId, DWORD binId, HANDLE& hfile, DWORD& fsize)
 {
-    //if (afsId == 0x0c)
-    //    LOG(L"Handling BIN: (%02x,%d)", afsId, binId);
+    if (afsId == 0x0c)
+        LOG(L"Handling BIN: (%02x,%d)", afsId, binId);
     if (afsId != 0x0c || binId < FIRST_FACE_SLOT || binId >= NUM_SLOTS)
         return false;
 

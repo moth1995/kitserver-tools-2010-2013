@@ -27,7 +27,7 @@ DWORD codeArray[][CODELEN] = {
     { 
         0x10dc946, 0x10d50e7, 0x119e035,
         0x10d50e3, 0x10d513e,
-        0x119e034, 0x119e077,
+        0x119e035, 0x119e077,
     },
 };
 

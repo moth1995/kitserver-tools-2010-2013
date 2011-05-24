@@ -6,14 +6,15 @@ BYTE allowedGames[] = {
     gvPES2011v103,
 };
 
-#define CODELEN 7
+#define CODELEN 8
 enum { 
     C_CHECK_FACE_AND_HAIR_ID, C_CHECK_FACE_ID, C_CHECK_HAIR_ID,
     C_GET_FACE_BIN, C_GOT_FACE_BIN,
     C_GET_HAIR_BIN, C_GOT_HAIR_BIN,
+    C_RESET_HAIR,
 };
 
-#define NOCODEADDR {0,0,0,0,0,0,0}
+#define NOCODEADDR {0,0,0,0,0,0,0,0}
 DWORD codeArray[][CODELEN] = { 
     // PES2011 demo
     NOCODEADDR,
@@ -28,6 +29,7 @@ DWORD codeArray[][CODELEN] = {
         0x10dc946, 0x10d50e7, 0x119e035,
         0x10d50e3, 0x10d513e,
         0x119e035, 0x119e077,
+        0x6d9c71,
     },
 };
 

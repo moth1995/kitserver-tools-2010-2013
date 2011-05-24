@@ -97,6 +97,8 @@ void fservAtGetHairBinCallPoint();
 KEXPORT DWORD fservGetFaceBin(DWORD faceId);
 KEXPORT DWORD fservGetHairBin(DWORD hairId);
 
+void fservAtResetHairCallPoint();
+
 void fservConfig(char* pName, const void* pValue, DWORD a);
 bool fservGetFileInfo(DWORD afsId, DWORD binId, HANDLE& hfile, DWORD& fsize);
 bool OpenFileIfExists(const wchar_t* filename, HANDLE& handle, DWORD& size);
@@ -203,6 +205,8 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
             fservAtGetFaceBinCallPoint, 6, 4);
     HookCallPoint(code[C_GET_HAIR_BIN],
             fservAtGetHairBinCallPoint, 6, 0);
+    HookCallPoint(code[C_RESET_HAIR],
+            fservAtResetHairCallPoint, 6, 2);
 
     // register callbacks
     afsioAddCallback(fservGetFileInfo);
@@ -615,6 +619,42 @@ void fservCopyPlayerData(PLAYER_INFO* players, int place, bool writeList)
     LOG(L"fservCopyPlayerData() done: players updated.");
 }
 
+void fservAtResetHairCallPoint()
+{
+    __asm {
+        pushfd
+        push eax
+        push ebx
+        push edx
+        lea ebx,[edi]
+        mov edx,[edi+4]
+        mov ecx,0x10
+        rep movs dword ptr es:[edi], dword ptr ds:[esi]
+        mov ecx,0xffff87ff
+        mov al,byte ptr [ebx+3]
+        and al,0x50
+        cmp al,0x40
+        je done
+        cmp al,0x50
+        je hback
+clear:
+        and [ebx+4],ecx
+        jmp done
+hback:   
+        mov ax,dx
+        and ax,0x7fff
+        mov edx,0xffff8000
+        and dword ptr [ebx+4],edx
+        or word ptr [ebx+4],ax 
+done:
+        pop edx
+        pop ebx
+        pop eax
+        popfd
+        retn
+    }
+}
+
 void fservAtGetFaceBinCallPoint()
 {
     __asm {
@@ -876,7 +916,17 @@ void fservWriteEditData(LPCVOID data, DWORD size)
     for (it = _saved_facehair.begin(); it != _saved_facehair.end(); it++) {
         players[it->first].specialHair = it->second.specialHair;
         players[it->first].specialFace = it->second.specialFace;
-        players[it->first].faceHairBits = it->second.faceHairBits;
+        if (!IsSpecialHair(&players[it->first])) {
+            // if edited hair --> allow that to be saved
+            DWORD justHair = (players[it->first].faceHairBits) & 0x7ff;
+            players[it->first].faceHairBits = it->second.faceHairBits;
+            players[it->first].faceHairBits &= 0xfffff800;
+            players[it->first].faceHairBits |= justHair;
+            players[it->first].specialHair &= ~SPECIAL_HAIR;
+        }
+        else {
+            players[it->first].faceHairBits = it->second.faceHairBits;
+        }
     }
 }
 

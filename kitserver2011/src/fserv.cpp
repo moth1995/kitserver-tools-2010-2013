@@ -886,8 +886,8 @@ bool OpenFileIfExists(const wchar_t* filename, HANDLE& handle, DWORD& size)
  */
 bool fservGetFileInfo(DWORD afsId, DWORD binId, HANDLE& hfile, DWORD& fsize)
 {
-    if (afsId == 0x0c)
-        LOG(L"Handling BIN: (%02x,%d)", afsId, binId);
+    //if (afsId == 0x0c)
+    //    LOG(L"Handling BIN: (%02x,%d)", afsId, binId);
     if (afsId != 0x0c || binId < FIRST_FACE_SLOT || binId >= NUM_SLOTS)
         return false;
 

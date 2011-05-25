@@ -12,7 +12,7 @@
 
 #define DLL_NAME "kload\0"
 #define DLL_NAME_SET "kset\0"
-#define DEFAULT_EXE_NAME L"pes2011.exe\0"
+#define DEFAULT_EXE_NAME L"pes2011\0"
 #define DEFAULT_DEMO_EXE_NAME L"pes2011demo.exe\0"
 #define BUFLEN 4096
 #define SW sizeof(wchar_t)
@@ -771,10 +771,11 @@ executable.\0");
 				ZeroMemory(buf, 0x18);
 				fseek(f, sizeof(DWORD), SEEK_CUR);
 				fread(buf, 0x18, 1, f);
-				char* dllFilename = strrchr(buf,'\\') + 1;
+				char* dllFilename = strrchr(buf,'\\');
+                dllFilename = (dllFilename)?dllFilename+1:buf;
 				isInstalled[i] = false;
 				
-				if (savedEntryPoint != 0 && dllFilename != (char*)1 &&
+				if (savedEntryPoint != 0 &&
 						strcmp(dllFilename, (i==0)?DLL_NAME:DLL_NAME_SET) == 0) {
 					isInstalled[i] = true;
 				}
@@ -783,22 +784,24 @@ executable.\0");
 				{
 					char exeFolderName[BUFLEN];
 					ZeroMemory(exeFolderName, BUFLEN);
-					strncpy(exeFolderName,buf,dllFilename-buf-1);
+					strncpy(exeFolderName,buf,
+                        max(0,dllFilename-buf-1));
 	
-					if (1) {//strcmp(exeFolderName, patchFolderName) == 0) {
+					if (strcmp(exeFolderName, patchFolderName) == 0) {
 						SendMessage(infoControl, WM_SETTEXT, (WPARAM)0, 
-								(LPARAM)L"KitServer ATTACHED to this exe.\0");
+								(LPARAM)L"Kitserver ATTACHED to this exe.\0");
 								
 						EnableWindow(g_installButtonControl, FALSE);
 						EnableWindow(g_removeButtonControl, TRUE);
 					}
-                    /*
 					else
 					{
-						char temp[BUFLEN];
-						ZeroMemory(temp,BUFLEN);
+						wchar_t temp[BUFLEN];
+						ZeroMemory(temp,BUFLEN*sizeof(wchar_t));
 						wchar_t* temp2 = Utf8::ansiToUnicode(exeFolderName);
-						swprintf(temp2, L"KitServer ATTACHED to this exe.\0", temp2);
+						swprintf(temp, 
+                            L"WARN: Kitserver from folder \"%s\" ATTACHED "
+                            L"to this exe.\0", temp2);
 						Utf8::free(temp2);
 						
 						SendMessage(infoControl, WM_SETTEXT, (WPARAM)0, 
@@ -806,7 +809,6 @@ executable.\0");
 						EnableWindow(g_installButtonControl, FALSE);
 						EnableWindow(g_removeButtonControl, TRUE);
 					};
-                    */
 				}
 				else
 				{
@@ -877,14 +879,14 @@ void InitControls(void)
 			count++; //only count the listed exe files
 		}
 		
-		if (wcsicmp(fData.cFileName, patchExeName) != 0) // skip default game exe
+		if (wcsnicmp(fData.cFileName, patchExeName, wcslen(patchExeName)) != 0) // skip default game exe
 		{
 			SendMessage(g_setListControl, CB_ADDSTRING, (WPARAM)0, (LPARAM)fData.cFileName);
 			SendMessage(g_setListControl, WM_SETTEXT, (WPARAM)0, (LPARAM)fData.cFileName);
 			count1++;
 		}
 		
-        if (wcsicmp(fData.cFileName, patchExeName) == 0) { // auto-select
+        if (wcsnicmp(fData.cFileName, patchExeName, wcslen(patchExeName)) == 0) { // auto-select
             selectedIndex = count - 1;
         }
         

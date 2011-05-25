@@ -243,6 +243,8 @@ void kloadLoadDlls(char* pName, const wchar_t* pValue, DWORD a)
 {	
 	wchar_t dllName[BUFLEN];
 	ZeroMemory(dllName, WBUFLEN);
+
+    SetCurrentDirectory(g_pesinfo.myDir);
 	
 	wcscpy(dllName, pValue);
 	// check for C:, D: etc and things like %windir%

@@ -31,8 +31,8 @@ DWORD codeArray[][CODELEN] = {
 		0, 0, 
 		0, 0, 
         0, 0,
-        0, 0,
-        0, 0,
+        0xc7b313, 0xc7b1da,
+        0x42d991, 0x1191201,
         0, 0,
   },
   // PES2011 v1.01
@@ -43,7 +43,7 @@ DWORD codeArray[][CODELEN] = {
 		0, 0, 
         0, 0,
         0xc7b7f3, 0xc7b6ba,
-        0, 0,
+        0x42d5b1, 0x1191751,
         0, 0, 
   },
   // PES2011 v1.02
@@ -54,7 +54,7 @@ DWORD codeArray[][CODELEN] = {
 		0, 0, 
         0, 0,
         0xc7b883, 0xc7b74a,
-        0, 0,
+        0x42d8c1, 0x11918b1,
         0, 0, 
   },
   // PES2011 v1.03
@@ -91,7 +91,7 @@ DWORD dataArray[][DATALEN] = {
     },
     // PES2011
     {
-        0, 0,
+        0x1940b08, 0,
         0, 0,
         0, 0, 0,
         0, 0, 0,
@@ -99,7 +99,7 @@ DWORD dataArray[][DATALEN] = {
     },
     // PES2011 v1.01
     {
-        0, 0,
+        0x1940b60, 0,
         0, 0,
         0, 0, 0,
         0, 0, 0,
@@ -107,7 +107,7 @@ DWORD dataArray[][DATALEN] = {
     },
     // PES2011 v1.02
     {
-        0, 0,
+        0x1940b58, 0,
         0, 0,
         0, 0, 0,
         0, 0, 0,

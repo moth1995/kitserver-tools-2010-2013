@@ -107,12 +107,18 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		wcscat(cfgFile, L"config.txt");
 		if (!readConfig(cfgFile))
 			LOG(L"Couldn't open the config.txt!");
-		
+
+        wchar_t currDir[BUFLEN];
+        GetCurrentDirectory(BUFLEN, currDir);
+        LOG(L"CurrentDirectory: %s", currDir);
+        SetCurrentDirectory(g_pesinfo.myDir);
+
 		_getConfig("kload", "gdb.dir", DT_STRING, 1, kloadConfig);
 		_getConfig("kload", "debug", DT_DWORD, 2, kloadConfig);
 		_getConfig("kload", "lang", DT_STRING, 3, kloadConfig);
         _getConfig("kload", "noshade", DT_DWORD, 4, kloadConfig);
 		_getConfig("kload", "dll", DT_STRING, C_ALL, (PROCESSCONFIG)kloadLoadDlls);
+        SetCurrentDirectory(currDir);
 		
 		// adjust gdbDir, if it is specified as relative path
 		if (g_pesinfo.gdbDir[0] == '.')
@@ -244,8 +250,6 @@ void kloadLoadDlls(char* pName, const wchar_t* pValue, DWORD a)
 	wchar_t dllName[BUFLEN];
 	ZeroMemory(dllName, WBUFLEN);
 
-    SetCurrentDirectory(g_pesinfo.myDir);
-	
 	wcscpy(dllName, pValue);
 	// check for C:, D: etc and things like %windir%
 	if (dllName[1] != ':' && dllName[0] != '%')
@@ -262,9 +266,9 @@ void kloadLoadDlls(char* pName, const wchar_t* pValue, DWORD a)
 	
 	LOG(L"Loading module \"%s\" ...", dllName);
 	if (LoadLibrary(dllName) == NULL)
-		LOG(L"... was NOT successful!");
+		LOG(L"... ERROR!");
 	else
-		LOG(L"... was successful!");
+		LOG(L"... OK!");
 	 
 	return;
 }

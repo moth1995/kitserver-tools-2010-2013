@@ -15,17 +15,32 @@ typedef struct _PLAYER_INFO
     char name[0x2e];
     char name2[0x10];
     DWORD id_again;
-    BYTE unknown2[0x33];
+    BYTE unknown2[0x30];
+    BYTE unknown3[3];
     BYTE specialHair;
     DWORD faceHairBits;
-    BYTE unknown3[0x2c];
+    BYTE unknown4[0x2c];
     WORD nationality;
     BYTE specialFace;
-    BYTE unknown4;
-    DWORD unknown5;
+    BYTE unknown5;
     DWORD unknown6;
+    DWORD unknown7;
 
 } PLAYER_INFO;
+
+typedef struct _PLAYER_DETAILS
+{
+    BYTE unknown3[3];
+    BYTE specialHair;
+    DWORD faceHairBits;
+    BYTE unknown4[0x2c];
+    WORD nationality;
+    BYTE specialFace;
+    BYTE unknown5;
+    DWORD unknown6;
+    DWORD unknown7;
+
+} PLAYER_DETAILS; 
 
 /*****************************************
  * Face/Hair bits:

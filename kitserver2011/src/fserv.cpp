@@ -100,6 +100,8 @@ KEXPORT DWORD fservGetHairBin(DWORD hairId);
 void fservAtResetHairCallPoint();
 void fservAtResetHair(PLAYER_DETAILS* src, PLAYER_DETAILS* dest, 
                       DWORD numDwords);
+void fservAtSetDefaultCallPoint();
+void fservAtSetDefault(DWORD src, DWORD dest, DWORD numDwords);
 
 void fservConfig(char* pName, const void* pValue, DWORD a);
 bool fservGetFileInfo(DWORD afsId, DWORD binId, HANDLE& hfile, DWORD& fsize);
@@ -209,6 +211,8 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
             fservAtGetHairBinCallPoint, 6, 0);
     HookCallPoint(code[C_RESET_HAIR],
             fservAtResetHairCallPoint, 6, 2);
+    HookCallPoint(code[C_SET_DEFAULT_PLAYER],
+            fservAtSetDefaultCallPoint, 6, 2);
 
     // register callbacks
     afsioAddCallback(fservGetFileInfo);
@@ -446,6 +450,7 @@ void SetSpecialFaceBits(DWORD* pFaceHairBits, int faceId)
 void SetSpecialHair(PLAYER_INFO* p, int hairId)
 {
     SetSpecialHairBits(&p->faceHairBits, hairId);
+    p->specialHair &= ~EDITED_FACEHAIR;
     p->specialHair |= SPECIAL_HAIR;
 }
 
@@ -687,83 +692,114 @@ void fservAtResetHairCallPoint()
     }
 }
 
+void fservAtSetDefaultCallPoint()
+{
+    __asm {
+        pushfd
+        push ebp
+        push eax
+        push ebx
+        push edx
+        push esi
+        push edi
+        mov ecx,0x1b
+        push ecx  // param: dword count
+        push edi  // param: dest
+        push esi  // param: src
+        call fservAtSetDefault
+        add esp,0x0c // pop params
+        pop edi
+        add edi,0x6c
+        pop esi
+        add esi,0x6c
+        mov ecx,0
+        pop edx
+        pop ebx
+        pop eax
+        pop ebp
+        popfd
+        retn
+    }
+}
+
+bool IsXFace(PLAYER_DETAILS* ppd)
+{
+    if ((ppd->specialFace & SPECIAL_FACE)==0) {
+        return false;
+    }
+    //LOG(L"IsXFace(%08x) --> %d",
+    //        ppd->faceHairBits, ((ppd->faceHairBits & 0x3c000000)!=0));
+    return (ppd->faceHairBits & 0x3c000000) != 0;
+}
+
+bool IsXHair(PLAYER_DETAILS* ppd)
+{
+    if ((ppd->specialHair & SPECIAL_HAIR)==0) {
+        return false;
+    }
+    //LOG(L"IsXHair(%08x) --> %d",
+    //        ppd->faceHairBits, ((ppd->faceHairBits & 0x00007800)!=0));
+    return (ppd->faceHairBits & 0x00007800) != 0;
+}
+
+void CopyXFace(DWORD* dest, DWORD src)
+{
+    *dest &= 0xc0007fff;
+    *dest |= (src & 0x3fff8000);
+}
+
+void CopyXHair(DWORD* dest, DWORD src)
+{
+    *dest &= 0xffff8000;
+    *dest |= (src & 0x00007fff);
+}
+
 void fservAtResetHair(PLAYER_DETAILS* src, PLAYER_DETAILS* dest, 
                       DWORD numDwords)
 {
-    LOG(L"src/dest: (%02x,%02x,%08x)/(%02x,%02x,%08x)", 
-        src->specialHair, src->specialFace,
-        src->faceHairBits, dest->specialHair,
-        dest->specialFace, dest->faceHairBits);
+    //LOG(L"src/dest: (%02x,%02x,%08x)/(%02x,%02x,%08x)", 
+    //    src->specialHair, src->specialFace,
+    //    src->faceHairBits, dest->specialHair,
+    //    dest->specialFace, dest->faceHairBits);
 
-    if ((dest->faceHairBits & 0x3c000000) && 
-            (dest->specialFace & SPECIAL_FACE)) {
+    // keep Xface
+    if (IsXFace(dest)) {// || 
+            //(src->specialFace != dest->specialFace)) {
         src->specialFace = dest->specialFace;
-        src->faceHairBits &= 0xc0007fff;
-        src->faceHairBits |= (dest->faceHairBits & 0x3fff8000);
+        CopyXFace(&src->faceHairBits, dest->faceHairBits);
     }
-    if ((dest->faceHairBits & 0x00007800) && 
-            (dest->specialHair & SPECIAL_HAIR)) {
+    // keep Xhair
+    if (IsXHair(dest)) {// || 
+            //(src->specialHair != dest->specialHair)) {
         src->specialHair = dest->specialHair;
-        src->faceHairBits &= 0xffff8000;
-        src->faceHairBits |= (dest->faceHairBits & 0x7fff);
+        CopyXHair(&src->faceHairBits, dest->faceHairBits);
     }
 
     // execute game logic
     memcpy(dest, src, numDwords*sizeof(DWORD));
 
-    LOG(L"dest now: (%02x,%02x,%08x)",
-        dest->specialHair, dest->specialFace, dest->faceHairBits);
+    //LOG(L"dest now: (%02x,%02x,%08x)",
+    //    dest->specialHair, dest->specialFace, dest->faceHairBits);
+}
 
-    /*
-    // make adjustments, if needed
-    // FACE
-    WORD faceId = GetFaceIdRaw(dest->faceHairBits);
-    if (faceId & ~0x7ff) {
-        // higher bits not empty --> check slot existence
-        WORD slot = faceId - FIRST_XFACE_ID + FIRST_FACE_SLOT;
-        LOG(L"dest slot: %d", slot);
-        if (!_fast_bin_table[slot - FIRST_FACE_SLOT]) {
-            // we don't have this slot filled --> clear bits
-            dest->faceHairBits &= 0xc3ffffff;
-            LOG(L"cleared face bits: %08x", dest->faceHairBits);
-        }
-    }
-    // enforce our values, if it was a faceserver slot
-    if (dest->faceHairBits & 0x10){// == 0){
-        faceId = GetFaceIdRaw(dest_copy.faceHairBits);
-        WORD slot = faceId - FIRST_XFACE_ID + FIRST_FACE_SLOT;
-        LOG(L"dest_copy slot: %d", slot);
-        if (_fast_bin_table[slot - FIRST_FACE_SLOT]) {
-            dest->faceHairBits &= 0xc0007fff;
-            dest->faceHairBits |= (faceId << 15) & 0xffff8000;
-            LOG(L"adjusted face bits: %08x", dest->faceHairBits);
-        }
-    }
+void fservAtSetDefault(DWORD srcAddr, DWORD destAddr, DWORD numDwords)
+{
+    PLAYER_DETAILS* src = (PLAYER_DETAILS*)(srcAddr + 0x2c);
+    PLAYER_DETAILS* dest = (PLAYER_DETAILS*)(destAddr + 0x2c);
 
-    // HAIR
-    WORD hairId = GetHairIdRaw(dest->faceHairBits);
-    if (hairId & ~0x7ff) {
-        // higher bits not empty --> check slot existence
-        WORD slot = hairId - FIRST_XHAIR_ID + FIRST_FACE_SLOT;
-        LOG(L"dest slot (hair): %d", slot);
-        if (!_fast_bin_table[slot - FIRST_FACE_SLOT]) {
-            // we don't have this slot filled --> clear bits
-            dest->faceHairBits &= 0xffff87ff;
-            LOG(L"cleared hair bits: %08x", dest->faceHairBits);
-        }
-    }
-    // enforce our values, if it was a faceserver slot
-    if (dest->faceHairBits & 0x10){// == 0){
-        hairId = GetHairIdRaw(dest_copy.faceHairBits);
-        WORD slot = hairId - FIRST_XHAIR_ID + FIRST_FACE_SLOT;
-        LOG(L"dest_copy slot (hair): %d", slot);
-        if (_fast_bin_table[slot - FIRST_FACE_SLOT]) {
-            dest->faceHairBits &= 0xffff8000;
-            dest->faceHairBits |= hairId & 0x7fff;
-            LOG(L"adjusted hair bits: %08x", dest->faceHairBits);
-        }
-    }
-    */
+    //LOG(L"SDEF: src/dest: (%02x,%02x,%08x)/(%02x,%02x,%08x)", 
+    //    src->specialHair, src->specialFace,
+    //    src->faceHairBits, dest->specialHair,
+    //    dest->specialFace, dest->faceHairBits);
+
+    // clear extended bits in the src
+    src->faceHairBits &= CLEAR_EXTENDED_BITS;
+
+    // execute game logic
+    memcpy(dest, src, numDwords*sizeof(DWORD));
+
+    //LOG(L"SDEF: dest now: (%02x,%02x,%08x)",
+    //    dest->specialHair, dest->specialFace, dest->faceHairBits);
 }
 
 void fservAtGetFaceBinCallPoint()
@@ -997,8 +1033,8 @@ bool OpenFileIfExists(const wchar_t* filename, HANDLE& handle, DWORD& size)
  */
 bool fservGetFileInfo(DWORD afsId, DWORD binId, HANDLE& hfile, DWORD& fsize)
 {
-    if (afsId == 0x0c)
-        LOG(L"Handling BIN: (%02x,%d)", afsId, binId);
+    //if (afsId == 0x0c)
+    //    LOG(L"Handling BIN: (%02x,%d)", afsId, binId);
     if (afsId != 0x0c || binId < FIRST_FACE_SLOT || binId >= NUM_SLOTS)
         return false;
 

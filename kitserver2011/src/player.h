@@ -7,6 +7,7 @@
 
 #define SPECIAL_FACE 0x20
 #define SPECIAL_HAIR 0x40
+#define EDITED_FACEHAIR 0x10
 
 typedef struct _PLAYER_INFO
 {

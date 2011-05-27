@@ -1,6 +1,6 @@
 // ADDRESSES for fserv.cpp
 BYTE allowedGames[] = {
-    //gvPES2011,//TODO: last addr
+    gvPES2011,
     gvPES2011v101,
     gvPES2011v102,
     gvPES2011v103,
@@ -23,7 +23,7 @@ DWORD codeArray[][CODELEN] = {
         0x10dc276,
         0x10d4a13, 0x10d4a6e,
         0x119d945, 0x119d987,
-        0x6d9d71, 0,//TODO
+        0x6d9d71, 0x7a5eaf,
     },
     // PES2011 v1.01
     {

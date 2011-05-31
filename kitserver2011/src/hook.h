@@ -122,8 +122,10 @@ typedef void (*WRITE_DATA_CALLBACK)(LPCVOID data, DWORD size);
 typedef void (*READ_DATA_CALLBACK)(LPCVOID data, DWORD size);
 KEXPORT void addWriteEditDataCallback(WRITE_DATA_CALLBACK callback);
 KEXPORT void addWriteReplayDataCallback(WRITE_DATA_CALLBACK callback);
+KEXPORT void addWriteBalDataCallback(WRITE_DATA_CALLBACK callback);
 KEXPORT void addReadEditDataCallback(READ_DATA_CALLBACK callback);
 KEXPORT void addReadReplayDataCallback(READ_DATA_CALLBACK callback);
+KEXPORT void addReadBalDataCallback(READ_DATA_CALLBACK callback);
 
 typedef void (*MENU_EVENT_CALLBACK)(int delta, DWORD menuMode, DWORD ind, DWORD inGameInd, DWORD cupModeInd);
 KEXPORT void addMenuCallback(MENU_EVENT_CALLBACK callback);

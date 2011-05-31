@@ -122,7 +122,7 @@ kload.res:
 fserv.lib: fserv.obj configs.obj afsio.lib
 fserv.dll: fserv.lib fserv.res
 	$(LINK) $(LFLAGS) /out:fserv.dll /DLL fserv.obj configs.obj fserv.res $(LIBS) $(D3DX9) kload.lib afsio.lib
-fserv.obj: fserv.cpp fserv.h fserv_addr.h fserv.rc
+fserv.obj: fserv.cpp fserv.h fserv_addr.h fserv.rc replay.h player.h bal.h
 fserv.res: 
 	$(RC) -r -fo fserv.res fserv.rc
 	

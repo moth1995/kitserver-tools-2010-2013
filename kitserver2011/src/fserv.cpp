@@ -17,6 +17,7 @@
 #include "utf8.h"
 #include "player.h"
 #include "replay.h"
+#include "bal.h"
 
 #define lang(s) getTransl("fserv",s)
 
@@ -38,6 +39,8 @@
 #define MAX_FACE_ID 1500
 #define MAX_HAIR_ID 1500
 #define MANEKEN_ID 948
+
+#define REPLAY_SIG "ks11"
 
 // VARIABLES
 HINSTANCE hInst = NULL;
@@ -100,6 +103,9 @@ KEXPORT DWORD fservGetHairBin(DWORD hairId);
 void fservAtResetHairCallPoint();
 void fservAtResetHair(PLAYER_DETAILS* src, PLAYER_DETAILS* dest, 
                       DWORD numDwords);
+void fservAtSquadListCallPoint();
+void fservAtSquadList(PLAYER_DETAILS* src, PLAYER_DETAILS* dest, 
+                      DWORD numDwords);
 void fservAtSetDefaultCallPoint();
 void fservAtSetDefault(DWORD src, DWORD dest, DWORD numDwords);
 
@@ -112,6 +118,7 @@ void fservCopyPlayerData(PLAYER_INFO* players, int place, bool writeList);
 void fservWriteEditData(LPCVOID data, DWORD size);
 void fservReadReplayData(LPCVOID data, DWORD size);
 void fservWriteReplayData(LPCVOID data, DWORD size);
+void fservReadBalData(LPCVOID data, DWORD size);
 
 static void string_strip(wstring& s)
 {
@@ -211,6 +218,8 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
             fservAtGetHairBinCallPoint, 6, 0);
     HookCallPoint(code[C_RESET_HAIR],
             fservAtResetHairCallPoint, 6, 2);
+    HookCallPoint(code[C_SQUAD_LIST],
+            fservAtSquadListCallPoint, 6, 2);
     HookCallPoint(code[C_SET_DEFAULT_PLAYER],
             fservAtSetDefaultCallPoint, 6, 2);
 
@@ -219,6 +228,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     addCopyPlayerDataCallback(fservCopyPlayerData);
 
     addReadReplayDataCallback(fservReadReplayData);
+    addReadBalDataCallback(fservReadBalData);
     addWriteReplayDataCallback(fservWriteReplayData);
     addWriteEditDataCallback(fservWriteEditData);
 
@@ -692,6 +702,36 @@ void fservAtResetHairCallPoint()
     }
 }
 
+void fservAtSquadListCallPoint()
+{
+    __asm {
+        pushfd
+        push ebp
+        push eax
+        push ebx
+        push edx
+        push esi
+        push edi
+        mov ecx,0x10
+        push ecx  // param: dword count
+        push edi  // param: dest
+        push esi  // param: src
+        call fservAtSquadList
+        add esp,0x0c // pop params
+        pop edi
+        add edi,0x40
+        pop esi
+        add esi,0x40
+        mov ecx,0
+        pop edx
+        pop ebx
+        pop eax
+        pop ebp
+        popfd
+        retn
+    }
+}
+
 void fservAtSetDefaultCallPoint()
 {
     __asm {
@@ -757,10 +797,10 @@ void CopyXHair(DWORD* dest, DWORD src)
 void fservAtResetHair(PLAYER_DETAILS* src, PLAYER_DETAILS* dest, 
                       DWORD numDwords)
 {
-    //LOG(L"src/dest: (%02x,%02x,%08x)/(%02x,%02x,%08x)", 
-    //    src->specialHair, src->specialFace,
-    //    src->faceHairBits, dest->specialHair,
-    //    dest->specialFace, dest->faceHairBits);
+    LOG(L"src/dest: (%02x,%02x,%08x)/(%02x,%02x,%08x)", 
+        src->specialHair, src->specialFace,
+        src->faceHairBits, dest->specialHair,
+        dest->specialFace, dest->faceHairBits);
 
     // keep Xface
     if (IsXFace(dest)) {// || 
@@ -778,8 +818,20 @@ void fservAtResetHair(PLAYER_DETAILS* src, PLAYER_DETAILS* dest,
     // execute game logic
     memcpy(dest, src, numDwords*sizeof(DWORD));
 
-    //LOG(L"dest now: (%02x,%02x,%08x)",
-    //    dest->specialHair, dest->specialFace, dest->faceHairBits);
+    LOG(L"dest now: (%02x,%02x,%08x)",
+        dest->specialHair, dest->specialFace, dest->faceHairBits);
+}
+
+void fservAtSquadList(PLAYER_DETAILS* src, PLAYER_DETAILS* dest, 
+                      DWORD numDwords)
+{
+    LOG(L"SQUAD src/dest: (%02x,%02x,%08x)/(%02x,%02x,%08x)", 
+        src->specialHair, src->specialFace,
+        src->faceHairBits, dest->specialHair,
+        dest->specialFace, dest->faceHairBits);
+
+    // execute game logic
+    memcpy(dest, src, numDwords*sizeof(DWORD));
 }
 
 void fservAtSetDefault(DWORD srcAddr, DWORD destAddr, DWORD numDwords)
@@ -787,10 +839,10 @@ void fservAtSetDefault(DWORD srcAddr, DWORD destAddr, DWORD numDwords)
     PLAYER_DETAILS* src = (PLAYER_DETAILS*)(srcAddr + 0x2c);
     PLAYER_DETAILS* dest = (PLAYER_DETAILS*)(destAddr + 0x2c);
 
-    //LOG(L"SDEF: src/dest: (%02x,%02x,%08x)/(%02x,%02x,%08x)", 
-    //    src->specialHair, src->specialFace,
-    //    src->faceHairBits, dest->specialHair,
-    //    dest->specialFace, dest->faceHairBits);
+    LOG(L"SDEF: src/dest: (%02x,%02x,%08x)/(%02x,%02x,%08x)", 
+        src->specialHair, src->specialFace,
+        src->faceHairBits, dest->specialHair,
+        dest->specialFace, dest->faceHairBits);
 
     // clear extended bits in the src
     src->faceHairBits &= CLEAR_EXTENDED_BITS;
@@ -798,8 +850,8 @@ void fservAtSetDefault(DWORD srcAddr, DWORD destAddr, DWORD numDwords)
     // execute game logic
     memcpy(dest, src, numDwords*sizeof(DWORD));
 
-    //LOG(L"SDEF: dest now: (%02x,%02x,%08x)",
-    //    dest->specialHair, dest->specialFace, dest->faceHairBits);
+    LOG(L"SDEF: dest now: (%02x,%02x,%08x)",
+        dest->specialHair, dest->specialFace, dest->faceHairBits);
 }
 
 void fservAtGetFaceBinCallPoint()
@@ -1081,49 +1133,60 @@ void fservReadReplayData(LPCVOID data, DWORD size)
 {
     LOG(L"Reading replay data:");
     REPLAY_DATA* replay = (REPLAY_DATA*)data;
-    // check faceId/hairId for players
-    // if we have the extended slots mapped, then ok
-    // --> otherwise, clear the corresponding bits
-    for (int i=0; i<22; i++) {
-        // debug
-        wchar_t* wname = Utf8::utf8ToUnicode(
-            (BYTE*)(replay->payload.players[i].name));
-        LOG(L"Player #%02d: %s", i, wname);
-        Utf8::free(wname);
+    if (memcmp(replay->ksSignature, REPLAY_SIG, 
+                sizeof(replay->ksSignature))==0) {
+        // check faceId/hairId for players
+        // if we have the extended slots mapped, then ok
+        // --> otherwise, clear the corresponding bits
+        for (int i=0; i<22; i++) {
+            // debug
+            wchar_t* wname = Utf8::utf8ToUnicode(
+                (BYTE*)(replay->payload.players[i].name));
+            LOG(L"Player #%02d: %s", i, wname);
+            Utf8::free(wname);
 
-        DWORD* pFaceHairBits = &replay->payload.players[i].faceHairBits;
+            DWORD* pFaceHairBits = &replay->payload.players[i].faceHairBits;
 
-        int faceId = GetFaceIdRaw(*pFaceHairBits);
-        if (faceId >= FIRST_XFACE_ID) {
-            if (!_fast_bin_table[faceId - FIRST_XFACE_ID]) {
-                // do not currently have any players mapped
-                // to that slot ==> clear extended bits, use maneken
-                *pFaceHairBits = *pFaceHairBits & CLEAR_EXTENDED_FACE_BITS;
-                SetSpecialFaceBits(pFaceHairBits, MANEKEN_ID);
-                LOG(L"nothing mapped to slot: %d. Skipping", 
-                    faceId + FIRST_FACE_SLOT - FIRST_XFACE_ID);
+            int faceId = GetFaceIdRaw(*pFaceHairBits);
+            if (faceId >= FIRST_XFACE_ID) {
+                if (!_fast_bin_table[faceId - FIRST_XFACE_ID]) {
+                    // do not currently have any players mapped
+                    // to that slot ==> clear extended bits, use maneken
+                    *pFaceHairBits = *pFaceHairBits & CLEAR_EXTENDED_FACE_BITS;
+                    SetSpecialFaceBits(pFaceHairBits, MANEKEN_ID);
+                    LOG(L"nothing mapped to slot: %d. Skipping", 
+                        faceId + FIRST_FACE_SLOT - FIRST_XFACE_ID);
+                }
+            }
+            else {
+                // normal bin
+                replay->payload.players[i].faceHairBits 
+                    &= CLEAR_EXTENDED_FACE_BITS;
+            }
+            int hairId = GetHairIdRaw(*pFaceHairBits);
+            if (hairId >= FIRST_XHAIR_ID) {
+                if (!_fast_bin_table[hairId - FIRST_XHAIR_ID]) {
+                    // do not currently have any players mapped
+                    // to that slot ==> clear extended bits, use maneken
+                    *pFaceHairBits = *pFaceHairBits & CLEAR_EXTENDED_HAIR_BITS;
+                    SetSpecialHairBits(pFaceHairBits, MANEKEN_ID);
+                    LOG(L"nothing mapped to slot: %d. Skipping", 
+                        hairId + FIRST_FACE_SLOT - FIRST_XHAIR_ID);
+                }
+            }
+            else {
+                // normal bin
+                replay->payload.players[i].faceHairBits 
+                    &= CLEAR_EXTENDED_HAIR_BITS;
             }
         }
-        else {
-            // normal bin
+    }
+    else {
+        // non-fs replay
+        // clear extended bits in all players
+        for (int i=0; i<22; i++) {
             replay->payload.players[i].faceHairBits 
-                &= CLEAR_EXTENDED_FACE_BITS;
-        }
-        int hairId = GetHairIdRaw(*pFaceHairBits);
-        if (hairId >= FIRST_XHAIR_ID) {
-            if (!_fast_bin_table[hairId - FIRST_XHAIR_ID]) {
-                // do not currently have any players mapped
-                // to that slot ==> clear extended bits, use maneken
-                *pFaceHairBits = *pFaceHairBits & CLEAR_EXTENDED_HAIR_BITS;
-                SetSpecialHairBits(pFaceHairBits, MANEKEN_ID);
-                LOG(L"nothing mapped to slot: %d. Skipping", 
-                    hairId + FIRST_FACE_SLOT - FIRST_XHAIR_ID);
-            }
-        }
-        else {
-            // normal bin
-            replay->payload.players[i].faceHairBits 
-                &= CLEAR_EXTENDED_HAIR_BITS;
+                &= CLEAR_EXTENDED_BITS;
         }
     }
 }
@@ -1133,7 +1196,7 @@ void fservWriteReplayData(LPCVOID data, DWORD size)
     LOG(L"Writing replay data:");
     REPLAY_DATA* replay = (REPLAY_DATA*)data;
     // set kitserver signature
-    memcpy(replay->ksSignature, "ks11", 4);
+    memcpy(replay->ksSignature, REPLAY_SIG, sizeof(replay->ksSignature));
 }
 
 KEXPORT DWORD fservGetFaceBin(DWORD faceId)
@@ -1162,5 +1225,32 @@ KEXPORT DWORD fservGetHairBin(DWORD hairId)
     LOG(L"_fast_bin_table[%d - %d] is NULL!", binId, FIRST_FACE_SLOT);
     LOG(L"hairId & 0x7ff = %d", (hairId & 0x7ff));
     return MANEKEN_ID; //hairId & 0x7ff;
+}
+
+void fservReadBalData(LPCVOID data, DWORD size)
+{
+    BAL* bal = (BAL*)data;
+    wchar_t* wideName = Utf8::utf8ToUnicode((BYTE*)bal->bal1.player.name);
+    LOG(L"BAL player: id=%d, name={%s}, faceHairBits=%08x, "
+        L"sHair=%02x, sFace=%02x",
+            bal->bal1.player.id, wideName, 
+            bal->bal2.playerDetails.faceHairBits,
+            bal->bal2.playerDetails.specialHair, 
+            bal->bal2.playerDetails.specialFace);
+
+    // clear extended bits for correct operation
+    bal->bal2.playerDetails.faceHairBits &= CLEAR_EXTENDED_BITS;
+
+    // Load face/hair, if specified (TODO)
+    // TEST:
+    //if (bal->bal1.player.id == 0x010000a0) {
+    //    bal->bal2.playerDetails.faceHairBits = 0x8af815f2;
+    //    bal->bal2.playerDetails.specialFace |= SPECIAL_FACE;
+    //    bal->bal2.playerDetails.specialHair |= SPECIAL_HAIR;
+    //}
+
+    LOG(L"BAL player: faceHairBits now: %08x", 
+            bal->bal2.playerDetails.faceHairBits);
+    Utf8::free(wideName);
 }
 

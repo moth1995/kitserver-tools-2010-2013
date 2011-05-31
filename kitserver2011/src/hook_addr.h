@@ -70,16 +70,16 @@ DWORD codeArray[][CODELEN] = {
   },
 };
 
-#define DATALEN 12
+#define DATALEN 13
 enum {
 	PLAYERDATA, ISREFEREEADDR,
 	GENERALINFO, REPLAYGENERALINFO,
     MENU_MODE_IDX, MAIN_SCREEN_INDICATOR, INGAME_INDICATOR,
     NEXT_MATCH_DATA_PTR, CUP_MODE_PTR, EDIT_DATA_PTR,
-    EDIT_DATA_SIZE, REPLAY_DATA_SIZE,
+    EDIT_DATA_SIZE, REPLAY_DATA_SIZE, BAL_DATA_SIZE,
 };
 
-#define NODATAADDR {0,0,0,0,0,0,0,0,0,0,0,0},
+#define NODATAADDR {0,0,0,0,0,0,0,0,0,0,0,0,0},
 DWORD dataArray[][DATALEN] = {
     // PES2011 demo
     {
@@ -87,7 +87,7 @@ DWORD dataArray[][DATALEN] = {
         0, 0,
         0, 0, 0,
         0, 0, 0,
-        6902664, 4694064,
+        6902664, 4694064, 8389024,
     },
     // PES2011
     {
@@ -95,7 +95,7 @@ DWORD dataArray[][DATALEN] = {
         0, 0,
         0, 0, 0,
         0, 0, 0,
-        6902664, 4694064,
+        6902664, 4694064, 8389024,
     },
     // PES2011 v1.01
     {
@@ -103,7 +103,7 @@ DWORD dataArray[][DATALEN] = {
         0, 0,
         0, 0, 0,
         0, 0, 0,
-        6902664, 4694064,
+        6902664, 4694064, 8389024,
     },
     // PES2011 v1.02
     {
@@ -111,7 +111,7 @@ DWORD dataArray[][DATALEN] = {
         0, 0,
         0, 0, 0,
         0, 0, 0,
-        6902664, 4694064,
+        6902664, 4694064, 8389024,
     },
     // PES2011 v1.03
     {
@@ -119,7 +119,7 @@ DWORD dataArray[][DATALEN] = {
         0, 0,
         0, 0, 0,
         0, 0, 0,
-        6902664, 4694064,
+        6902664, 4694064, 8389024,
     },
 };
 

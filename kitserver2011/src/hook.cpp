@@ -124,8 +124,10 @@ list<COPY_PLAYER_DATA_CALLBACK> _copyPlayerDataCallbacks;
 
 list<READ_DATA_CALLBACK> _writeEditDataCallbacks;
 list<READ_DATA_CALLBACK> _writeReplayDataCallbacks;
+list<READ_DATA_CALLBACK> _writeBalDataCallbacks;
 list<READ_DATA_CALLBACK> _readEditDataCallbacks;
 list<READ_DATA_CALLBACK> _readReplayDataCallbacks;
+list<READ_DATA_CALLBACK> _readBalDataCallbacks;
 
 ALLVOID g_orgBeginRender1 = NULL;
 ALLVOID g_orgBeginRender2 = NULL;
@@ -1522,6 +1524,11 @@ KEXPORT void addReadReplayDataCallback(READ_DATA_CALLBACK callback)
     _readReplayDataCallbacks.push_back(callback);
 }
 
+KEXPORT void addReadBalDataCallback(READ_DATA_CALLBACK callback)
+{
+    _readBalDataCallbacks.push_back(callback);
+}
+
 KEXPORT void addWriteEditDataCallback(WRITE_DATA_CALLBACK callback)
 {
     _writeEditDataCallbacks.push_back(callback);
@@ -1530,6 +1537,11 @@ KEXPORT void addWriteEditDataCallback(WRITE_DATA_CALLBACK callback)
 KEXPORT void addWriteReplayDataCallback(WRITE_DATA_CALLBACK callback)
 {
     _writeReplayDataCallbacks.push_back(callback);
+}
+
+KEXPORT void addWriteBalDataCallback(WRITE_DATA_CALLBACK callback)
+{
+    _writeBalDataCallbacks.push_back(callback);
 }
 
 /**
@@ -1652,10 +1664,29 @@ BOOL WINAPI hookReadFile(
                 data[REPLAY_DATA_SIZE] - 0x180);
     }
 
+    else if (nNumberOfBytesToRead == data[BAL_DATA_SIZE])  // BAL data
+    {
+        LOG(L"Loading BAL Data...");
+
+        // call the callbacks
+        for (list<READ_DATA_CALLBACK>::iterator it = _readBalDataCallbacks.begin();
+                it != _readBalDataCallbacks.end();
+                it++)
+            (*it)(lpBuffer, nNumberOfBytesToRead);
+
+        // adjust CRC32 checksum
+        DWORD* pChecksum = (DWORD*)((BYTE*)lpBuffer + 0x188);
+        *pChecksum = 0;
+        *pChecksum = GetCRC((BYTE*)lpBuffer + 0x180, 
+                data[BAL_DATA_SIZE] - 0x180);
+    }
+
     if (result && nNumberOfBytesToRead == data[EDIT_DATA_SIZE])
         LOG(L"Edit Data LOADED.");
     else if (result && nNumberOfBytesToRead == data[REPLAY_DATA_SIZE])
         LOG(L"Replay Data LOADED.");
+    else if (result && nNumberOfBytesToRead == data[BAL_DATA_SIZE])
+        LOG(L"BAL Data LOADED.");
 
     return result;
 }

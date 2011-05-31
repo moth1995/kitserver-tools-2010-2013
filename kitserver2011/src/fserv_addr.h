@@ -6,12 +6,12 @@ BYTE allowedGames[] = {
     gvPES2011v103,
 };
 
-#define CODELEN 7
+#define CODELEN 8
 enum { 
     C_CHECK_FACE_AND_HAIR_ID, //C_CHECK_FACE_ID, C_CHECK_HAIR_ID,
     C_GET_FACE_BIN, C_GOT_FACE_BIN,
     C_GET_HAIR_BIN, C_GOT_HAIR_BIN,
-    C_RESET_HAIR, C_SET_DEFAULT_PLAYER,
+    C_RESET_HAIR, C_SQUAD_LIST, C_SET_DEFAULT_PLAYER,
 };
 
 #define NOCODEADDR {0,0,0,0,0,0,0}
@@ -23,28 +23,28 @@ DWORD codeArray[][CODELEN] = {
         0x10dc276,
         0x10d4a13, 0x10d4a6e,
         0x119d945, 0x119d987,
-        0x6d9d71, 0x7a5eaf,
+        0x6d9d71, 0, 0x7a5eaf,
     },
     // PES2011 v1.01
     {
         0x10dc7d6,
         0x10d4f73, 0x10d4fce,
         0x119de95, 0x119ded7,
-        0x6d9bf1, 0x7a66bf,
+        0x6d9bf1, 0, 0x7a66bf,
     },
     // PES2011 v1.02
     {
         0x10dc936,
         0x10d50d3, 0x10d512e,
         0x119dff5, 0x119e037,
-        0x6d9c61, 0x7a642f,
+        0x6d9c61, 0, 0x7a642f,
     },
     // PES2011 v1.03
     { 
         0x10dc946, //0x10d50e7, 0x119e035,
         0x10d50e3, 0x10d513e,
         0x119e035, 0x119e077,
-        0x6d9c71, 0x7a644f,
+        0x6d9c71, 0x6d9cb1, 0x7a644f,
     },
 };
 

@@ -25,7 +25,8 @@ typedef struct _PLAYER_INFO
     BYTE specialFace;
     BYTE unknown5;
     DWORD unknown6;
-    DWORD unknown7;
+    WORD unknown7;
+    WORD index;
 
 } PLAYER_INFO;
 
@@ -39,7 +40,8 @@ typedef struct _PLAYER_DETAILS
     BYTE specialFace;
     BYTE unknown5;
     DWORD unknown6;
-    DWORD unknown7;
+    WORD unknown7;
+    WORD index;
 
 } PLAYER_DETAILS; 
 
@@ -54,25 +56,12 @@ typedef struct _PLAYER_DETAILS
  *
  */
 
-int GetHairId(PLAYER_INFO* p);
-int GetFaceId(PLAYER_INFO* p);
-
-bool IsSpecialHair(PLAYER_INFO* p);
-bool IsSpecialFace(PLAYER_INFO* p);
-void SetSpecialHair(PLAYER_INFO* p, int hairId);
-void SetSpecialFace(PLAYER_INFO* p, int faceId);
-
 const DWORD FIRST_HAIR_BIN = 3705;
 const DWORD FIRST_FACE_BIN = 131;
 
-//#define CLEAR_HAIR_MASK  0xfffff800
-//#define CLEAR_HAIR_FLAGS 0xffff87ff
-//#define CLEAR_FACE_MASK  0xffc07fff
-//#define CLEAR_FACE_FLAGS 0xc3ffffff
-#define CLEAR_HAIR_MASK  0xffff8000
-#define CLEAR_FACE_MASK  0xc0007fff
-#define CLEAR_EXTENDED_BITS 0xc3ff87ff
-#define CLEAR_EXTENDED_FACE_BITS 0xc3ffffff
-#define CLEAR_EXTENDED_HAIR_BITS 0xffff87ff
+#define CLEAR_HAIR_MASK  0xfffff800
+#define CLEAR_HAIR_FLAGS 0xffff87ff
+#define CLEAR_FACE_MASK  0xffc07fff
+#define CLEAR_FACE_FLAGS 0xc3ffffff
 
 #endif

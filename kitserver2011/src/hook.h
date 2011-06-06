@@ -130,7 +130,8 @@ KEXPORT void addReadBalDataCallback(READ_DATA_CALLBACK callback);
 typedef void (*MENU_EVENT_CALLBACK)(int delta, DWORD menuMode, DWORD ind, DWORD inGameInd, DWORD cupModeInd);
 KEXPORT void addMenuCallback(MENU_EVENT_CALLBACK callback);
 
-typedef void (*COPY_PLAYER_DATA_CALLBACK)(PLAYER_INFO* players, int place, bool writeList);
+typedef void (*COPY_PLAYER_DATA_CALLBACK)(
+    PLAYER_INFO* players, DWORD numBytes, int place, bool writeList);
 KEXPORT void addCopyPlayerDataCallback(COPY_PLAYER_DATA_CALLBACK callback);
 
 typedef void (*UNIFORM_SELECT_EVENT_CALLBACK)(bool enter);

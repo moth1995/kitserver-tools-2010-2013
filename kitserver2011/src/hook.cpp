@@ -118,8 +118,9 @@ list<UNIFORM_SELECT_EVENT_CALLBACK> _uniformSelectEventCallbacks;
 
 void hookAtCopyEditDataCallPoint1();
 void hookAtCopyEditDataCallPoint2();
-void hookCopyPlayerData(PLAYER_INFO* players, int place, bool writeList=true);
-void hookAtCopyEditData(DWORD dest, int place);
+void hookCopyPlayerData(
+    PLAYER_INFO* players, DWORD numBytes, int place, bool writeList=true);
+void hookAtCopyEditData(DWORD dest, DWORD numBytes, int place);
 list<COPY_PLAYER_DATA_CALLBACK> _copyPlayerDataCallbacks;
 
 list<READ_DATA_CALLBACK> _writeEditDataCallbacks;
@@ -1702,22 +1703,23 @@ KEXPORT void addCopyPlayerDataCallback(COPY_PLAYER_DATA_CALLBACK callback)
     _copyPlayerDataCallbacks.push_back(callback);
 }
 
-void hookCopyPlayerData(PLAYER_INFO* players, int place, bool writeList)
+void hookCopyPlayerData(PLAYER_INFO* players, DWORD numBytes, int place, bool writeList)
 {
     // call the callbacks
     for (list<COPY_PLAYER_DATA_CALLBACK>::iterator it = _copyPlayerDataCallbacks.begin();
             it != _copyPlayerDataCallbacks.end();
             it++)
-        (*it)(players, place, writeList);
+        (*it)(players, numBytes, place, writeList);
 }
 
-void hookAtCopyEditData(DWORD dest, int place)
+void hookAtCopyEditData(DWORD dest, DWORD numBytes, int place)
 {
     DWORD* pData = (DWORD*)data[PLAYERDATA];
     if (pData && *pData == dest-8) {
         // copying player data
-        LOG(L"data copy: player data loaded (place=%d)", place);
-        hookCopyPlayerData((PLAYER_INFO*)dest, place);
+        LOG(L"data copy: player data loaded (place=%d, numBytes=%08x)", 
+            place, numBytes);
+        hookCopyPlayerData((PLAYER_INFO*)dest, numBytes, place);
     }
 }
 
@@ -1739,10 +1741,12 @@ void hookAtCopyEditDataCallPoint1()
         push edx
         push esi
         push edi
+        mov ebx,dword ptr ss:[esp+0x38]
         push 1    // param: place
+        push ebx  // param: numBytes
         push eax  // param: dest
         call hookAtCopyEditData
-        add esp,8 // pop params
+        add esp,0x0c // pop params
         pop edi
         pop esi
         pop edx
@@ -1768,9 +1772,10 @@ void hookAtCopyEditDataCallPoint2()
         push esi
         push edi
         push 2    // param: place
+        push 0    // param: numBytes
         push eax  // param: dest
         call hookAtCopyEditData
-        add esp,8 // pop params
+        add esp,0x0c // pop params
         pop edi
         pop esi
         pop edx

@@ -1590,6 +1590,22 @@ BOOL WINAPI hookWriteFile(
         *pChecksum = GetCRC((BYTE*)lpBuffer + 0x180, 
                 data[REPLAY_DATA_SIZE] - 0x180);
     }
+    else if (nNumberOfBytesToWrite == data[BAL_DATA_SIZE])  // BAL data
+    {
+        LOG(L"Saving BAL Data...");
+
+        // call the callbacks
+        for (list<WRITE_DATA_CALLBACK>::iterator it = _writeBalDataCallbacks.begin();
+                it != _writeBalDataCallbacks.end();
+                it++)
+            (*it)(lpBuffer, nNumberOfBytesToWrite);
+
+        // adjust CRC32 checksum
+        DWORD* pChecksum = (DWORD*)((BYTE*)lpBuffer + 0x188);
+        *pChecksum = 0;
+        *pChecksum = GetCRC((BYTE*)lpBuffer + 0x180, 
+                data[BAL_DATA_SIZE] - 0x180);
+    }
 
     //BOOL result = _writeFile(
     BOOL result = WriteFile(
@@ -1603,6 +1619,8 @@ BOOL WINAPI hookWriteFile(
         LOG(L"Edit Data SAVED.");
     else if (result && nNumberOfBytesToWrite == data[REPLAY_DATA_SIZE])
         LOG(L"Replay Data SAVED.");
+    else if (result && nNumberOfBytesToWrite == data[BAL_DATA_SIZE])
+        LOG(L"BAL Data SAVED.");
 
     return result;
 }

@@ -36,6 +36,9 @@
 
 #define NETWORK_MODE 4
 
+#define FIRST_BAL_ID 0x010000a0
+#define NUM_BAL_PLAYERS 20
+
 #define MAX_FACE_ID 1500
 #define MAX_HAIR_ID 1500
 #define MANEKEN_ID 948
@@ -55,6 +58,7 @@ public:
 
 fserv_config_t _fserv_config;
 
+/*
 class player_facehair_t
 {
 public:
@@ -68,6 +72,7 @@ public:
         faceHairBits(p->faceHairBits)
     {}
 };
+*/
 
 // GLOBALS
 hash_map<DWORD,wstring> _player_face;
@@ -75,12 +80,12 @@ hash_map<DWORD,wstring> _player_hair;
 hash_map<DWORD,WORD> _player_face_slot;
 hash_map<DWORD,WORD> _player_hair_slot;
 
-hash_map<DWORD,player_facehair_t> _saved_facehair;
+//hash_map<DWORD,player_facehair_t> _saved_facehair;
+
+hash_map<DWORD,BYTE> _saved_facebit;
+hash_map<DWORD,BYTE> _saved_hairbit;
 
 wstring* _fast_bin_table[NUM_SLOTS-FIRST_FACE_SLOT];
-
-bool _struct_replaced = false;
-int _num_slots = 8094;
 
 DWORD _gotFaceBin = 0;
 DWORD _gotHairBin = 0;
@@ -131,6 +136,7 @@ void fservWriteEditData(LPCVOID data, DWORD size);
 void fservReadReplayData(LPCVOID data, DWORD size);
 void fservWriteReplayData(LPCVOID data, DWORD size);
 void fservReadBalData(LPCVOID data, DWORD size);
+void fservWriteBalData(LPCVOID data, DWORD size);
 
 static void string_strip(wstring& s)
 {
@@ -247,6 +253,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     addReadEditDataCallback(fservReadEditData);
     addWriteReplayDataCallback(fservWriteReplayData);
     addWriteEditDataCallback(fservWriteEditData);
+    addWriteBalDataCallback(fservWriteBalData);
 
     // initialize face/hair map
     InitMaps();
@@ -404,7 +411,9 @@ void fservCopyPlayerData(
     hash_map<int,bool> hairsUsed;
     hash_map<int,bool> facesUsed;
 
-    _saved_facehair.clear();
+    //_saved_facehair.clear();
+    _saved_facebit.clear();
+    _saved_hairbit.clear();
     
     _player_face_slot.clear();
     _player_hair_slot.clear();
@@ -416,6 +425,7 @@ void fservCopyPlayerData(
     multimap<string,DWORD> mm;
     for (WORD i=0; i<numPlayers; i++)
     {
+        // assign index
         players[i].index = i;
 
         if (players[i].id == 0) {
@@ -425,6 +435,8 @@ void fservCopyPlayerData(
             continue;  // no player at this player slot
         }
 
+        bool modified(false);
+
         // assign slots
         hash_map<DWORD,wstring>::iterator sit;
         sit = _player_face.find(players[i].id);
@@ -432,25 +444,29 @@ void fservCopyPlayerData(
             DWORD slot = FIRST_FACE_SLOT + i*2;
             _fast_bin_table[slot - FIRST_FACE_SLOT] = &sit->second;
             _player_face_slot.insert(pair<DWORD,WORD>(sit->first,slot));
+
+            // save original face bit
+            _saved_facebit.insert(pair<DWORD,BYTE>(
+                i, players[i].specialFace & SPECIAL_FACE));
+            
         }
         sit = _player_hair.find(players[i].id);
         if (sit != _player_hair.end()) {
             DWORD slot = FIRST_FACE_SLOT + i*2 + 1;
             _fast_bin_table[slot - FIRST_FACE_SLOT] = &sit->second;
             _player_hair_slot.insert(pair<DWORD,WORD>(sit->first,slot));
-        }
 
-        // save original info
-        player_facehair_t facehair(&players[i]);
-        _saved_facehair.insert(
-            pair<DWORD,player_facehair_t>(i, facehair));
+            // save original hair bit
+            _saved_hairbit.insert(pair<DWORD,BYTE>(
+                i, players[i].specialHair & SPECIAL_HAIR));
+        }
 
         hash_map<DWORD,WORD>::iterator it = 
             _player_face_slot.find(players[i].id);
         if (it != _player_face_slot.end())
         {
-            LOG(L"player %d assigned slot (face) #%d",
-                    players[i].id,it->second);
+            LOG(L"player %d assigned slot (face) #%d (index=0x%x)",
+                    players[i].id,it->second, i);
             // if not unique face, remember that for later restoring
             //if (!(IsSpecialFace(&players[i]))) {
             //    _non_unique_face.push_back(i);
@@ -461,8 +477,8 @@ void fservCopyPlayerData(
         it = _player_hair_slot.find(players[i].id);
         if (it != _player_hair_slot.end())
         {
-            LOG(L"player %d assigned slot (hair) #%d",
-                    players[i].id,it->second);
+            LOG(L"player %d assigned slot (hair) #%d (index=0x%x)",
+                    players[i].id,it->second, i);
             // if not unique hair, remember that for later restoring
             //if (!(IsSpecialHair(&players[i]))) {
             //    _non_unique_hair.push_back(i);
@@ -502,6 +518,28 @@ void fservCopyPlayerData(
         //if (players[i].index != 0) {
         //    indexTaken = true;
         //}
+    }
+
+    // BAL players
+    for (DWORD id=FIRST_BAL_ID; id<FIRST_BAL_ID+NUM_BAL_PLAYERS; id++) {
+        // assign slots
+        hash_map<DWORD,wstring>::iterator sit;
+        sit = _player_face.find(id);
+        if (sit != _player_face.end()) {
+            DWORD slot = FIRST_FACE_SLOT + (MAX_PLAYERS+id-FIRST_BAL_ID)*2;
+            _fast_bin_table[slot - FIRST_FACE_SLOT] = &sit->second;
+            _player_face_slot.insert(pair<DWORD,WORD>(sit->first,slot));
+            LOG(L"BAL player %d assigned slot (face) #%d (index=0x%x)",
+                    id, slot, (slot-FIRST_FACE_SLOT)/2);
+        }
+        sit = _player_hair.find(id);
+        if (sit != _player_hair.end()) {
+            DWORD slot = FIRST_FACE_SLOT + (MAX_PLAYERS+id-FIRST_BAL_ID)*2 + 1;
+            _fast_bin_table[slot - FIRST_FACE_SLOT] = &sit->second;
+            _player_hair_slot.insert(pair<DWORD,WORD>(sit->first,slot));
+            LOG(L"BAL player %d assigned slot (hair) #%d (index=0x%x)",
+                    id, slot, (slot-FIRST_FACE_SLOT)/2);
+        }
     }
 
     //LOG(L"indexTaken=%d", indexTaken);
@@ -707,7 +745,31 @@ void fservAtOnlineEnter(DWORD src, DWORD dest, DWORD size)
         if (pSrc->index != 0) {
             //LOG(L"pSrc->index = %d", pSrc->index);
             //LOG(L"online reset for player index %d", pSrc->index);
+            //
+            DWORD addr = (DWORD)&(pDest->index);
+            if (dest <= addr && addr < dest+size) {
+                pDest->index = 0;
+            }
 
+            hash_map<DWORD,BYTE>::iterator it;
+            it = _saved_facebit.find(pSrc->index);
+            if (it != _saved_facebit.end()) {
+                addr = (DWORD)&(pDest->specialFace);
+                if (dest <= addr && addr < dest+size) {
+                    pDest->specialFace &= ~SPECIAL_FACE;
+                    pDest->specialFace |= it->second;
+                }
+            }
+            it = _saved_hairbit.find(pSrc->index);
+            if (it != _saved_hairbit.end()) {
+                addr = (DWORD)&(pDest->specialHair);
+                if (dest <= addr && addr < dest+size) {
+                    pDest->specialHair &= ~SPECIAL_HAIR;
+                    pDest->specialHair |= it->second;
+                }
+            }
+
+            /*
             hash_map<DWORD,player_facehair_t>::iterator it;
             it = _saved_facehair.find(pSrc->index);
             if (it != _saved_facehair.end()) {
@@ -732,6 +794,7 @@ void fservAtOnlineEnter(DWORD src, DWORD dest, DWORD size)
                     pDest->index = 0;
                 }
             }
+            */
         }
     }
 }
@@ -1043,11 +1106,26 @@ void fservWriteEditData(LPCVOID data, DWORD size)
 
     // restore face/hair settings
     PLAYER_INFO* players = (PLAYER_INFO*)((BYTE*)data + 0x1a0);
+    /*
     hash_map<DWORD,player_facehair_t>::iterator it;
     for (it = _saved_facehair.begin(); it != _saved_facehair.end(); it++) {
-        players[it->first].specialHair = it->second.specialHair;
-        players[it->first].specialFace = it->second.specialFace;
         players[it->first].index = 0;
+        players[it->first].specialFace &= ~SPECIAL_FACE;
+        players[it->first].specialFace |= it->second.specialFace & SPECIAL_FACE;
+        players[it->first].specialHair &= ~SPECIAL_HAIR;
+        players[it->first].specialHair |= it->second.specialHair & SPECIAL_HAIR;
+    }
+    */
+    hash_map<DWORD,BYTE>::iterator it;
+    for (it = _saved_facebit.begin(); it != _saved_facebit.end(); it++) {
+        players[it->first].index = 0;
+        players[it->first].specialFace &= ~SPECIAL_FACE;
+        players[it->first].specialFace |= it->second;
+    }
+    for (it = _saved_hairbit.begin(); it != _saved_hairbit.end(); it++) {
+        players[it->first].index = 0;
+        players[it->first].specialHair &= ~SPECIAL_HAIR;
+        players[it->first].specialHair |= it->second;
     }
 }
 
@@ -1128,17 +1206,83 @@ void fservReadBalData(LPCVOID data, DWORD size)
             bal->bal2.playerDetails.faceHairBits,
             bal->bal2.playerDetails.specialHair, 
             bal->bal2.playerDetails.specialFace);
-
-    // Load face/hair, if specified (TODO)
-    // TEST:
-    //if (bal->bal1.player.id == 0x010000a0) {
-    //    bal->bal2.playerDetails.faceHairBits = 0x8af815f2;
-    //    bal->bal2.playerDetails.specialFace |= SPECIAL_FACE;
-    //    bal->bal2.playerDetails.specialHair |= SPECIAL_HAIR;
-    //}
-
-    LOG(L"BAL player: faceHairBits now: %08x", 
-            bal->bal2.playerDetails.faceHairBits);
     Utf8::free(wideName);
+
+    // Adjust face/hair bytes, if specified.
+    hash_map<DWORD,WORD>::iterator it;
+    it = _player_face_slot.find(bal->bal1.player.id);
+    if (it != _player_face_slot.end())
+    {
+        WORD index = MAX_PLAYERS + (bal->bal1.player.id - FIRST_BAL_ID);
+        LOG(L"BAL player %d has face slot=#%d (index=0x%x)",
+                bal->bal1.player.id, it->second, index);
+
+        bal->bal4.faceBit = bal->bal2.playerDetails.specialFace & SPECIAL_FACE;
+        LOG(L"faceBit = %02x", bal->bal4.faceBit);
+
+        bal->bal2.playerDetails.index = index;
+        bal->bal2.playerDetails.specialFace |= SPECIAL_FACE;
+        bal->bal3.player.index = index;
+        bal->bal3.player.specialFace |= SPECIAL_FACE;
+    }
+    it = _player_hair_slot.find(bal->bal1.player.id);
+    if (it != _player_hair_slot.end())
+    {
+        WORD index = MAX_PLAYERS + (bal->bal1.player.id - FIRST_BAL_ID);
+        LOG(L"BAL player %d has hair slot=#%d (index=0x%x)",
+                bal->bal1.player.id, it->second, index);
+
+        bal->bal4.hairBit = bal->bal2.playerDetails.specialHair & SPECIAL_HAIR;
+        LOG(L"hairBit = %02x", bal->bal4.hairBit);
+
+        bal->bal2.playerDetails.index = index;
+        bal->bal2.playerDetails.specialHair |= SPECIAL_HAIR;
+        bal->bal3.player.index = index;
+        bal->bal3.player.specialHair |= SPECIAL_HAIR;
+    }
+}
+
+void fservWriteBalData(LPCVOID data, DWORD size)
+{
+    BAL* bal = (BAL*)data;
+    wchar_t* wideName = Utf8::utf8ToUnicode((BYTE*)bal->bal1.player.name);
+    LOG(L"BAL player: id=%d, name={%s}, faceHairBits=%08x, "
+        L"sHair=%02x, sFace=%02x",
+            bal->bal1.player.id, wideName, 
+            bal->bal2.playerDetails.faceHairBits,
+            bal->bal2.playerDetails.specialHair, 
+            bal->bal2.playerDetails.specialFace);
+    Utf8::free(wideName);
+
+    // Restore face/hair bytes, if specified.
+    hash_map<DWORD,WORD>::iterator it;
+    it = _player_face_slot.find(bal->bal1.player.id);
+    if (it != _player_face_slot.end())
+    {
+        WORD index = MAX_PLAYERS + (bal->bal1.player.id - FIRST_BAL_ID);
+        LOG(L"BAL player %d has face slot=#%d (index=0x%x)",
+                bal->bal1.player.id, it->second, index);
+        bal->bal2.playerDetails.index = 0;
+        bal->bal2.playerDetails.specialFace &= ~SPECIAL_FACE;
+        bal->bal2.playerDetails.specialFace |= bal->bal4.faceBit;
+        bal->bal3.player.index = 0;
+        bal->bal3.player.specialFace &= ~SPECIAL_FACE;
+        bal->bal3.player.specialFace |= bal->bal4.faceBit;
+        LOG(L"specialFace now: %02x", bal->bal3.player.specialFace);
+    }
+    it = _player_hair_slot.find(bal->bal1.player.id);
+    if (it != _player_hair_slot.end())
+    {
+        WORD index = MAX_PLAYERS + (bal->bal1.player.id - FIRST_BAL_ID);
+        LOG(L"BAL player %d has hair slot=#%d (index=0x%x)",
+                bal->bal1.player.id, it->second, index);
+        bal->bal2.playerDetails.index = 0;
+        bal->bal2.playerDetails.specialHair &= ~SPECIAL_HAIR;
+        bal->bal2.playerDetails.specialHair |= bal->bal4.hairBit;
+        bal->bal3.player.index = 0;
+        bal->bal3.player.specialHair &= ~SPECIAL_HAIR;
+        bal->bal3.player.specialHair |= bal->bal4.hairBit;
+        LOG(L"specialHair now: %02x", bal->bal3.player.specialHair);
+    }
 }
 

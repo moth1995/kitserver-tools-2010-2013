@@ -132,6 +132,9 @@ kserv.dll: kserv.lib kserv.res
 kserv.obj: kserv.cpp kserv.h kserv_addr.h kserv.rc dllinit.h afsio.h teaminfo.h
 gdb.obj: gdb.cpp gdb.h
 
+tab1.exe: tab1.obj
+	$(LINK) $(LFLAGS) /out:tab1.exe tab1.obj $(LIBS)
+
 setupgui.obj: setupgui.cpp setupgui.h
 manager.obj: manager.cpp manager.h setupgui.h
 manager.exe: manager.obj detect.obj setupgui.obj imageutil.obj lang.obj configs.obj manager.res

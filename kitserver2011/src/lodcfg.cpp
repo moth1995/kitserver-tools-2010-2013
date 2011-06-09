@@ -195,6 +195,54 @@ void ResetSpeedSwitch()
             (LPARAM)getTickValue2(1.0));
 }
 
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+LRESULT CALLBACK WindowProc1(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    // get the tab message from lParam
+    LPNMHDR lpnmhdr = (LPNMHDR)lParam;
+
+    switch(uMsg)
+    {
+        case WM_NOTIFY:
+            // if we received the TCN_SELCHANGE message, process it
+            // (TCN_SELCHANGE is when the selection changes from
+            // one tab item to another)
+            if (lpnmhdr->code == TCN_SELCHANGE)
+            {
+                // get the currently selected tab item
+                int iPage = TabCtrl_GetCurSel(hTab);
+
+                // hide and show the appropriate tab view
+                // based on which tab item was clicked
+                switch (iPage)
+                {
+                    // Tab1 (item 0) was clicked
+                    case 0:
+                        ShowLODTab(SW_HIDE);
+                        ShowMiscTab(SW_SHOW);
+                        break;
+
+                    // Tab2 (item 1) was clicked
+                    case 1:
+                        ShowMiscTab(SW_HIDE);
+                        ShowLODTab(SW_SHOW);
+                        break;
+
+                    default:
+                        // don't do anything if the tab item isn't 0 or 1
+                        break;
+                }
+            }
+            else {
+                // forward
+                WindowProc(hWnd, WM_COMMAND, wParam, lParam);
+            }
+            break;
+    }
+    return WindowProc(hwnd, uMsg, wParam, lParam);
+}
+
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch(uMsg)
@@ -877,7 +925,7 @@ bool InitApp(HINSTANCE hInstance, LPSTR lpCmdLine)
 	// cbSize - the size of the structure.
 	wcx.cbSize = sizeof(WNDCLASSEX);
 	wcx.style = CS_HREDRAW | CS_VREDRAW;
-	wcx.lpfnWndProc = (WNDPROC)WindowProc;
+	wcx.lpfnWndProc = (WNDPROC)WindowProc1;
 	wcx.cbClsExtra = 0;
 	wcx.cbWndExtra = 0;
 	wcx.hInstance = hInstance;
@@ -1616,12 +1664,27 @@ void UpdateConfig(LMCONFIG& cfg)
     }
 }
 
+/*
+    initialize common controls
+*/
+void InitComCtls()
+{
+    INITCOMMONCONTROLSEX icce = {0};
+
+    icce.dwSize = sizeof(INITCOMMONCONTROLSEX);
+    icce.dwICC = ICC_WIN95_CLASSES;
+    InitCommonControlsEx(&icce);
+}
+
 int APIENTRY WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      LPSTR     lpCmdLine,
                      int       nCmdShow)
 {
 	MSG msg; int retval;
+
+    // init common controls
+    InitComCtls();
 
  	if(InitApp(hInstance, lpCmdLine) == false)
 		return 0;

@@ -5,12 +5,18 @@
 
 #include <windows.h>
 
-#define WIN_WIDTH 540 
+//#define WIN_WIDTH 540 
+#define WIN_WIDTH 600 
 //#define WIN_HEIGHT 315
 //#define WIN_HEIGHT 310
 //#define WIN_HEIGHT 690
 //#define WIN_HEIGHT 660
-#define WIN_HEIGHT 777
+//#define WIN_HEIGHT 777
+#define WIN_HEIGHT 580
+
+extern HWND hTab;        // our tab control
+extern HWND hTabView1;   // view window for tab1
+extern HWND hTabView2;   // view window for tab2
 
 extern HWND g_lodListControl[5];          // lod lists
 extern HWND g_crowdCheckBox;              // crowd
@@ -86,5 +92,8 @@ int getTickValue2(float switchValue);
 float getSwitchValue2(int tickValue);
 float getMaxSwitchValue2();
 float getMinSwitchValue2();
+
+void ShowMiscTab(int flag);
+void ShowLODTab(int flag);
 
 #endif

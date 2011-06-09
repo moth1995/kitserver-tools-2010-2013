@@ -5,8 +5,8 @@
 
 #include <windows.h>
 
-//#define WIN_WIDTH 540 
-#define WIN_WIDTH 600 
+#define WIN_WIDTH 540 
+//#define WIN_WIDTH 600 
 //#define WIN_HEIGHT 315
 //#define WIN_HEIGHT 310
 //#define WIN_HEIGHT 690
@@ -37,6 +37,8 @@ extern HWND g_resHeightControl;
 extern HWND g_arCheckBox;
 extern HWND g_arRadio1;
 extern HWND g_arRadio2;
+extern HWND g_pqCheckBox;
+extern HWND g_pqRadio[3];
 extern HWND g_arEditControl;
 extern HWND g_angleControl;
 extern HWND g_timeCheckBox;

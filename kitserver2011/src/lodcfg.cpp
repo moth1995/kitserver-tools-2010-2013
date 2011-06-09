@@ -395,6 +395,13 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         EnableWindow(g_arEditControl, false);
                     }
                 }
+				else if ((HWND)lParam == g_pqCheckBox)
+                {
+                    bool checked = SendMessage(g_pqCheckBox,BM_GETCHECK,0,0);
+                    for (int i=0; i<3; i++) {
+                        EnableWindow(g_pqRadio[i], checked);
+                    }
+                }
 				else if ((HWND)lParam == g_arRadio1)
                 {
                     EnableWindow(g_arEditControl, false);
@@ -951,12 +958,17 @@ HWND BuildWindow(int nCmdShow)
 	style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 	xstyle = WS_EX_LEFT;
 
+    RECT r = {0};
+    GetWindowRect(GetDesktopWindow(), &r);
+    int x = (r.left+r.right)/2 - WIN_WIDTH/2;
+    int y = (r.top+r.bottom)/2 - WIN_HEIGHT/2;
+
 	retval = CreateWindowEx(xstyle,
         "LODCFGCLS",      // class name
         LODCFG_WINDOW_TITLE, // title for our window (appears in the titlebar)
         style,
-        CW_USEDEFAULT,  // initial x coordinate
-        CW_USEDEFAULT,  // initial y coordinate
+        x, //CW_USEDEFAULT,  // initial x coordinate
+        y, //CW_USEDEFAULT,  // initial y coordinate
         WIN_WIDTH, WIN_HEIGHT,   // width and height of the window
         NULL,           // no parent window.
         NULL,           // no menu

@@ -42,6 +42,8 @@ HWND g_resWidthControl;
 HWND g_resHeightControl;
 HWND g_arRadio1;
 HWND g_arRadio2;
+HWND g_pqCheckBox;
+HWND g_pqRadio[3];
 HWND g_arEditControl;
 HWND g_angleControl;
 HWND g_timeControl;
@@ -241,10 +243,10 @@ void CreateTabControl(HWND hMainWindow)
                WC_TABCONTROL,          // tab control constant
                L"",                     // text/caption
                WS_CHILD | WS_VISIBLE,  // is a child control, and visible
-               5,                      // X position - device units from left
-               5,                      // Y position - device units from top
-               WIN_WIDTH-17,        // Width - in device units
-               WIN_HEIGHT-75,       // Height - in device units
+               2,                      // X position - device units from left
+               2,                      // Y position - device units from top
+               WIN_WIDTH-15,        // Width - in device units
+               WIN_HEIGHT-80,       // Height - in device units
                hMainWindow,            // parent window
                NULL,                   // no menu
                NULL,//hInst,                 // instance
@@ -267,7 +269,7 @@ void CreateTabControl(HWND hMainWindow)
     // start adding items to our tab control
     TCITEM tie = {0};  // tab item structure
     TCHAR pszTab1 [] = L"Misc settings";  // tab1's text
-    TCHAR pszTab2 [] = L"LOD settings";  // tab2's text
+    TCHAR pszTab2 [] = L"LOD configuration";  // tab2's text
 
     // set up tab item structure for Tab1
     tie.mask = TCIF_TEXT;  // we're only displaying text in the tabs
@@ -410,7 +412,7 @@ bool BuildControls(HWND parent)
 
     // all goes into tabs
     HWND real_parent = parent;
-    parent = hTab;
+    //parent = hTab;
 
 	// Get a handle to the stock font object
 	hObj = GetStockObject(DEFAULT_GUI_FONT);
@@ -426,7 +428,7 @@ bool BuildControls(HWND parent)
 
 	// TOP SECTION: Aspect ratio
 
-	borW = WIN_WIDTH - spacer*5;
+	borW = WIN_WIDTH - spacer*4;
 	statW = 40;
 	boxW = borW - statW - spacer*3; boxH = 22; statH = 16;
 	borH = spacer*3 + boxH*2;
@@ -591,14 +593,52 @@ bool BuildControls(HWND parent)
     y += butH + spacer*3;
     */
 
+    // Picture quality
+    //////////////////
+    
+    x = spacer;
+   	HWND staticBorderTopControl6 = CreateWindowEx(
+			xstyle, L"Static", L"", WS_CHILD | WS_VISIBLE | SS_ETCHEDFRAME,
+			x, y, borW, boxH*2+spacer*2,
+			parent, NULL, NULL, NULL);
+    _misc_tab_list.push_back(staticBorderTopControl6);
+
+    y += spacer;
+    x += spacer;
+ 
+	g_pqCheckBox = CreateWindowEx(
+			xstyle, L"button", L"Enforce picture quality", 
+            WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+			x, y+4, borW/2, statH,
+			parent, NULL, NULL, NULL);
+    _misc_tab_list.push_back(g_pqCheckBox);
+    SetDefaultFont(g_pqCheckBox);
+    y += statH + spacer;
+
+    x = spacer*2 + 40;
+	style = WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON;
+    butW = 70;
+    wchar_t* pqTexts[] = {L"Low",L"Medium",L"High"};
+    for (int i=0; i<3; i++) {
+        g_pqRadio[i] = CreateWindowEx(
+                xstyle, L"button", pqTexts[i], style,
+                x, y, butW, butH,
+                parent, NULL, NULL, NULL);
+        _misc_tab_list.push_back(g_pqRadio[i]);
+        SetDefaultFont(g_pqRadio[i]);
+        EnableWindow(g_pqRadio[i], FALSE);
+        x += butW + 100;
+    }
+    y += butH + spacer*2;
+
     UINT org_borW = borW;
 
     // controller check
     //y += spacer*3;
     topY = y;
     statW = 250;
-    statW = statW/2 - spacer;
-    borW = borW/2 - spacer;
+    //statW = statW/2 - spacer;
+    //borW = borW/2 - spacer;
     x = spacer;
 	HWND staticBorderTopControl4 = CreateWindowEx(
 			xstyle, L"Static", L"", WS_CHILD | WS_VISIBLE | SS_ETCHEDFRAME,
@@ -609,7 +649,9 @@ bool BuildControls(HWND parent)
     y += spacer;
     x = spacer*2;
 	g_controllerCheckBox = CreateWindowEx(
-			xstyle, L"button", L"Free sides selection", 
+			xstyle, L"button", 
+            L"Free sides selection  "
+            L"(makes controllers move freely between sides)",
             WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
 			x, y, statW*2-spacer, butH,
 			parent, NULL, NULL, NULL);
@@ -618,6 +660,7 @@ bool BuildControls(HWND parent)
 	y += boxH + spacer*2;
     x = spacer*2;
 
+    /*
     // time control
     x = spacer;
 	HWND staticTimeBorderTopControl = CreateWindowEx(
@@ -660,10 +703,12 @@ bool BuildControls(HWND parent)
 
     x = spacer * 2;
     y += butH + spacer*3;
+    */
 
     // Game speed
-    x = spacer*3 + borW;
-    y = topY;
+    //x = spacer*3 + borW;
+    //y = topY;
+    x = spacer;
 
    	HWND staticBorderTopControl5 = CreateWindowEx(
 			xstyle, L"Static", L"", WS_CHILD | WS_VISIBLE | SS_ETCHEDFRAME,
@@ -698,9 +743,11 @@ bool BuildControls(HWND parent)
     y += th + spacer;
 
     SendMessage(g_speedTrackBarControl, 
-            TBM_SETTICFREQ, (WPARAM)2, 0);
+            TBM_SETTICFREQ, (WPARAM)1, 0);
 
-    y += spacer*4;
+    y += spacer*2;
+
+
 
     // LOD
     /////////////////////////////////////////////////////////////
@@ -1149,10 +1196,10 @@ bool BuildControls(HWND parent)
     // 
 	style = WS_CHILD | WS_VISIBLE;
     y = WIN_HEIGHT-65;
-    borW = borW/2 - spacer;
+    //borW = borW/2 - spacer;
 	
-    borW = (borW + spacer)*2;
-	x = borW - butW + spacer*2;
+    //borW = (borW + spacer)*2;
+	x = borW - butW + 5;
 	g_saveButtonControl = CreateWindowEx(
 			xstyle, L"Button", L"Save", style,
 			x, y, butW + spacer, butH,

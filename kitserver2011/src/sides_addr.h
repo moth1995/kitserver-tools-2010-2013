@@ -1,5 +1,6 @@
 // ADDRESSES for sides module
 BYTE allowedGames[] = {
+    gvPES2011,
     gvPES2011v101,
     gvPES2011v102,
     gvPES2011v103,
@@ -15,13 +16,21 @@ DWORD codeArray[][CODELEN] = {
     // PES2011 demo
     NOCODEADDR,
     // PES2011 
-    NOCODEADDR,
+    {
+        0x4fcbce, 0x4fb79b, 0x4fc41a, 0x4fc38e,
+    },
     // PES2011 v1.01
-    0x4fcbae, 0x4fb77b, 0x4fc3fa, 0x4fc36e,
+    {
+        0x4fcbae, 0x4fb77b, 0x4fc3fa, 0x4fc36e,
+    },
     // PES2011 v1.02
-    0x4fcc5e, 0x4fb82b, 0x4fc4aa, 0x4fc41e,
+    {
+        0x4fcc5e, 0x4fb82b, 0x4fc4aa, 0x4fc41e,
+    },
     // PES2011 v1.03
-    0x4fcc5e, 0x4fb82b, 0x4fc4aa, 0x4fc41e,
+    {
+        0x4fcc5e, 0x4fb82b, 0x4fc4aa, 0x4fc41e,
+    },
 };
 
 #define DATALEN 1 

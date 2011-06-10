@@ -1,5 +1,6 @@
 // ADDRESSES for lodmixer.cpp
 BYTE allowedGames[] = {
+    gvPES2011,
     gvPES2011v101,
     gvPES2011v102,
     gvPES2011v103,
@@ -15,7 +16,9 @@ DWORD codeArray[][CODELEN] = {
     // PES2011 demo
     NOCODEADDR,
     // PES2011 
-    NOCODEADDR,
+    {
+        0x1122e73, 0x112603a, 0x1125cf4,
+    },
     // PES2011 v1.01 
     {
         0x11233d3, 0x112659a, 0x1126254,
@@ -43,7 +46,12 @@ DWORD dataArray[][DATALEN] = {
     // PES2011 demo
     NODATAADDR,
     // PES2011 
-    NODATAADDR,
+    {
+        0x1940370, 0x1940374, 0x1940378,
+        0x143df84, 0x1440da0,
+        0x15a2dd0, 0x15a2e18,
+        0x1535760, 0x1535788,
+    },
     // PES2011 v1.01
     {
         0x19403c8, 0x19403cc, 0x19403d0,

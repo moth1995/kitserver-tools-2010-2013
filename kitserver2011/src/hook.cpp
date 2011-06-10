@@ -370,7 +370,7 @@ HRESULT STDMETHODCALLTYPE newCreateDevice(IDirect3D9* self, UINT Adapter,
 	g_device = *ppReturnedDeviceInterface;
 	g_device->AddRef();
 
-	if (g_device) {
+	if (0) {//g_device) {
 		DWORD* vtable = (DWORD*)(*((DWORD*)g_device));
 		// the first vtable is overwritten by the second one on resets
 		DWORD* vtable2 = *(DWORD**)(vtable - 1);

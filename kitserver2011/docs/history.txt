@@ -6,7 +6,7 @@ Kitserver 11 HISTORY notes
 ----------
 v11.1.0
 - faceserver: initial release
-- kserv: added handling of extra teams
+- kserv: added handling of extra teams (ID up to 499)
 - lodmixer: automatic AR-correction, 
             custom resolution selection,
             picture quality overwrite.

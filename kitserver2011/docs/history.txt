@@ -1,5 +1,16 @@
-Kitserver 2011 HISTORY notes
-============================
+Kitserver 11 HISTORY notes
+==========================
+
+
+2011-06-09
+----------
+v11.1.0
+- faceserver: initial release
+- kserv: added handling of extra teams
+- lodmixer: automatic AR-correction, 
+            custom resolution selection,
+            picture quality overwrite.
+- manager.exe: is back
 
 
 2011-03-02

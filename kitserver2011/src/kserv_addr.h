@@ -1,6 +1,6 @@
 // ADDRESSES for kserv.cpp
 BYTE allowedGames[] = {
-    //gvPES2010v13,
+    gvPES2011,
     gvPES2011v101,
     gvPES2011v102,
     gvPES2011v103,
@@ -16,19 +16,15 @@ enum {
 
 #define NOCODEADDR {0,0,0,0,0,0,0,0,0}
 DWORD codeArray[][CODELEN] = { 
-    /*
-    // PES2010 v1.3
-    {
-        0xf417b5, 0xf41745, 
-        0xef1a2b, 0xef28ab, 0x10a8a41,
-        0xf05dee, 0x12838d8,
-        0xfdf79e, 0xb82aaf,
-    },
-    */
     // PES2011 demo
     NOCODEADDR,
     // PES2011 
-    NOCODEADDR,
+    {
+        0x787b5c, 0x109dc74,
+        0x10cf60c, 0x10d00bc, 0x119d7ea,
+        0, 0,
+        0, 0,
+    },
     // PES2011 v1.01
     {
         0x78816c, 0x109e1d4,
@@ -61,18 +57,14 @@ enum {
 
 #define NODATAADDR {0,0,0,0,0}
 DWORD dataArray[][DATALEN] = {
-    /*
-    // PES2010 v1.3
-    {
-        0x1942b48, 0x1942b50,
-        ???, 0x1c64c8,
-        0x1644004,
-    },
-    */
     // PES2011 demo
     NODATAADDR,
     // PES2011 
-    NODATAADDR,
+    {
+        0, 0x1940b08,
+        0x3ac8c8, 0x249918,
+        0x15a2c50,
+    },
     // PES2011 v1.01
     {
         0, 0x1940b60,

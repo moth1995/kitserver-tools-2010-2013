@@ -54,8 +54,8 @@
 Version history: <a href="history.txt">history.txt</a><br />
 </div>
 <div>
-    June 9, 2011 - <b>Kitserver 11.1.0</b> -
-    <span class="emph2">"Facelift" release</span>
+    June 10, 2011 - <b>Kitserver 11.1.0</b> -
+    <span class="emph2">"Hydrodynamica" release</span>
 </div>
 <p class="note">
 Usually, the most up-to-date version of this documentation, and the translations to many languages, are located here: <a href="http://kitserver.ath.cx/docs/">http://kitserver.ath.cx/docs/</a>. Documentation for Kitservers 5-8 and Kitserver 2010 can also be found there.
@@ -84,7 +84,7 @@ If you are new to Kitserver, please make sure you read the
         <th><b>afs2fs.dll</b></th>
         <td>Manage AFS (.img) game content using files and folders: much easier and quicker to install/remove patches, without the need modify *.img files.</td>
     </tr>
-    <tr><td><a href="#kserv">Kserv 11.0.3</a></td>
+    <tr><td><a href="#kserv">Kserv 11.1.0</a></td>
         <th><b>kserv.dll</b></th>
         <td>Organize your kits into GDB, and assign each team its own kits.</td>
     </tr>
@@ -518,7 +518,7 @@ Kserv was historically the first module implemented in the original Kitserver pr
 <p>
 The GDB contains a folder named <b>uni</b>, which is responsible for storing
 the team kits (uniforms). The single most important file inside <b>uni</b> is called <b>map.txt</b>.
-This file tells kitserver where to find the kits for particular team. As you know, each team has a unique id - an integer number from 0 to 370. For every team in the GDB, you must specify in the map.txt where the kits for this team are. Here is an example:
+This file tells kitserver where to find the kits for particular team. As you know, each team has a unique id - an integer number from 0 to 499. For every team in the GDB, you must specify in the map.txt where the kits for this team are. Here is an example:
 
 <pre>
 # This config maps team number into folder name

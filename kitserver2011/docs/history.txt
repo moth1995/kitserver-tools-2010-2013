@@ -11,6 +11,7 @@ v11.1.0
             custom resolution selection,
             picture quality overwrite.
 - manager.exe: is back
+- added 1.0 exe support to where it was missing
 
 
 2011-03-02

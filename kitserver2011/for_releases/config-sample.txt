@@ -3,7 +3,7 @@ debug = 0
 img.dir = "example-root"
 
 [kload]
-dll = afsio.dll
+dll = fserv.dll
 dll = kserv.dll
 dll = afs2fs.dll
 dll = sides.dll
@@ -20,7 +20,4 @@ techfit.model = 40
 techfit.model = 41
 techfit.model = 54
 tight.model = 24
-
-[speeder]
-count.factor = 1.0
 

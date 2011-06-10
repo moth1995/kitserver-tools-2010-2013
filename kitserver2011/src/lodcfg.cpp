@@ -398,8 +398,15 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				else if ((HWND)lParam == g_pqCheckBox)
                 {
                     bool checked = SendMessage(g_pqCheckBox,BM_GETCHECK,0,0);
+                    bool chosen(false);
                     for (int i=0; i<3; i++) {
                         EnableWindow(g_pqRadio[i], checked);
+                        chosen = chosen || SendMessage(
+                            g_pqRadio[i],BM_GETCHECK,0,0);
+                    }
+                    // check Low, if none chosen
+                    if (checked && !chosen) {
+                        SendMessage(g_pqRadio[0], BM_SETCHECK, BST_CHECKED, 0);
                     }
                 }
 				else if ((HWND)lParam == g_arRadio1)
@@ -1050,6 +1057,21 @@ void UpdateControls(LMCONFIG& cfg)
         SendMessage(g_resHeightControl, WM_SETTEXT, 0, (LPARAM)buf);
     }
 
+    // Picture quality
+    SendMessage(g_pqCheckBox, BM_SETCHECK, BST_UNCHECKED, 0);
+    for (int i=0; i<3; i++) {
+        EnableWindow(g_pqRadio[i], false);
+    }
+    if (cfg.pictureQuality >= 0) {
+        SendMessage(g_pqCheckBox, BM_SETCHECK, BST_CHECKED, 0);
+        for (int i=0; i<3; i++) {
+            EnableWindow(g_pqRadio[i], true);
+            SendMessage(g_pqRadio[i], BM_SETCHECK, BST_UNCHECKED, 0);
+        }
+        int x = (cfg.pictureQuality<3)?cfg.pictureQuality:0;
+        SendMessage(g_pqRadio[x], BM_SETCHECK, BST_CHECKED, 0);
+    }
+
     // Camera angle
     {
         char buf[40] = {0}; sprintf(buf,"%d",_cameraAngle);
@@ -1463,6 +1485,29 @@ void UpdateConfig(LMCONFIG& cfg)
         }
     }
 
+    // Picture quality
+    _removeConfig("lodmixer", "picture.quality");
+    bool pqChecked = SendMessage(g_pqCheckBox, BM_GETCHECK, 0, 0);
+    if (pqChecked) {
+        int value = -1;
+        for (int i=0; i<3; i++) {
+            bool checked = SendMessage(g_pqRadio[i], BM_GETCHECK, 0, 0);
+            if (checked) {
+                value = i;
+                break;
+            }
+        }
+        if (value == 0) {
+            _setConfig("lodmixer", "picture.quality", wstring(L"0"));
+        }
+        else if (value == 1) {
+            _setConfig("lodmixer", "picture.quality", wstring(L"1"));
+        }
+        else if (value == 2) {
+            _setConfig("lodmixer", "picture.quality", wstring(L"2"));
+        }
+    }
+
     // Camera angle
     _removeConfig("camera", "angle");
     {
@@ -1746,6 +1791,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
             "lod.active.player.fk.s2", DT_FLOAT, 30, lodmixerConfig);
     _getConfig("lodmixer", 
             "lod.active.player.fk.s3", DT_FLOAT, 31, lodmixerConfig);
+    _getConfig("lodmixer", "picture.quality", DT_DWORD, 32, lodmixerConfig);
 
     UpdateControls(_lmconfig);
 
@@ -1859,6 +1905,9 @@ void lodmixerConfig(char* pName, const void* pValue, DWORD a)
 			break;
 		case 31: 
 			_lmconfig.lod.lodActivePlayerFKs3 = *(float*)pValue;
+			break;
+		case 32: 
+			_lmconfig.pictureQuality = *(DWORD*)pValue;
 			break;
 	}
 }

@@ -42,6 +42,7 @@ HWND g_resWidthControl;
 HWND g_resHeightControl;
 HWND g_arRadio1;
 HWND g_arRadio2;
+HWND g_pqGroup;
 HWND g_pqCheckBox;
 HWND g_pqRadio[3];
 HWND g_arEditControl;
@@ -544,7 +545,7 @@ bool BuildControls(HWND parent)
     EnableWindow(g_resHeightControl, FALSE);
 
 	x = spacer*2;
-	y += boxH + spacer*3;
+	y += boxH + spacer;
 
     /*
     // CAMERA ANGLE
@@ -597,13 +598,14 @@ bool BuildControls(HWND parent)
     //////////////////
     
     x = spacer;
-   	HWND staticBorderTopControl6 = CreateWindowEx(
-			xstyle, L"Static", L"", WS_CHILD | WS_VISIBLE | SS_ETCHEDFRAME,
-			x, y, borW, boxH*2+spacer*2,
+   	HWND g_pqGroup = CreateWindowEx(
+			//xstyle, L"Static", L"", WS_CHILD | WS_VISIBLE | SS_ETCHEDFRAME,
+			xstyle, L"button", L"", WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
+			x, y, borW, boxH*2+spacer*3,
 			parent, NULL, NULL, NULL);
-    _misc_tab_list.push_back(staticBorderTopControl6);
+    _misc_tab_list.push_back(g_pqGroup);
 
-    y += spacer;
+    y += spacer*2;
     x += spacer;
  
 	g_pqCheckBox = CreateWindowEx(
@@ -613,7 +615,7 @@ bool BuildControls(HWND parent)
 			parent, NULL, NULL, NULL);
     _misc_tab_list.push_back(g_pqCheckBox);
     SetDefaultFont(g_pqCheckBox);
-    y += statH + spacer;
+    y += statH + spacer*2;
 
     x = spacer*2 + 40;
 	style = WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON;
@@ -622,8 +624,8 @@ bool BuildControls(HWND parent)
     for (int i=0; i<3; i++) {
         g_pqRadio[i] = CreateWindowEx(
                 xstyle, L"button", pqTexts[i], style,
-                x, y, butW, butH,
-                parent, NULL, NULL, NULL);
+                x, spacer*3+statH, butW, butH,
+                g_pqGroup, NULL, NULL, NULL);
         _misc_tab_list.push_back(g_pqRadio[i]);
         SetDefaultFont(g_pqRadio[i]);
         EnableWindow(g_pqRadio[i], FALSE);

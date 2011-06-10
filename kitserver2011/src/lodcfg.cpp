@@ -58,6 +58,12 @@ only those that are REALLY supported by your videocard will be\n\
 in full-screen. Unsupported resolutions will switch back to\n\
 windowed mode.\n\
 \n\
+Enforcing picture quality allows you to choose any of the three \n\
+available modes: Low, Medium, High. Be advised though, that if \n\
+you do that Kitserver will disable to video adapter test logic in the \n\
+game and if your video card really does not support the chosen \n\
+mode then the game will likely crash.\n\
+\n\
 About Free Sides Select: in cup modes (League/Cup, ML, UEFA CL)\n\
 PES 2011 doesn't allow human players to control both teams,\n\
 unless both of their selected teams are playing against each other\n\

@@ -298,9 +298,17 @@ be named accordingly: MyPatchRun.log)</p>
 <h5>3.4. Running the game without Kitserver</h5>
 
 <p>You can always run the game without Kitserver.<br />
-Just launch it the normal way, as you would - through the Start Menu or
-via a shortcut on your Desktop. If you don't use <b>krun</b> utility, then
-Kitserver is not loaded into memory with the game.</p>
+
+<p>If you used KRUN-WAY, then it's easy: just launch the game using its
+exe, not with krun tool. This way, the Kitserver is not loaded into memory,
+and the game runs in its original unmodified form.</p>
+
+<p>If you did the MANAGER-WAY, then you will need to Detach the kitserver
+from the game exe. (You can always re-attach later again). Run 
+<b>manager.exe</b>, select the correct exe, and click [Detach] button. Wait
+for the manager to confirm that it had successfully detached kitserver.
+Now run the game exe, and Kitserver will no longer be loaded.
+</p>
 
 <p>This is handy for troubleshooting crashes, for example. Things go wrong 
 no matter what, so the first thing you'd want to do is to isolate a problem. 

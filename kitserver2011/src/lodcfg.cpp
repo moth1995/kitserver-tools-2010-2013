@@ -1110,6 +1110,10 @@ void UpdateControls(LMCONFIG& cfg)
         char buf[40] = {0}; sprintf(buf,"%0.2f",sw);
         SendMessage(g_speedTrackBarControl, TBM_SETPOS, TRUE, (LPARAM)getTickValue2(sw));
         SendMessage(g_speedEditControl, WM_SETTEXT, 0, (LPARAM)buf);
+        
+        // redraw
+        ShowWindow(g_speedTrackBarControl, SW_HIDE);
+        ShowWindow(g_speedTrackBarControl, SW_SHOW);
     }
 
     // LOD

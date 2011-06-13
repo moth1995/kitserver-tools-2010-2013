@@ -54,8 +54,8 @@
 Version history: <a href="history.txt">history.txt</a><br />
 </div>
 <div>
-    June 10, 2011 - <b>Kitserver 11.1.0</b> -
-    <span class="emph2">"Hydrodynamica" release</span>
+    June 13, 2011 - <b>Kitserver 11.1.1</b> -
+    <span class="emph2">"Four ones" release</span>
 </div>
 <p class="note">
 Usually, the most up-to-date version of this documentation, and the translations to many languages, are located here: <a href="http://kitserver.ath.cx/docs/">http://kitserver.ath.cx/docs/</a>. Documentation for Kitservers 5-8 and Kitserver 2010 can also be found there.
@@ -88,7 +88,7 @@ If you are new to Kitserver, please make sure you read the
         <th><b>kserv.dll</b></th>
         <td>Organize your kits into GDB, and assign each team its own kits.</td>
     </tr>
-    <tr><td><a href="#fserv">Faceserver 11.1.0</a></td>
+    <tr><td><a href="#fserv">Faceserver 11.1.1</a></td>
         <th><b>fserv.dll</b></th>
         <td>Assign special face/hair (from GDB) to any player you want.</td>
     </tr>
@@ -912,7 +912,37 @@ Here are some examples of entries in map.txt:
 </pre>
 </p>
 
-<h5>7.3. Network play</h5>
+<h5>7.3. Using a large map</h5>
+<p>
+Sometimes, if your map is large (2000 players or more),
+the faceserver may take a while to initialize itself, because it checks 
+every file, specified in the map for existence, and whether it has proper
+access to it (can open). This may appear is if the game has frozen. Howerver,
+if you wait for a minute or two, then it should be able to complete the
+initialization and "unfreeze" the game.
+</p>
+<p>
+Alternatively, if the wait is really long, you can disable the checking of
+the map at the startup. To do that, modify the <b>config.txt</b> file and
+add a section like this to it:
+
+<pre>
+[fserv]
+map-check.enabled = 0
+</pre>
+</p>
+
+<p>One caveat about disabling the startup map check is that if you do have
+errors in the map, they will not be discovered until later - when Faceserver
+tries to load a face or hair bin, and finds out that the file isn't there
+or that it cannot open it for reading for some other reason. What will happen
+in that case is that the player will receive a "maneken" face and hair. (This
+is a different behaviour from the one you get if map-check is done at 
+startup: there, if there is an error, the player will retain his existing
+face/hair)
+</p>
+
+<h5>7.4. Network play</h5>
 <p>
 Faceserver should work fine in all online modes, although i have not 
 done a lot of testing with it. Ranking and Friendly matches were successfully

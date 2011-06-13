@@ -29,6 +29,9 @@
 //#define CREATE_FLAGS FILE_FLAG_SEQUENTIAL_SCAN | FILE_FLAG_NO_BUFFERING
 #define CREATE_FLAGS 0
 
+#define CHECKED_OK 1
+#define CHECKED_FAIL 2
+
 #define FIRST_FACE_SLOT 13000
 #define NUM_SLOTS 65536
 #define FIRST_XFACE_ID 3000
@@ -49,11 +52,23 @@
 HINSTANCE hInst = NULL;
 KMOD k_fserv = {MODID, NAMELONG, NAMESHORT, DEFAULT_DEBUG};
 
+class wbuffer_t
+{
+public:
+    wbuffer_t(size_t num_chars) 
+    {
+        _buf = new wchar_t[num_chars];
+    }
+    ~wbuffer_t() { delete _buf; }
+    wchar_t* _buf;
+};
+
+
 class fserv_config_t
 {
 public:
-    bool _enable_online;
-    fserv_config_t() : _enable_online(false) {}
+    bool _check_map_on_load;
+    fserv_config_t() : _check_map_on_load(true) {}
 };
 
 fserv_config_t _fserv_config;
@@ -86,6 +101,7 @@ hash_map<DWORD,BYTE> _saved_facebit;
 hash_map<DWORD,BYTE> _saved_hairbit;
 
 wstring* _fast_bin_table[NUM_SLOTS-FIRST_FACE_SLOT];
+BYTE _fast_bin_exists[NUM_SLOTS-FIRST_FACE_SLOT];
 
 DWORD _gotFaceBin = 0;
 DWORD _gotHairBin = 0;
@@ -127,6 +143,8 @@ void fservAtSetDefault(DWORD src, DWORD dest, DWORD numDwords);
 void fservConfig(char* pName, const void* pValue, DWORD a);
 bool fservGetFileInfo(DWORD afsId, DWORD binId, HANDLE& hfile, DWORD& fsize);
 bool OpenFileIfExists(const wchar_t* filename, HANDLE& handle, DWORD& size);
+bool FileExists(const wstring& filename);
+bool BinExists(DWORD binId);
 void InitMaps();
 void fservCopyPlayerData(
     PLAYER_INFO* players, DWORD numBytes, int place, bool writeList);
@@ -193,7 +211,8 @@ void fservConfig(char* pName, const void* pValue, DWORD a)
 			k_fserv.debug = *(DWORD*)pValue;
 			break;
         case 2: // disable-online
-            _fserv_config._enable_online = *(DWORD*)pValue == 1;
+            _fserv_config._check_map_on_load = *(DWORD*)pValue == 1;
+            LOG(L"map-check: %d", _fserv_config._check_map_on_load);
             break;
 	}
 	return;
@@ -219,7 +238,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     LOG(L"Initializing Faceserver");
 
     getConfig("fserv", "debug", DT_DWORD, 1, fservConfig);
-    getConfig("fserv", "online.enabled", DT_DWORD, 2, fservConfig);
+    getConfig("fserv", "map-check.enabled", DT_DWORD, 2, fservConfig);
 
     _gotFaceBin = code[C_GOT_FACE_BIN];
     _gotHairBin = code[C_GOT_HAIR_BIN];
@@ -264,6 +283,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
 
 void InitMaps()
 {
+    ZeroMemory(_fast_bin_exists, sizeof(_fast_bin_exists));
     ZeroMemory(_fast_bin_table, sizeof(_fast_bin_table));
 
     // process face/hair map file
@@ -300,19 +320,25 @@ void InitMaps()
 
             if (!face.empty())
             {
-                // check that the file exists, so that we don't crash
-                // later, when it's attempted to replace a face.
                 wstring filename(getPesInfo()->gdbDir);
                 filename += L"GDB\\faces\\" + face;
-                HANDLE handle;
-                DWORD size;
-                if (OpenFileIfExists(filename.c_str(), handle, size))
-                {
-                    CloseHandle(handle);
-                    _player_face.insert(pair<DWORD,wstring>(it->first,face));
+                if (_fserv_config._check_map_on_load) {
+                    if (FileExists(filename)) {
+                        _player_face.insert(
+                            pair<DWORD,wstring>(it->first,face));
+                    }
+                    else {
+                        LOG(L"ERROR in faceserver map for ID = %d: "
+                            L"FAILED to open face BIN \"%s\". Skipping", 
+                            it->first, face.c_str());
+                    }
                 }
-                else
-                    LOG(L"ERROR in faceserver map for ID = %d: FAILED to open face BIN \"%s\". Skipping", it->first, face.c_str());
+                else {
+                    // insert blindly: will check later, when
+                    // BIN is loaded
+                    _player_face.insert(
+                        pair<DWORD,wstring>(it->first,face));
+                }
             }
             if (!hair.empty())
             {
@@ -320,15 +346,23 @@ void InitMaps()
                 // later, when it's attempted to replace a hair.
                 wstring filename(getPesInfo()->gdbDir);
                 filename += L"GDB\\faces\\" + hair;
-                HANDLE handle;
-                DWORD size;
-                if (OpenFileIfExists(filename.c_str(), handle, size))
-                {
-                    CloseHandle(handle);
-                    _player_hair.insert(pair<DWORD,wstring>(it->first,hair));
+                if (_fserv_config._check_map_on_load) {
+                    if (FileExists(filename)) {
+                        _player_hair.insert(
+                            pair<DWORD,wstring>(it->first,hair));
+                    }
+                    else {
+                        LOG(L"ERROR in faceserver map for ID = %d: "
+                            L"FAILED to open hair BIN \"%s\". Skipping", 
+                            it->first, hair.c_str()); 
+                    }
                 }
-                else
-                    LOG(L"ERROR in faceserver map for ID = %d: FAILED to open hair BIN \"%s\". Skipping", it->first, hair.c_str());
+                else {
+                    // insert blindly: will check later, when
+                    // BIN is loaded
+                    _player_hair.insert(
+                        pair<DWORD,wstring>(it->first,hair));
+                }
             }
         }
     }
@@ -396,12 +430,8 @@ void fservCopyPlayerData(
     afsioExtendSlots(0x0c, 45000);
     //LOG(L"COPY-DATA: # players = %d", numBytes/sizeof(PLAYER_INFO));
 
-    if (place==2)
-    {
+    if (place==2) {
         return;
-        //DWORD menuMode = *(DWORD*)data[MENU_MODE_IDX];
-        //if (menuMode==NETWORK_MODE && !_fserv_config._enable_online)
-        //    return;
     }
 
     int minFaceId = 2048;
@@ -417,6 +447,7 @@ void fservCopyPlayerData(
     
     _player_face_slot.clear();
     _player_hair_slot.clear();
+    ZeroMemory(_fast_bin_exists, sizeof(_fast_bin_exists));
     ZeroMemory(_fast_bin_table, sizeof(_fast_bin_table));
 
     bool indexTaken(false);
@@ -492,6 +523,7 @@ void fservCopyPlayerData(
             mm.insert(pair<string,DWORD>(name,players[i].id));
         }
 
+        /*
         WORD faceId = GetFaceId(players[i].faceHairBits);
         WORD hairId = GetHairId(players[i].faceHairBits);
         if (IsSpecialFace(&players[i])) {
@@ -504,16 +536,17 @@ void fservCopyPlayerData(
             if (hairId > maxHairId) maxHairId = hairId;
             hairsUsed.insert(pair<WORD,bool>(hairId,true));
         }
+        */
         
         //LOG(L"Player (%d): faceHairBits: %08x", i, players[i].faceHairBits);
 
         int faceBin = GetFaceBin(&players[i]);
         int hairBin = GetHairBin(&players[i]);
-        wchar_t* nameBuf = Utf8::utf8ToUnicode((BYTE*)players[i].name);
+        //wchar_t* nameBuf = Utf8::utf8ToUnicode((BYTE*)players[i].name);
         //LOG(L"Player (%d): id=%d (id_again=%d): %s (f:%d, h:%d), index=%04x", 
         //        i, players[i].id, players[i].id_again, nameBuf,
         //        faceBin, hairBin, players[i].index);
-        Utf8::free(nameBuf);
+        //Utf8::free(nameBuf);
 
         //if (players[i].index != 0) {
         //    indexTaken = true;
@@ -543,10 +576,12 @@ void fservCopyPlayerData(
     }
 
     //LOG(L"indexTaken=%d", indexTaken);
-    LOG(L"face id range: [%d,%d]", minFaceId, maxFaceId);
-    LOG(L"hair id range: [%d,%d]", minHairId, maxHairId);
-    LOG(L"number of faces used: %d", facesUsed.size());
-    LOG(L"number of hairs used: %d", hairsUsed.size());
+    //LOG(L"face id range: [%d,%d]", minFaceId, maxFaceId);
+    //LOG(L"hair id range: [%d,%d]", minHairId, maxHairId);
+    //LOG(L"number of faces used: %d", facesUsed.size());
+    //LOG(L"number of hairs used: %d", hairsUsed.size());
+    LOG(L"number of GDB faces used: %d", _player_face_slot.size());
+    LOG(L"number of GDB hairs used: %d", _player_hair_slot.size());
 
     if (writeList)
     {
@@ -1045,6 +1080,70 @@ KEXPORT void fservAtFaceHair(DWORD dest, PLAYER_DETAILS* src)
 
 /**
  */
+bool BinExists(DWORD binId)
+{
+    // fast check first
+    switch (_fast_bin_exists[binId - FIRST_FACE_SLOT]) {
+        case CHECKED_OK:
+            return true;
+        case CHECKED_FAIL:
+            return false;
+        default:
+            break;
+    } 
+
+    wstring* pws = _fast_bin_table[binId - FIRST_FACE_SLOT];
+    if (!pws) {
+        return false;
+    }
+
+    wbuffer_t wbuf(1024);
+    _snwprintf(wbuf._buf, 1024, L"%sGDB\\faces\\%s", 
+            getPesInfo()->gdbDir,
+            pws->c_str());
+
+    HANDLE handle = CreateFile(wbuf._buf,     // file to open
+                       GENERIC_READ,          // open for reading
+                       FILE_SHARE_READ,       // share for reading
+                       NULL,                  // default security
+                       OPEN_EXISTING,         // existing file only
+                       FILE_ATTRIBUTE_NORMAL | CREATE_FLAGS, // normal file
+                       NULL);                 // no attr. template
+
+    if (handle != INVALID_HANDLE_VALUE) {
+        CloseHandle(handle);
+        _fast_bin_exists[binId - FIRST_FACE_SLOT] = CHECKED_OK;
+        return true;
+    }
+    LOG(L"ERROR in faceserver map: FAILED to open file \"%s\".", 
+        wbuf._buf);
+    _fast_bin_exists[binId - FIRST_FACE_SLOT] = CHECKED_FAIL;
+    return false;
+}
+
+/**
+ */
+bool FileExists(const wstring& filename)
+{
+    TRACE(L"FileExists:: %s", filename.c_str());
+    HANDLE handle = CreateFile(filename.c_str(), // file to open
+                       GENERIC_READ,          // open for reading
+                       FILE_SHARE_READ,       // share for reading
+                       NULL,                  // default security
+                       OPEN_EXISTING,         // existing file only
+                       FILE_ATTRIBUTE_NORMAL | CREATE_FLAGS, // normal file
+                       NULL);                 // no attr. template
+
+    if (handle != INVALID_HANDLE_VALUE)
+    {
+        CloseHandle(handle);
+        return true;
+    }
+    return false;
+}
+
+/**
+ */
 bool OpenFileIfExists(const wchar_t* filename, HANDLE& handle, DWORD& size)
 {
     TRACE(L"OpenFileIfExists:: %s", filename);
@@ -1169,10 +1268,13 @@ KEXPORT DWORD fservGetFaceBin(DWORD faceId)
     if (_fast_bin_table[binId - FIRST_FACE_SLOT]) {
         //LOG(L"fservGetFaceBin: faceId=%d (hex:%04x) --> result=%d", 
         //    faceId, faceId, binId);
-        return binId;
+        if (BinExists(binId)) {
+            return binId;
+        }
+        return MANEKEN_ID;
     }
-    LOG(L"_fast_bin_table[%d - %d] is NULL!", binId, FIRST_FACE_SLOT);
-    LOG(L"faceId & 0x7ff = %d", (faceId & 0x7ff));
+    //LOG(L"_fast_bin_table[%d - %d] is NULL!", binId, FIRST_FACE_SLOT);
+    //LOG(L"faceId & 0x7ff = %d", (faceId & 0x7ff));
     return MANEKEN_ID; //faceId & 0x7ff;
 }
 
@@ -1189,7 +1291,10 @@ KEXPORT DWORD fservGetHairBin(DWORD hairId)
     if (_fast_bin_table[binId - FIRST_FACE_SLOT]) {
         //LOG(L"fservGetHairBin: hairId=%d (hex:%04x) --> result=%d", 
         //    hairId, hairId, binId);
-        return binId;
+        if (BinExists(binId)) {
+            return binId;
+        }
+        return MANEKEN_ID;
     }
     LOG(L"_fast_bin_table[%d - %d] is NULL!", binId, FIRST_FACE_SLOT);
     LOG(L"hairId & 0x7ff = %d", (hairId & 0x7ff));

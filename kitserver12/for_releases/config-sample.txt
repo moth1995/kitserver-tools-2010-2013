@@ -1,0 +1,5 @@
+[afs2fs]
+img.dir = "example-root"
+
+[kload]
+dll = afs2fs

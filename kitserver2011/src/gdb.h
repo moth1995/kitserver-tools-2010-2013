@@ -126,13 +126,15 @@ public:
 class GDB {
 public:
     wstring dir;
+    wstring uniMapFile;
     hash_map<WORD,KitCollection> uni;
     KitCollection dummyHome;
     KitCollection dummyAway;
     bool readConfigs;
 
-    GDB(const wstring& gdir, bool rc=true) : 
+    GDB(const wstring& gdir, const wstring& unimap, bool rc=true) : 
         dir(gdir), 
+        uniMapFile(unimap),
         dummyHome(L""), 
         dummyAway(L""), 
         readConfigs(rc)

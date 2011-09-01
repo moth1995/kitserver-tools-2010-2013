@@ -111,10 +111,11 @@ void GDB::load()
 
     // process kit map file
     hash_map<WORD,wstring> mapFile;
-    if (!readMap((this->dir + L"GDB\\uni\\map.txt").c_str(), mapFile))
+    if (!readMap(this->uniMapFile.c_str(), mapFile))
     {
         GDB_DEBUG(wlog,(slog,L"Unable to find uni-map: %s\n",mapFile));
-        LOG(L"Couldn't open uni-map for reading: {%s}",(this->dir + L"GDB\\uni\\map.txt").c_str());
+        LOG(L"Couldn't open uni-map for reading: {%s}",
+            this->uniMapFile.c_str());
     }
 
     for (hash_map<WORD,wstring>::iterator it = mapFile.begin(); it != mapFile.end(); it++)

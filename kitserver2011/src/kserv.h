@@ -1,7 +1,7 @@
 // kserv.h
 
 #define MODID 100
-#define NAMELONG L"KSERV Module 11.1.0.0"
+#define NAMELONG L"KSERV Module 11.1.0.1"
 #define NAMESHORT L"KSERV"
 #define DEFAULT_DEBUG 0
 

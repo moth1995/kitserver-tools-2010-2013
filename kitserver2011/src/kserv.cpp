@@ -102,6 +102,7 @@ public:
        memset(_techfit, 0, sizeof(_techfit));
     }
     bool _use_description;
+    wstring _map_file;
     BYTE _techfit[0x10000];
 };
 
@@ -437,19 +438,38 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
             kservCheckKitReloadFlagCallPoint, 
             6, 2);
 
-    // Load GDB
-    LOG(L"pesDir: {%s}",getPesInfo()->pesDir);
-    LOG(L"myDir : {%s}",getPesInfo()->myDir);
-    LOG(L"gdbDir: {%sGDB}",getPesInfo()->gdbDir);
-    _gdb = new GDB(getPesInfo()->gdbDir, false);
-    LOG(L"Teams in GDB map: %d", _gdb->uni.size());
 
     getConfig("kserv", "debug", DT_DWORD, 1, kservConfig);
     getConfig("kserv", "use.description", DT_DWORD, 2, kservConfig);
     getConfig("kserv", "techfit.model", DT_DWORD, C_ALL, kservConfigModels);
     getConfig("kserv", "tight.model", DT_DWORD, C_ALL, kservConfigModels2);
+    getConfig("kserv", "gdb.uni.map", DT_STRING, 3, kservConfig);
     LOG(L"debug = %d", k_kserv.debug);
     LOG(L"use.description = %d", _kserv_config._use_description);
+
+    // Load GDB
+    LOG(L"pesDir: {%s}",getPesInfo()->pesDir);
+    LOG(L"myDir : {%s}",getPesInfo()->myDir);
+    LOG(L"gdbDir: {%sGDB}",getPesInfo()->gdbDir);
+
+    wstring uniMapFile(getPesInfo()->gdbDir);
+    if (_kserv_config._map_file.empty()) {
+        uniMapFile += L"GDB\\uni\\map.txt";
+    } 
+    else {
+        if (_kserv_config._map_file[1]==L':') {
+            // absolute file name
+            uniMapFile = _kserv_config._map_file;
+        }
+        else {
+            uniMapFile += L"GDB\\uni\\";
+            uniMapFile += _kserv_config._map_file;
+        }
+    }
+    LOG(L"GDB uni mapFile: {%s}", uniMapFile.c_str());
+
+    _gdb = new GDB(getPesInfo()->gdbDir, uniMapFile, false);
+    LOG(L"Teams in GDB map: %d", _gdb->uni.size());
 
     // initialize techfit-models map to defaults, if none
     // specified in the config file 
@@ -499,6 +519,8 @@ void kservConfig(char* pName, const void* pValue, DWORD a)
         case 2: // use-description
             _kserv_config._use_description = *(DWORD*)pValue == 1;
             break;
+        case 3: // gdb.uni.map
+            _kserv_config._map_file = wstring((wchar_t*)pValue);
 	}
 	return;
 }

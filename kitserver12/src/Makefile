@@ -59,7 +59,7 @@ pngdib:
 #apps: manager.exe config.exe zlibtool.exe
 #dlls: kload.dll kserv.dll afsio.dll afs2fs.dll speeder.dll sides.dll lodmixer.dll fserv.dll
 #apps: manager.exe zlibtool.exe config.exe krun.exe
-dlls: kload.dll afsio.dll afs2fs.dll
+dlls: kload.dll afsio.dll afs2fs.dll speeder.dll
 apps: manager.exe
 
 imageutil.obj: imageutil.cpp imageutil.h

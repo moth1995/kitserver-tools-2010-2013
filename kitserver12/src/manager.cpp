@@ -230,9 +230,9 @@ Couldn't find LoadLibraryA in\n\
 				else
 					dataOffset = dataHeader.VirtualAddress + dataHeader.SizeOfRawData;
 	
-				// shift 32 bytes back
-				dataOffset -= 0x20;
-				dataVA -= 0x20;
+				// shift 28 bytes back
+				dataOffset -= 0x1c;
+				dataVA -= 0x1c;
 			}
 	
 			if (!quiet) MyMessageBox(L"dataOffset = %08x", dataOffset);
@@ -241,16 +241,16 @@ Couldn't find LoadLibraryA in\n\
 			if (dataOffset != 0) {
 				// at the found empty place, write the LoadLibrary address, 
 				// and the name of kserv.dll
-				BYTE buf[0x20], zero[0x20];
-				ZeroMemory(zero, 0x20);
-				ZeroMemory(buf, 0x20);
+				BYTE buf[0x1c], zero[0x1c];
+				ZeroMemory(zero, 0x1c);
+				ZeroMemory(buf, 0x1c);
 	
 				fseek(f, dataOffset, SEEK_SET);
-				fread(&buf, 0x20, 1, f);
-				if (memcmp(buf, zero, 0x20)==0)
+				fread(&buf, 0x1c, 1, f);
+				if (memcmp(buf, zero, 0x1c)==0)
 				{
 					// ok, we found an empty place. Let's live here.
-					fseek(f, -0x20, SEEK_CUR);
+					fseek(f, -0x1c, SEEK_CUR);
 					DWORD* p = (DWORD*)buf;
 					p[0] = ep; // save old entry pointer for easy uninstall
 					p[1] = loadLib;
@@ -258,7 +258,7 @@ Couldn't find LoadLibraryA in\n\
 						memcpy(buf + 8, installDllPath, strlen(installDllPath)+1);
 					else
 						memcpy(buf + 8, installDllSetPath, strlen(installDllSetPath)+1);
-					fwrite(buf, 0x20, 1, f);
+					fwrite(buf, 0x1c, 1, f);
 					
 					loadLibAddr = ib + dataVA + sizeof(DWORD);
 					//wprintf("loadLibAddr = %08x\n", loadLibAddr);
@@ -520,7 +520,7 @@ bool RemoveKserv(wstring& gfile, wstring& sfile, wstring& outs, const bool quiet
 				else
 					dataOffset = dataHeader.VirtualAddress + dataHeader.SizeOfRawData;
 	
-				// shift 32 bytes back
+				// shift 28 bytes back
 				dataOffset -= 0x20;
 				dataVA -= 0x20;
 			}
@@ -537,6 +537,16 @@ bool RemoveKserv(wstring& gfile, wstring& sfile, wstring& outs, const bool quiet
 	
 				// read saved old entry point
 				fread(&newEntryPoint, sizeof(DWORD), 1, f);
+                size_t writeSize = 0x20;
+                if (newEntryPoint == 0) {
+                    // try 0x1c
+                    dataOffset += 4;
+                    dataVA += 4;
+                    fseek(f, dataOffset, SEEK_SET);
+                    fread(&newEntryPoint, sizeof(DWORD), 1, f);
+                    writeSize -= 4;
+                }
+
 				if (newEntryPoint == 0)
 				{
 					//wprintf("Already uninstalled.\n");
@@ -555,7 +565,7 @@ Kitserver 12 is not attached to\n\
 				}
 				// zero out the bytes
 				fseek(f, -sizeof(DWORD), SEEK_CUR);
-				fwrite(zero, 0x20, 1, f);
+				fwrite(zero, writeSize, 1, f);
 			}
 	
 			IMAGE_SECTION_HEADER textHeader;
@@ -758,19 +768,28 @@ executable.\0");
 	
 			if (dataOffset != 0) {
 				// if installed this should have some data
-				BYTE zero[0x20];
-				ZeroMemory(zero, 0x20);
+				BYTE zero[0x1c];
+				ZeroMemory(zero, 0x1c);
 				fseek(f, dataOffset, SEEK_SET);
 	
 				// read saved old entry point
 				DWORD savedEntryPoint = 0;
 				fread(&savedEntryPoint, sizeof(DWORD), 1, f);
+                size_t readSize = 0x18;
+                if (savedEntryPoint == 0) {
+                    // try 0x1c
+                    dataOffset += 4;
+                    dataVA += 4;
+                    fseek(f, dataOffset, SEEK_SET);
+                    fread(&savedEntryPoint, sizeof(DWORD), 1, f);
+                    readSize -= 4;
+                }
 	
 				// read kitserver DLL name
 				char buf[0x18];
 				ZeroMemory(buf, 0x18);
 				fseek(f, sizeof(DWORD), SEEK_CUR);
-				fread(buf, 0x18, 1, f);
+				fread(buf, readSize, 1, f);
 				char* dllFilename = strrchr(buf,'\\');
                 dllFilename = (dllFilename)?dllFilename+1:buf;
 				isInstalled[i] = false;

@@ -1,11 +1,12 @@
 // ADDRESSES for afs2fs.cpp
 BYTE allowedGames[] = {
-    gvPES2011demo,
-    gvPES2011,
-    gvPES2011v101,
-    gvPES2011v102,
-    gvPES2011v103,
+    //gvPES2011demo,
+    //gvPES2011,
+    //gvPES2011v101,
+    //gvPES2011v102,
+    //gvPES2011v103,
     gvPES2012demo,
+    gvPES2012demo2,
 };
 
 #define CODELEN 1
@@ -39,6 +40,10 @@ DWORD codeArray[][CODELEN] = {
     {
         0x431ae3,
     },
+    // PES2012 demo2
+    {
+        0x431533,
+    },
 };
 
 #define DATALEN 5 
@@ -71,6 +76,10 @@ DWORD dataArray[][DATALEN] = {
     // PES2012 demo
     {
         0x19fab00, 0x140ae38, 11, 32, 0,
+    },
+    // PES2012 demo2
+    {
+        0x1a11160, 0x1420d80, 11, 32, 0,
     },
 };
 

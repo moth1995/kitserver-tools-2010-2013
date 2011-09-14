@@ -1,5 +1,5 @@
 #define UNICODE
-#define WINDOW_TITLE L"Kitserver 11"
+#define WINDOW_TITLE L"Kitserver 12"
 #define KEXPORT EXTERN_C __declspec(dllexport)
 
 #include <map>

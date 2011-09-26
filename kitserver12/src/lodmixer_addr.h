@@ -1,0 +1,115 @@
+// ADDRESSES for lodmixer.cpp
+BYTE allowedGames[] = {
+    gvPES2011,
+    gvPES2011v101,
+    gvPES2011v102,
+    gvPES2011v103,
+    gvPES2012demo,
+    gvPES2012demo2,
+    gvPES2012,
+};
+
+#define CODELEN 3
+enum {
+    C_SETTINGS_READ, C_QUALITY_CHECK, C_QUALITY_CHECK_2,
+};
+
+#define NOCODEADDR {0,0,0}
+DWORD codeArray[][CODELEN] = { 
+    // PES2011 demo
+    NOCODEADDR,
+    // PES2011 
+    {
+        0x1122e73, 0x112603a, 0x1125cf4,
+    },
+    // PES2011 v1.01 
+    {
+        0x11233d3, 0x112659a, 0x1126254,
+    },
+    // PES2011 v1.02 
+    {
+        0x1123533, 0x11266fa, 0x11263b4,
+    },
+    // PES2011 v1.03 
+    {
+        0x1123573, 0x112673a, 0x11263f4,
+    },
+    // PES2012 demo
+    {
+        0x11e0f33, 0x11e404f, 0x11e3dd1,
+    },
+    // PES2012 demo2
+    {
+        0x11f4ef3, 0x11f801f, 0x11f7da1,
+    },
+    // PES2012
+    {
+        0x124d0e3, 0x12502ef, 0x1250071,
+    },
+};
+
+#define DATALEN 11
+enum {
+    SCREEN_WIDTH, SCREEN_HEIGHT, WIDESCREEN_FLAG,
+    RATIO_4on3, RATIO_16on9,
+    LOD_PLAYERS_TABLE1, LOD_PLAYERS_TABLE2, 
+    LOD_REF_TABLE1, LOD_REF_TABLE2,
+};
+
+#define NODATAADDR {0,0,0,0,0,0,0,0,0,0,0}
+DWORD dataArray[][DATALEN] = {
+    // PES2011 demo
+    NODATAADDR,
+    // PES2011 
+    {
+        0x1940370, 0x1940374, 0x1940378,
+        0x143df84, 0x1440da0,
+        0x15a2dd0, 0x15a2e18,
+        0x1535760, 0x1535788,
+    },
+    // PES2011 v1.01
+    {
+        0x19403c8, 0x19403cc, 0x19403d0,
+        0x143e304, 0x1441120,
+        0x15a2dd0, 0x15a2e18,
+        0x1535760, 0x1535788, 
+    },
+    // PES2011 v1.02
+    {
+        0x19403c0, 0x19403c4, 0x19403c8,
+        0x143e30c, 0x1441128,
+        0x15a2dd0, 0x15a2e18,
+        0x1535760, 0x1535788, 
+    },
+    // PES2011 v1.03
+    {
+        0x19403c0, 0x19403c4, 0x19403c8,
+        0x143e30c, 0x1441128,
+        0x15a2dd0, 0x15a2e18,
+        0x1535760, 0x1535788, 
+    },
+    // PES2012 demo
+    {
+        0x199a388, 0x199a38c, 0x199a390,
+        0x14efe98, 0x14f040c,
+        0x165fae8, 0x165fb20,
+        0x165f0e4, 0x165f10c,
+    },
+    // PES2012 demo2
+    {
+        0x19b09c0, 0x19b09c4, 0x19b09c8,
+        0x1505828, 0x1505dcc,
+        0x1675f80, 0x1675fb8,
+        0x167557c, 0x16755a4,
+    },
+    // PES2012
+    {
+        0x1a15090, 0x1a15094, 0x1a15098,
+        0x1563b68, 0x156410c,
+        0x16d5148, 0x16d5180,
+        0x16d4744, 0x16d476c,
+    },
+};
+
+DWORD code[CODELEN];
+DWORD data[DATALEN];

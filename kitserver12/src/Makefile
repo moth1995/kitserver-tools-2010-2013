@@ -33,7 +33,7 @@ all: dlls apps
 #	copy $(LIBPNGDLL) output
 #	copy $(ZLIBDLL) output
 	copy manager.exe output
-#	copy config.exe output
+	copy config.exe output
 #	copy krun.exe output
 #	copy lang_*.txt output
 	
@@ -49,7 +49,7 @@ all_apps: apps
 	if exist output (rd /S /Q output)
 	mkdir output
 	copy manager.exe output
-#	copy config.exe output
+	copy config.exe output
 #	copy lang_*.txt output
 
 pngdib:
@@ -59,8 +59,8 @@ pngdib:
 #apps: manager.exe config.exe zlibtool.exe
 #dlls: kload.dll kserv.dll afsio.dll afs2fs.dll speeder.dll sides.dll lodmixer.dll fserv.dll
 #apps: manager.exe zlibtool.exe config.exe krun.exe
-dlls: kload.dll afsio.dll afs2fs.dll speeder.dll
-apps: manager.exe
+dlls: kload.dll afsio.dll afs2fs.dll speeder.dll lodmixer.dll
+apps: manager.exe config.exe
 
 imageutil.obj: imageutil.cpp imageutil.h
 detect.obj: detect.cpp detect.h

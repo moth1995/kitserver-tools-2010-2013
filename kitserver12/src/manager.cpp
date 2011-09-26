@@ -24,6 +24,7 @@
 #include "detect.h"
 #include "configs.h"
 #include "lang.h"
+#include "manage.h"
 #define lang(s) _getTransl("manager",s)
 
 HWND hWnd = NULL;
@@ -210,7 +211,13 @@ Couldn't find LoadLibraryA in\n\
 			dataVA = 0;
 	
 			// find empty space at the end of .rdata
-			bool rdataFound = SeekSectionHeader(f, ".rdata");
+			bool rdataFound(false);
+            if (GetGameVersion(GetRealGameVersion(fileName)) == gvPES2012) {
+                rdataFound = SeekSectionHeader(f,".data");
+            } 
+            else {
+                rdataFound = SeekSectionHeader(f, ".rdata");
+            }
 			if (!rdataFound) rdataFound = SeekSectionHeader(f, ".rsrc");
 			if (!rdataFound) rdataFound = SeekSectionHeader(f, ".IN");
 			if (rdataFound) {
@@ -291,7 +298,13 @@ Kitserver 12 is already installed (1) for\n\
 			codeVA = 0;
 	
 			// find empty space at the end of .text
-	        bool textFound = SeekSectionHeader(f, ".text");
+            bool textFound(false);
+            if (GetGameVersion(GetRealGameVersion(fileName)) == gvPES2012) {
+                textFound = SeekSectionHeader(f,"PSFD00");
+            }
+            else {
+	            textFound = SeekSectionHeader(f, ".text");
+            }
 	        if (!textFound) textFound = SeekSectionHeader(f,"rr02");
 	        if (!textFound) textFound = SeekSectionHeader(f,".HEAVEN");
 	        if (!textFound) textFound = SeekSectionHeader(f,"");
@@ -305,6 +318,11 @@ Kitserver 12 is already installed (1) for\n\
 	                fseek(f, -sizeof(IMAGE_SECTION_HEADER), SEEK_CUR);
 	                fwrite(&textHeader, sizeof(IMAGE_SECTION_HEADER), 1, f);
 	            }
+
+                MyMessageBox(
+                    L"VirtualAddress = %08x", textHeader.VirtualAddress);
+                MyMessageBox(
+                    L"SizeOfRawData = %08x", textHeader.SizeOfRawData);
 	
 				codeVA = textHeader.VirtualAddress + textHeader.SizeOfRawData;
 				if (textHeader.PointerToRawData != 0)
@@ -315,6 +333,11 @@ Kitserver 12 is already installed (1) for\n\
 				// shift 32 bytes back.
 				codeOffset -= 0x20;
 				codeVA -= 0x20;
+                if (GetGameVersion(GetRealGameVersion(fileName)) == gvPES2012) {
+                    // shift more
+                    codeOffset -= 0x20;
+                    codeVA -= 0x20;
+                }
 			} else {
 	            if (!quiet) MyMessageBox(L"section header for '.text' not found", 0);
                 result = false;
@@ -508,7 +531,13 @@ bool RemoveKserv(wstring& gfile, wstring& sfile, wstring& outs, const bool quiet
 			dataVA = 0;
 	
 			// find empty space at the end of .rdata
-			bool rdataFound = SeekSectionHeader(f, ".rdata");
+			bool rdataFound(false);
+            if (GetGameVersion(GetRealGameVersion(fileName)) == gvPES2012) {
+                rdataFound = SeekSectionHeader(f,".data");
+            } 
+            else {
+                rdataFound = SeekSectionHeader(f, ".rdata");
+            }
             if (!rdataFound) rdataFound = SeekSectionHeader(f, ".rsrc");
             if (!rdataFound) rdataFound = SeekSectionHeader(f, ".IN");
 			if (rdataFound) {
@@ -574,12 +603,23 @@ Kitserver 12 is not attached to\n\
 			codeVA = 0;
 	
 			// find empty space at the end of .text
-	        bool textFound = SeekSectionHeader(f, ".text");
+            bool textFound(false);
+            if (GetGameVersion(GetRealGameVersion(fileName)) == gvPES2012) {
+                textFound = SeekSectionHeader(f,"PSFD00");
+            }
+            else {
+	            textFound = SeekSectionHeader(f, ".text");
+            }
 	        if (!textFound) textFound = SeekSectionHeader(f,"rr02");
 	        if (!textFound) textFound = SeekSectionHeader(f,".HEAVEN");
 	        if (!textFound) textFound = SeekSectionHeader(f,"");
 			if (textFound) {
 				fread(&textHeader, sizeof(IMAGE_SECTION_HEADER), 1, f);
+
+                MyMessageBox(
+                    L"VirtualAddress = %08x", textHeader.VirtualAddress);
+                MyMessageBox(
+                    L"SizeOfRawData = %08x", textHeader.SizeOfRawData);
 	
 				codeVA = textHeader.VirtualAddress + textHeader.SizeOfRawData;
 				if (textHeader.PointerToRawData != 0)
@@ -590,6 +630,11 @@ Kitserver 12 is not attached to\n\
 				// shift 32 bytes back.
 				codeOffset -= 0x20;
 				codeVA -= 0x20;
+                if (GetGameVersion(GetRealGameVersion(fileName)) == gvPES2012) {
+                    // shift more
+                    codeOffset -= 0x20;
+                    codeVA -= 0x20;
+                }
 			}
 	
 			if (!quiet) MyMessageBox(L"codeOffset = %08x", codeOffset);
@@ -746,7 +791,17 @@ executable.\0");
 			DWORD dataVA = 0;
 	
 			// find empty space at the end of .rdata
-			bool rdataFound = SeekSectionHeader(f, ".rdata");
+			bool rdataFound(false);
+            if (GetGameVersion(GetRealGameVersion(fileName)) == gvPES2012) {
+                rdataFound = SeekSectionHeader(f,".data");
+                MyMessageBox(L"it is gvPES2012! (%d)", 
+                        GetRealGameVersion(fileName));
+            } 
+            else {
+                rdataFound = SeekSectionHeader(f, ".rdata");
+                MyMessageBox(L"it is NOT gvPES2012... (%d)", 
+                        GetRealGameVersion(fileName));
+            }
             if (!rdataFound) rdataFound = SeekSectionHeader(f, ".rsrc");
             if (!rdataFound) rdataFound = SeekSectionHeader(f, ".IN");
 			if (rdataFound) {

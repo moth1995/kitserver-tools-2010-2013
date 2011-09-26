@@ -17,6 +17,7 @@ wchar_t* GAME[] = {
     L"PES2011 v1.03",
     L"PES2012 demo",
     L"PES2012 demo2",
+    L"PES2012",
 };
 
 char* GAME_GUID[] = {
@@ -29,6 +30,7 @@ char* GAME_GUID[] = {
     "1.03",
     "Pro Evolution Soccer 2012 DEMO",
     "Pro Evolution Soccer 2012 DEMO2",
+    "Pro Evolution Soccer 2012",
 };
 
 DWORD GAME_GUID_OFFSETS[] = { 
@@ -41,6 +43,7 @@ DWORD GAME_GUID_OFFSETS[] = {
     0x1027ae0,
     0x10d0140,
     0x10e5810,
+    0x111de88,
 };
 
 DWORD GAME_GUID_MEMORY[] = { 
@@ -53,6 +56,7 @@ DWORD GAME_GUID_MEMORY[] = {
     0x1427ae0,
     0x14d1140,
     0x14e6a10,
+    0x151f088,
 };
 
 BYTE BASE_GAME[] = {
@@ -65,6 +69,7 @@ BYTE BASE_GAME[] = {
     gvPES2011v103,
     gvPES2012demo,
     gvPES2012demo2,
+    gvPES2012,
 };
 
 bool ISGAME[] = {
@@ -77,6 +82,7 @@ bool ISGAME[] = {
     true,   // PES2011 v1.03
     true,   // PES2012 demo
     true,   // PES2012 demo2
+    true,   // PES2012
 };
 
 // Returns the game real version id

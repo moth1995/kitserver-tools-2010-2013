@@ -45,6 +45,13 @@ The bigger the value, the more camera turns when following the ball,\n\
 as opposed to rolling alongside the pitch. This helps to achieve\n\
 nice 'TV-broadcasting'-type views.\n\
 \n\
+About Free Sides Select: in cup modes (League/Cup, ML, UEFA CL)\n\
+PES 2012 doesn't allow human players to control both teams,\n\
+unless both of their selected teams are playing against each other\n\
+in the match. Now you can remove that limitation. So, even\n\
+for P1 vs. COM game, or P2 vs. COM - you can freely select\n\
+which team you control with each controller. This also allows to\n\
+play defence/goalkeeper in training mode.\n\
 */
 char* _help = 
 "Enabling aspect ratio correction will allow you to play with \n\
@@ -63,14 +70,6 @@ available modes: Low, Medium, High. Be advised though, that if \n\
 you do that Kitserver will disable to video adapter test logic in the \n\
 game and if your video card really does not support the chosen \n\
 mode then the game will likely crash.\n\
-\n\
-About Free Sides Select: in cup modes (League/Cup, ML, UEFA CL)\n\
-PES 2012 doesn't allow human players to control both teams,\n\
-unless both of their selected teams are playing against each other\n\
-in the match. Now you can remove that limitation. So, even\n\
-for P1 vs. COM game, or P2 vs. COM - you can freely select\n\
-which team you control with each controller. This also allows to\n\
-play defence/goalkeeper in training mode.\n\
 \n\
 The game LOD (level-of-detail) is adjustable. The sliders indicate \n\
 when the switching between the levels occurs. Moving sliders to \n\

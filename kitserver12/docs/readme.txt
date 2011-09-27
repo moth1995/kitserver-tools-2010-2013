@@ -1,13 +1,14 @@
-Kitserver 12.0.1
+Kitserver 12.0.3
 ================
 
-Released: September 14, 2011
+Released: September 26, 2011
 
 
-Supports: PES2012 demo
+Supports: PES2012 demo, demo2, full game (with "reloaded" exe)
 Modules implemented:
 - afs2fs
 - speeder
+- lodmixer
 
 
 
@@ -15,4 +16,4 @@ Credits
 =======
 
 programming and game analysis: juce, Robbie
-nike ball: from ballback by BALKAN PES BOX team
+example ball: from ballback by BALKAN PES BOX team

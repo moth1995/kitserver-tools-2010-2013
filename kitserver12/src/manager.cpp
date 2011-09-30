@@ -212,7 +212,7 @@ Couldn't find LoadLibraryA in\n\
 	
 			// find empty space at the end of .rdata
 			bool rdataFound(false);
-            if (GetGameVersion(GetRealGameVersion(fileName)) == gvPES2012) {
+            if (GetGameVersion(GetRealGameVersion(fileName)) >= gvPES2012) {
                 rdataFound = SeekSectionHeader(f,".data");
             } 
             else {
@@ -299,7 +299,7 @@ Kitserver 12 is already installed (1) for\n\
 	
 			// find empty space at the end of .text
             bool textFound(false);
-            if (GetGameVersion(GetRealGameVersion(fileName)) == gvPES2012) {
+            if (GetGameVersion(GetRealGameVersion(fileName)) >= gvPES2012) {
                 textFound = SeekSectionHeader(f,"PSFD00");
             }
             else {
@@ -532,7 +532,7 @@ bool RemoveKserv(wstring& gfile, wstring& sfile, wstring& outs, const bool quiet
 	
 			// find empty space at the end of .rdata
 			bool rdataFound(false);
-            if (GetGameVersion(GetRealGameVersion(fileName)) == gvPES2012) {
+            if (GetGameVersion(GetRealGameVersion(fileName)) >= gvPES2012) {
                 rdataFound = SeekSectionHeader(f,".data");
             } 
             else {
@@ -604,7 +604,7 @@ Kitserver 12 is not attached to\n\
 	
 			// find empty space at the end of .text
             bool textFound(false);
-            if (GetGameVersion(GetRealGameVersion(fileName)) == gvPES2012) {
+            if (GetGameVersion(GetRealGameVersion(fileName)) >= gvPES2012) {
                 textFound = SeekSectionHeader(f,"PSFD00");
             }
             else {
@@ -792,7 +792,7 @@ executable.\0");
 	
 			// find empty space at the end of .rdata
 			bool rdataFound(false);
-            if (GetGameVersion(GetRealGameVersion(fileName)) == gvPES2012) {
+            if (GetGameVersion(GetRealGameVersion(fileName)) >= gvPES2012) {
                 rdataFound = SeekSectionHeader(f,".data");
                 MyMessageBox(L"it is gvPES2012! (%d)", 
                         GetRealGameVersion(fileName));

@@ -1,10 +1,10 @@
-Kitserver 12.0.3
+Kitserver 12.0.5
 ================
 
-Released: September 26, 2011
+Released: September 29, 2011
 
 
-Supports: PES2012 demo, demo2, full game (with "reloaded" exe)
+Supports: PES2012 demo, demo2, PES2012 1.0, 1.01
 Modules implemented:
 - afs2fs
 - speeder

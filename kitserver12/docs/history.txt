@@ -2,6 +2,12 @@ Kitserver 12 HISTORY notes
 ==========================
 
 
+2011-09-29
+----------
+v12.0.5
+- added support for 1.01 exe of full game
+
+
 2011-09-26
 ----------
 v12.0.3

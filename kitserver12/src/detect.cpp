@@ -18,6 +18,7 @@ wchar_t* GAME[] = {
     L"PES2012 demo",
     L"PES2012 demo2",
     L"PES2012",
+    L"PES2012",
     L"PES2012 v1.01",
     L"PES2012 v1.01",
 };
@@ -32,6 +33,7 @@ char* GAME_GUID[] = {
     "1.03",
     "Pro Evolution Soccer 2012 DEMO",
     "Pro Evolution Soccer 2012 DEMO2",
+    "Pro Evolution Soccer 2012",
     "Pro Evolution Soccer 2012",
     "1.01",
     "1.01",
@@ -48,6 +50,7 @@ DWORD GAME_GUID_OFFSETS[] = {
     0x10d0140,
     0x10e5810,
     0x111de88,
+    0x11445f8,
     0x1150d68,
     0x1150168,
 };
@@ -63,6 +66,7 @@ DWORD GAME_GUID_MEMORY[] = {
     0x14d1140,
     0x14e6a10,
     0x151f088,
+    0x1544bf8,
     0x1551968,
     0x1551968,
 };
@@ -78,6 +82,7 @@ BYTE BASE_GAME[] = {
     gvPES2012demo,
     gvPES2012demo2,
     gvPES2012,
+    gvPES2012,
     gvPES2012v101,
     gvPES2012v101,
 };
@@ -92,6 +97,7 @@ bool ISGAME[] = {
     true,   // PES2011 v1.03
     true,   // PES2012 demo
     true,   // PES2012 demo2
+    true,   // PES2012
     true,   // PES2012
     true,   // PES2012 v1.01
     true,   // PES2012 v1.01 reloaded

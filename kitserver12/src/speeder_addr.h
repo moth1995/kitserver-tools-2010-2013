@@ -1,15 +1,19 @@
 // ADDRESSES for speeder module
 BYTE allowedGames[] = {
-    gvPES2011demo,
-    gvPES2011,
-    gvPES2011v101,
-    gvPES2011v102,
-    gvPES2011v103,
+    //gvPES2011demo,
+    //gvPES2011,
+    //gvPES2011v101,
+    //gvPES2011v102,
+    //gvPES2011v103,
+    gvPES2012demo,
+    gvPES2012demo2,
+    gvPES2012,
+    gvPES2012v101,
 };
 
 #define CODELEN 1
 enum { 
-    DUMMY1,
+    CS_QUERY_PERFORMANCE_FREQUENCY,
 };
 
 #define NOCODEADDR {0}
@@ -24,6 +28,22 @@ DWORD codeArray[][CODELEN] = {
     NOCODEADDR,
     // PES2011 v1.03
     NOCODEADDR,
+    // PES2012 demo
+    {
+        0x10e5279,
+    },
+    // PES2012 demo2
+    {
+        0x10f93d9,
+    },
+    // PES2012
+    {
+        0x1150799,
+    },
+    // PES2012 v1.01
+    {
+        0x1153bb9,
+    },
 };
 
 #define DATALEN 1 

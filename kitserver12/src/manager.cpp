@@ -300,7 +300,8 @@ Kitserver 12 is already installed (1) for\n\
 			// find empty space at the end of .text
             bool textFound(false);
             if (GetGameVersion(GetRealGameVersion(fileName)) >= gvPES2012) {
-                textFound = SeekSectionHeader(f,"PSFD00");
+                textFound = SeekSectionHeader(f,"Sitext");
+                if (!textFound) textFound = SeekSectionHeader(f,"PSFD00");
             }
             else {
 	            textFound = SeekSectionHeader(f, ".text");
@@ -605,7 +606,8 @@ Kitserver 12 is not attached to\n\
 			// find empty space at the end of .text
             bool textFound(false);
             if (GetGameVersion(GetRealGameVersion(fileName)) >= gvPES2012) {
-                textFound = SeekSectionHeader(f,"PSFD00");
+                textFound = SeekSectionHeader(f,"Sitext");
+                if (!textFound) textFound = SeekSectionHeader(f,"PSFD00");
             }
             else {
 	            textFound = SeekSectionHeader(f, ".text");

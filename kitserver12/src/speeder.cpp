@@ -16,7 +16,7 @@
 #include "configs.hpp"
 #include "utf8.h"
 
-#include "apihijack.h"
+//#include "apihijack.h"
 
 #define lang(s) getTransl("speeder",s)
 
@@ -42,6 +42,12 @@ KMOD k_speed = {MODID, NAMELONG, NAMESHORT, DEFAULT_DEBUG};
 
 // GLOBALS
 
+KEXPORT BOOL WINAPI Override_QueryPerformanceFrequency(
+        LARGE_INTEGER *lpPerformanceFrequency);
+
+bool _initialized(false);
+LARGE_INTEGER _metric;
+
 class config_t 
 {
 public:
@@ -50,7 +56,6 @@ public:
 };
 
 config_t _speeder_config;
-bool _change(false);
 
 // FUNCTIONS
 HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
@@ -59,8 +64,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     IDirect3DDevice9** ppReturnedDeviceInterface);
 
 void speederConfig(char* pName, const void* pValue, DWORD a);
-KEXPORT BOOL WINAPI Override_QueryPerformanceFrequency(
-        LARGE_INTEGER *lpPerformanceFrequency);
+void realInitModule();
 
 
 /*******************/
@@ -76,6 +80,13 @@ EXTERN_C BOOL WINAPI DllMain(
 		hInst = hInstance;
 
 		RegisterKModule(THISMOD);
+
+		if (!checkGameVersion()) {
+			LOG(L"Sorry, your game version isn't supported!");
+			return false;
+		}
+
+		copyAdresses();
 		hookFunction(hk_D3D_CreateDevice, initModule);
 	}
 	
@@ -110,10 +121,8 @@ void speederConfig(char* pName, const void* pValue, DWORD a)
 HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags,
     D3DPRESENT_PARAMETERS *pPresentationParameters, 
-    IDirect3DDevice9** ppReturnedDeviceInterface) {
-
-	unhookFunction(hk_D3D_CreateDevice, initModule);
-
+    IDirect3DDevice9** ppReturnedDeviceInterface) 
+{
     LOG(L"Initializing Speeder Module");
 
     getConfig("speeder", "debug", DT_DWORD, 1, speederConfig);
@@ -122,47 +131,60 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     LOG(L"configuration: count.factor = %0.3f",
                 _speeder_config.count_factor);
 
+    realInitModule();
+	TRACE(L"Initialization complete.");
+    return D3D_OK;
+}
+
+void realInitModule()
+{
+	unhookFunction(hk_D3D_CreateDevice, initModule);
+
     // patch code to enforce specified time
     if (_speeder_config.count_factor >= MIN_COUNT &&
             fabs(_speeder_config.count_factor-1.0) > FLOAT_ZERO) {
-       SDLLHook Kernel32Hook = 
-       {
-          "KERNEL32.DLL",
-          false, NULL,		// Default hook disabled, NULL function pointer.
-          {
-              { "QueryPerformanceFrequency", 
-                  Override_QueryPerformanceFrequency },
-              { NULL, NULL }
-          }
-       };
-       HookAPICalls( &Kernel32Hook );
+        LOG(L"speed adjustment enabled");
 
-       LOG(L"speed adjustment enabled");
+        // hook
+        /*
+        SDLLHook kernel32Hook = 
+        {
+            "KERNEL32.DLL",
+            false, NULL, // Default hook disabled, NULL function pointer.
+            {
+                { 
+                    "QueryPerformanceFrequency", 
+                    Override_QueryPerformanceFrequency 
+                },
+                { NULL, NULL }
+            }
+        };
+        HookAPICalls( &kernel32Hook );
+        */
+        BOOL result = QueryPerformanceFrequency(&_metric);
+        LOG(L"old metric(%d, %d), result=%d", 
+           _metric.HighPart, _metric.LowPart, result);
+        _metric.HighPart /= _speeder_config.count_factor;
+        _metric.LowPart /= _speeder_config.count_factor;
+        LOG(L"new metric(%d, %d)", 
+           _metric.HighPart, _metric.LowPart);
 
-       LARGE_INTEGER metric;
-       BOOL result = QueryPerformanceFrequency(&metric);
-       LOG(L"old metric(%d, %d), result=%d", 
-           metric.HighPart, metric.LowPart, result);
-       metric.HighPart /= _speeder_config.count_factor;
-       metric.LowPart /= _speeder_config.count_factor;
-       LOG(L"new metric(%d, %d)", 
-           metric.HighPart, metric.LowPart);
+        HookIndirectCall2(code[CS_QUERY_PERFORMANCE_FREQUENCY], 
+            Override_QueryPerformanceFrequency);
     }
-
-	TRACE(L"Initialization complete.");
-    return D3D_OK;
 }
 
 KEXPORT BOOL WINAPI Override_QueryPerformanceFrequency(
         LARGE_INTEGER *lpPerformanceFrequency)
 {
-    LARGE_INTEGER metric;
-    BOOL result = QueryPerformanceFrequency(&metric);
+    //LOG(L"called QueryPerformanceFrequency!");
+    
+    //BOOL result = QueryPerformanceFrequency(&_metric);
+    //_metric.HighPart /= _speeder_config.count_factor;
+    //_metric.LowPart /= _speeder_config.count_factor;
 
-    metric.HighPart /= _speeder_config.count_factor;
-    metric.LowPart /= _speeder_config.count_factor;
-    *lpPerformanceFrequency = metric;
-
-    return result;
+    *lpPerformanceFrequency = _metric;
+    //return result;
+    return TRUE;
 }
 

@@ -91,9 +91,9 @@ afsio.dll: afsio.lib afsio.res kload.lib
 	$(LINK) $(LFLAGS) /out:afsio.dll /DLL afsio.obj configs.obj afsio.res $(LIBS) kload.lib apihijack.obj
 afsio.obj: afsio.cpp afsio.h afsio_addr.h afsio.rc
 
-speeder.lib: speeder.obj configs.obj apihijack.obj
+speeder.lib: speeder.obj configs.obj
 speeder.dll: speeder.lib speeder.res
-	$(LINK) $(LFLAGS) /out:speeder.dll /DLL speeder.obj configs.obj apihijack.obj speeder.res $(LIBS) kload.lib
+	$(LINK) $(LFLAGS) /out:speeder.dll /DLL speeder.obj configs.obj speeder.res $(LIBS) kload.lib
 speeder.obj: speeder.cpp speeder.h speeder_addr.h speeder.rc
 
 sides.lib: sides.obj configs.obj

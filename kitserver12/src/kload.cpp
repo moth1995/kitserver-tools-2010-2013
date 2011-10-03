@@ -85,6 +85,44 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		LOG(L"Log started.");
 		RegisterKModule(THISMOD);
 
+        /*
+        // restore entry point (to avoid live_pe_crc error)
+        if (g_pesinfo.gameVersion == gvPES2012)
+        {
+            DWORD newProtection = PAGE_EXECUTE_READWRITE;
+            DWORD g_savedProtection;
+            if (VirtualProtect((BYTE*)0x400d48, 4, 
+                        newProtection, &g_savedProtection))
+            {
+                *(DWORD*)0x400d48 = ????;//TODO
+                TRACE(L"Entry point restored.");
+            }
+        }
+        else if (g_pesinfo.gameVersion == gvPES2012v101)
+        {
+            DWORD newProtection = PAGE_EXECUTE_READWRITE;
+            DWORD g_savedProtection;
+            if (VirtualProtect((BYTE*)0x400d48, 4, 
+                        newProtection, &g_savedProtection))
+            {
+                *(DWORD*)0x400d48 = 0x022f5b60;
+                LOG(L"Entry point restored.");
+            }
+
+            if (VirtualProtect((BYTE*)0x26f9fe0, 0x20,
+                newProtection, &g_savedProtection)) {
+                memset((BYTE*)0x26f9fe0, 0, 0x20);
+                LOG(L"restored 1");
+            }
+            newProtection = PAGE_READWRITE;
+            if (VirtualProtect((BYTE*)0x17171e0, 0x20,
+                newProtection, &g_savedProtection)) {
+                memset((BYTE*)0x17171e0, 0, 0x20);
+                LOG(L"restored 2");
+            }
+        }
+        */
+
         // initialize global critical section
         InitializeCriticalSection(&g_cs);
 		

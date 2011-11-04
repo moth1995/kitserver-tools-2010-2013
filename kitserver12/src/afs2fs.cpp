@@ -584,5 +584,8 @@ KEXPORT DWORD afsReadBalls(BALL_INFO* balls)
         LOG(L"ball #%d: {%s}", i+1, ballName);
         Utf8::free(ballName);
     }
+
+    // restore code
+    //PatchCode(code[C_READ_BALLS], "\xc6\x46\x3c\x01\x8b\x76\x34", 7); 
     return 0;
 }

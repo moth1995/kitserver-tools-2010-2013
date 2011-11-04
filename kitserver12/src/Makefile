@@ -59,7 +59,7 @@ pngdib:
 #apps: manager.exe config.exe zlibtool.exe
 #dlls: kload.dll kserv.dll afsio.dll afs2fs.dll speeder.dll sides.dll lodmixer.dll fserv.dll
 #apps: manager.exe zlibtool.exe config.exe krun.exe
-dlls: kload.dll afsio.dll afs2fs.dll speeder.dll lodmixer.dll
+dlls: kload.dll afsio.dll afs2fs.dll speeder.dll lodmixer.dll sides.dll
 apps: manager.exe config.exe
 
 imageutil.obj: imageutil.cpp imageutil.h
@@ -113,9 +113,9 @@ config.exe: lodcfg.obj detect.obj lodcfgui.obj configs.obj config.res
 config.res: 
 	$(RC) -r -fo config.res config.rc
 
-kload.lib: hook.obj kload.obj detect.obj imageutil.obj lang.obj log.obj configs.obj hooklib.obj hook.obj crc32.obj
+kload.lib: hook.obj kload.obj detect.obj imageutil.obj lang.obj log.obj configs.obj hooklib.obj hook.obj crc32.obj apihijack.obj
 kload.dll: kload.lib kload.res
-	$(LINK) $(LFLAGS) /out:kload.dll /DLL kload.obj detect.obj imageutil.obj lang.obj log.obj configs.obj hooklib.obj hook.obj crc32.obj kload.res $(LIBS) winmm.lib
+	$(LINK) $(LFLAGS) /out:kload.dll /DLL kload.obj detect.obj imageutil.obj lang.obj log.obj configs.obj hooklib.obj hook.obj crc32.obj apihijack.obj kload.res $(LIBS) winmm.lib
 kload.obj: kload.cpp kload.h
 
 kload.res: 

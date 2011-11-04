@@ -454,6 +454,16 @@ HRESULT STDMETHODCALLTYPE newCreateDevice(IDirect3D9* self, UINT Adapter,
            	BehaviorFlags, pPresentationParameters, ppReturnedDeviceInterface);
 	} CALLCHAIN_END
 
+    //HMODULE hmod = GetModuleHandle(L"dfengine.dll");
+    //if (hmod != NULL) {
+    //    LOG(L"unloading dfengine.dll...");
+    //    FreeLibrary(hmod);
+    //}
+    //hmod = GetModuleHandle(L"wbhelp.dll");
+    //if (hmod != NULL) {
+    //    LOG(L"unloading wbhelp.dll...");
+    //    FreeLibrary(hmod);
+    //}
 	return result;
 }
 
@@ -1095,6 +1105,23 @@ DWORD STDMETHODCALLTYPE hookedEditCopyPlayerName(DWORD p1, DWORD p2)
 	return res;
 }
 
+KEXPORT void PatchCode(DWORD addr, void* patch, size_t len)
+{
+	if (addr)
+	{
+	    BYTE* bptr = (BYTE*)addr;
+	    DWORD protection = 0;
+	    DWORD newProtection = PAGE_EXECUTE_READWRITE;
+	    if (VirtualProtect(bptr, (len+1)/4*4, newProtection, &protection)) {
+            memcpy(bptr, patch, len);
+	        TRACE(L"Patched code at address (%08x): %d bytes", addr, len);
+	    }
+        else {
+            TRACE(L"FAILED to patch code at %08x", addr);
+        }
+	}
+}
+
 DWORD hookedCopyString(DWORD dest, DWORD destLen, DWORD src, DWORD srcLen)
 {	
 	DWORD _ESI;
@@ -1171,6 +1198,11 @@ KEXPORT void HookCallPoint(DWORD addr, void* func, int codeShift, int numNops, b
         {
 	        LOG(L"FAILED to hook function (%08x) at (%08x)", target, addr);
         }
+        TRACE(L"protection=%08x, newProtection=%08x", 
+                protection, newProtection);
+        //if (!VirtualProtect(bptr, 16, protection, &newProtection)) {
+        //    LOG(L"FAILED to restore protection at %p", bptr);
+        //}
 	}
 }
 
@@ -1561,7 +1593,7 @@ BOOL WINAPI hookWriteFile(
   LPOVERLAPPED lpOverlapped
 )
 {
-    TRACE(L"WriteFile: len=%d", nNumberOfBytesToWrite);
+    TRACE(L"WriteFile: len=%08x", nNumberOfBytesToWrite);
     if (nNumberOfBytesToWrite == data[EDIT_DATA_SIZE])  // edit data
     {
         LOG(L"Saving Edit Data...");
@@ -1641,7 +1673,7 @@ BOOL WINAPI hookReadFile(
   LPOVERLAPPED lpOverlapped
 )
 {
-    LOG(L"ReadFile: len=%d", nNumberOfBytesToRead);
+    LOG(L"ReadFile: len=%08x", nNumberOfBytesToRead);
 
     //BOOL result = _readFile(
     BOOL result = ReadFile(
@@ -1649,6 +1681,11 @@ BOOL WINAPI hookReadFile(
             lpBuffer,
             nNumberOfBytesToRead,
             lpNumberOfBytesRead,
+            lpOverlapped);
+
+    LOG(L"ReadFile DONE: bytesToRead=%08x, bytesRead=%08x, lpOverlapped=%p",
+            nNumberOfBytesToRead, 
+            (lpNumberOfBytesRead)?(*lpNumberOfBytesRead):0, 
             lpOverlapped);
 
     if (!result)

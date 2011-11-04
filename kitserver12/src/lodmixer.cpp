@@ -98,14 +98,13 @@ void modifySettings()
         }
         else {
             BYTE lb = getLB();
-            if (lb == 0) { 
-                float ar = float(width) / float(height);
-                setAspectRatio(ar, false);
-
-            }
-            else {
+            if (lb & 0x01) { 
                 LOG(L"Letter-boxing detected. "
                     L"Automatic AR-correction disabled");
+            }
+            else {
+                float ar = float(width) / float(height);
+                setAspectRatio(ar, false);
             }
         }
     }

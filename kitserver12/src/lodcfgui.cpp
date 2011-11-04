@@ -658,8 +658,6 @@ bool BuildControls(HWND parent)
 			x, y, statW*2-spacer, butH,
 			parent, NULL, NULL, NULL);
     _misc_tab_list.push_back(g_controllerCheckBox);
-    /* TEMPORARY: UNTIL sides.dll is updated */
-    EnableWindow(g_controllerCheckBox, FALSE);
 
 	y += boxH + spacer*2;
     x = spacer*2;

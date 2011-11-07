@@ -21,6 +21,7 @@
 #include <string>
 
 //#include "apihijack.h"
+//#include "d3d9.h"
 
 
 extern KMOD k_kload;
@@ -178,7 +179,7 @@ void SetPosition(CUSTOMVERTEX* dest, CUSTOMVERTEX* src, int n, int x, int y)
 void hookDirect3DCreate9()
 {
 	BYTE g_jmp[5] = {0,0,0,0,0};
-	// Put a JMP-hook on Direct3DCreate8
+	// Put a JMP-hook on Direct3DCreate9
 	TRACE(L"JMP-hooking Direct3DCreate9...");
 	
 	char d3dDLL[5];
@@ -249,27 +250,20 @@ void initAddresses()
 
 bool firstD3Dcall = true;
 IDirect3D9* STDMETHODCALLTYPE newDirect3DCreate9(UINT sdkVersion) {
+
+    // put back saved code fragment
+    BYTE* dest = (BYTE*)g_orgDirect3DCreate9;
+    dest[0] = g_codeDirect3DCreate9[0];
+    *((DWORD*)(dest + 1)) = *((DWORD*)(g_codeDirect3DCreate9 + 1));
+
 	// the first instance is freed after getting the device properties
 	if (firstD3Dcall) {
 		firstD3Dcall = false;
 		
-		BYTE* dest = (BYTE*)g_orgDirect3DCreate9;
-
-		// put back saved code fragment
-		dest[0] = g_codeDirect3DCreate9[0];
-		*((DWORD*)(dest + 1)) = *((DWORD*)(g_codeDirect3DCreate9 + 1));
-
-		// hook the address of the real Direct3DCreate9 call
-		DWORD* ptr = (DWORD*)(code[C_D3DCREATE_CS] + 1);
-		DWORD protection = 0, newProtection = PAGE_EXECUTE_READWRITE;
-		if (VirtualProtect(ptr, 4, newProtection, &protection)) {
-			ptr[0] = (DWORD)newDirect3DCreate9 - (code[C_D3DCREATE_CS] + 5);
-		}
-		
 		// process the calls to the modules
 		ALLVOID NextCall = NULL;
 	
-		TRACE(L"newDirect3DCreate9 called.");
+		LOG(L"newDirect3DCreate9 called.");
 		
         CALLCHAIN_BEGIN(hk_D3D_Create, it) 
         {
@@ -277,8 +271,6 @@ IDirect3D9* STDMETHODCALLTYPE newDirect3DCreate9(UINT sdkVersion) {
 			NextCall();
         } 
         CALLCHAIN_END
-		
-		return g_orgDirect3DCreate9(sdkVersion);
 	}
 
 	// call the original function.
@@ -287,11 +279,16 @@ IDirect3D9* STDMETHODCALLTYPE newDirect3DCreate9(UINT sdkVersion) {
 	if (!g_device) {
 		DWORD* vtable = (DWORD*)(*((DWORD*)result));
         
-	  // hook CreateDevice method
-	  g_orgCreateDevice = (PFNCREATEDEVICEPROC)vtable[VTAB_CREATEDEVICE];
-	  DWORD protection = 0;
+	    // hook CreateDevice method
+        PFNCREATEDEVICEPROC createDeviceProc =
+            (PFNCREATEDEVICEPROC)vtable[VTAB_CREATEDEVICE];
+        if (createDeviceProc != newCreateDevice) {
+            g_orgCreateDevice = createDeviceProc;
+        }
+	    DWORD protection = 0;
 		DWORD newProtection = PAGE_EXECUTE_READWRITE;
-		if (VirtualProtect(vtable+VTAB_CREATEDEVICE, 4, newProtection, &protection))
+		if (VirtualProtect(
+                vtable+VTAB_CREATEDEVICE, 4, newProtection, &protection))
 		{
 			vtable[VTAB_CREATEDEVICE] = (DWORD)newCreateDevice;
 			TRACE(L"CreateDevice hooked.");
@@ -310,6 +307,7 @@ IDirect3D9* STDMETHODCALLTYPE newDirect3DCreate9(UINT sdkVersion) {
     //TODO: make this only on strip selection
     //HookKeyboard();
 	
+    hookDirect3DCreate9(); //rehook
 	return result;
 }
 
@@ -362,7 +360,7 @@ HRESULT STDMETHODCALLTYPE newCreateDevice(IDirect3D9* self, UINT Adapter,
     D3DPRESENT_PARAMETERS *pPresentationParameters, 
     IDirect3DDevice9** ppReturnedDeviceInterface)
 {
-	TRACE(L"newCreateDevice called.");
+	LOG(L"newCreateDevice called.");
 	
 	HRESULT result = g_orgCreateDevice(self, Adapter, DeviceType, hFocusWindow,
             BehaviorFlags, pPresentationParameters, ppReturnedDeviceInterface);
@@ -421,8 +419,9 @@ HRESULT STDMETHODCALLTYPE newCreateDevice(IDirect3D9* self, UINT Adapter,
     //        hookWriteFile);
     //_readFile = (READFILE_PROC)HookIndirectCall(code[C_READ_FILE],
     //        hookReadFile);
-    HookIndirectCall2(code[C_WRITE_FILE], hookWriteFile);
-    HookIndirectCall2(code[C_READ_FILE], hookReadFile);
+    
+    //HookIndirectCall2(code[C_WRITE_FILE], hookWriteFile);
+    //HookIndirectCall2(code[C_READ_FILE], hookReadFile);
 
     /**
     SDLLHook Kernel32Hook = 

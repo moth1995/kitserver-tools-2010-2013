@@ -162,11 +162,10 @@ void realInitModule()
         HookAPICalls( &kernel32Hook );
         */
         BOOL result = QueryPerformanceFrequency(&_metric);
-        LOG(L"old metric(%d, %d), result=%d", 
+        LOG(L"old metric(%u, %u), result=%d", 
            _metric.HighPart, _metric.LowPart, result);
-        _metric.HighPart /= _speeder_config.count_factor;
-        _metric.LowPart /= _speeder_config.count_factor;
-        LOG(L"new metric(%d, %d)", 
+        _metric.QuadPart /= _speeder_config.count_factor;
+        LOG(L"new metric(%u, %u)", 
            _metric.HighPart, _metric.LowPart);
 
         HookIndirectCall2(code[CS_QUERY_PERFORMANCE_FREQUENCY], 
@@ -180,8 +179,7 @@ KEXPORT BOOL WINAPI Override_QueryPerformanceFrequency(
     //LOG(L"called QueryPerformanceFrequency!");
     
     //BOOL result = QueryPerformanceFrequency(&_metric);
-    //_metric.HighPart /= _speeder_config.count_factor;
-    //_metric.LowPart /= _speeder_config.count_factor;
+    //_metric.QuadPart /= _speeder_config.count_factor;
 
     *lpPerformanceFrequency = _metric;
     //return result;

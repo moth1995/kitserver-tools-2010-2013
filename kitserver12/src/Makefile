@@ -113,9 +113,9 @@ config.exe: lodcfg.obj detect.obj lodcfgui.obj configs.obj config.res
 config.res: 
 	$(RC) -r -fo config.res config.rc
 
-kload.lib: hook.obj kload.obj detect.obj imageutil.obj lang.obj log.obj configs.obj hooklib.obj hook.obj crc32.obj apihijack.obj
+kload.lib: hook.obj kload.obj detect.obj imageutil.obj lang.obj log.obj configs.obj hooklib.obj hook.obj crc32.obj
 kload.dll: kload.lib kload.res
-	$(LINK) $(LFLAGS) /out:kload.dll /DLL kload.obj detect.obj imageutil.obj lang.obj log.obj configs.obj hooklib.obj hook.obj crc32.obj apihijack.obj kload.res $(LIBS) winmm.lib
+	$(LINK) $(LFLAGS) /out:kload.dll /DLL kload.obj detect.obj imageutil.obj lang.obj log.obj configs.obj hooklib.obj hook.obj crc32.obj kload.res $(LIBS) winmm.lib
 kload.obj: kload.cpp kload.h
 
 kload.res: 
@@ -165,7 +165,7 @@ clean:
 	if exist output (rd /S /Q output)
 
 clean-all:
-	del /Q /F *.exp *.lib *.obj *.res *.dll *.exe *.log *~
+	del /Q /F *.exp *.lib *.obj *.res *.dll *.exe *.log *~ *.orig
 	if exist soft\pngdib (cd soft\pngdib && $(MAKE) clean-all)
 	if exist output (rd /S /Q output)
 	

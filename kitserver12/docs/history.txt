@@ -2,6 +2,14 @@ Kitserver 12 HISTORY notes
 ==========================
 
 
+2011-11-07
+----------
+v12.0.8
+- added support for 1.02 version of the game
+- fix for speeder 
+  (sometimes low values were not handled correctly)
+
+
 2011-11-04
 ----------
 v12.0.7

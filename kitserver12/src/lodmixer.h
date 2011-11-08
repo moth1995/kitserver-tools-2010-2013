@@ -1,7 +1,7 @@
 // lodmixer.h
 
 #define MODID 101
-#define NAMELONG L"LOD Mixer 12.0.7.0"
+#define NAMELONG L"LOD Mixer 12.0.8.0"
 #define NAMESHORT L"LODMIXER"
 #define DEFAULT_DEBUG 0
 

@@ -59,7 +59,7 @@ pngdib:
 #apps: manager.exe config.exe zlibtool.exe
 #dlls: kload.dll kserv.dll afsio.dll afs2fs.dll speeder.dll sides.dll lodmixer.dll fserv.dll
 #apps: manager.exe zlibtool.exe config.exe krun.exe
-dlls: kload.dll afsio.dll afs2fs.dll speeder.dll lodmixer.dll sides.dll
+dlls: kload.dll afsio.dll afs2fs.dll speeder.dll lodmixer.dll sides.dll kserv.dll
 apps: manager.exe config.exe
 
 imageutil.obj: imageutil.cpp imageutil.h
@@ -132,7 +132,7 @@ kserv.lib: kserv.obj gdb.obj configs.obj afsio.dll kload.dll pngdib
 kserv.dll: kserv.lib kserv.res
 	$(LINK) $(LFLAGS) /out:kserv.dll /LIBPATH:$(LPPNGDIB) /LIBPATH:$(LPLIBPNG) /LIBPATH:$(LPZLIB) /DLL kserv.obj gdb.obj configs.obj kserv.res $(LIBS) $(D3DX9) kload.lib afsio.lib $(LIBSDLL)
 kserv.obj: kserv.cpp kserv.h kserv_addr.h kserv.rc dllinit.h afsio.h teaminfo.h
-gdb.obj: gdb.cpp gdb.h
+gdb.obj: gdb.cpp gdb.h configs.hpp
 
 tab1.exe: tab1.obj
 	$(LINK) $(LFLAGS) /out:tab1.exe tab1.obj $(LIBS)

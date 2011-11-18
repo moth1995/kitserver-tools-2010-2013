@@ -248,7 +248,7 @@ void initAddresses()
 	return;
 }
 
-bool firstD3Dcall = true;
+int callCount = 0;
 IDirect3D9* STDMETHODCALLTYPE newDirect3DCreate9(UINT sdkVersion) {
 
     // put back saved code fragment
@@ -257,9 +257,10 @@ IDirect3D9* STDMETHODCALLTYPE newDirect3DCreate9(UINT sdkVersion) {
     *((DWORD*)(dest + 1)) = *((DWORD*)(g_codeDirect3DCreate9 + 1));
 
 	// the first instance is freed after getting the device properties
-	if (firstD3Dcall) {
-		firstD3Dcall = false;
-		
+    callCount += 1;
+    LOG(L"callCount = %d", callCount);
+
+    if (callCount == 1) {
 		// process the calls to the modules
 		ALLVOID NextCall = NULL;
 	
@@ -1199,9 +1200,9 @@ KEXPORT void HookCallPoint(DWORD addr, void* func, int codeShift, int numNops, b
         }
         TRACE(L"protection=%08x, newProtection=%08x", 
                 protection, newProtection);
-        //if (!VirtualProtect(bptr, 16, protection, &newProtection)) {
-        //    LOG(L"FAILED to restore protection at %p", bptr);
-        //}
+        if (!VirtualProtect(bptr, 16, protection, &newProtection)) {
+            LOG(L"FAILED to restore protection at %p", bptr);
+        }
 	}
 }
 

@@ -77,7 +77,9 @@ bool readMap(const wchar_t* cfgFile, T& m)
 		pValue = pEq + 1;
 		
         T::key_type numKey;
-		if (swscanf(pName, L"%d", &numKey)==1)
+        int n = swscanf(pName, L"0x%x", &numKey);
+        if (n!=1) n = swscanf(pName, L"%d", &numKey);
+        if (n==1)
         {
             while (*pValue == ' ')
                 pValue++;

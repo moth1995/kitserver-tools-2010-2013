@@ -143,6 +143,50 @@ void modifySettings()
             }
         }
     }
+
+    // LOD modifications
+    {
+        float* fptr =(float*)data[LOD_PLAYERS_TABLE1];
+        if (fptr)
+        {
+            SET(fptr+0, _lmconfig.lod.lodPlayersMiscS1);
+            SET(fptr+1, _lmconfig.lod.lodPlayersMiscS2);
+            SET(fptr+2, _lmconfig.lod.lodPlayersMiscS3);
+            SET(fptr+3, _lmconfig.lod.lodPlayersReplayS1);
+            SET(fptr+4, _lmconfig.lod.lodPlayersReplayS2);
+            SET(fptr+5, _lmconfig.lod.lodPlayersReplayS3);
+            // active player: corner kicks
+            SET(fptr+6, _lmconfig.lod.lodActivePlayerCKs1); 
+            SET(fptr+7, _lmconfig.lod.lodActivePlayerCKs2); 
+            SET(fptr+8, _lmconfig.lod.lodActivePlayerCKs3); 
+            // active player: free kicks
+            SET(fptr+9, _lmconfig.lod.lodActivePlayerFKs1); 
+            SET(fptr+10, _lmconfig.lod.lodActivePlayerFKs2); 
+            SET(fptr+11, _lmconfig.lod.lodActivePlayerFKs3); 
+        }
+
+        fptr = (float*)data[LOD_PLAYERS_TABLE2];
+        if (fptr)
+        {
+            SET(fptr-3, _lmconfig.lod.lodPlayersEntranceS1);
+            SET(fptr-2, _lmconfig.lod.lodPlayersEntranceS2);
+            SET(fptr-1, _lmconfig.lod.lodPlayersEntranceS3);
+            SET(fptr+0, _lmconfig.lod.lodPlayersEntranceS1);
+            SET(fptr+1, _lmconfig.lod.lodPlayersEntranceS2);
+            SET(fptr+2, _lmconfig.lod.lodPlayersEntranceS3);
+
+            SET(fptr+3, _lmconfig.lod.lodPlayersInplayS1);
+            SET(fptr+4, _lmconfig.lod.lodPlayersInplayS2);
+            SET(fptr+5, _lmconfig.lod.lodPlayersInplayS3);
+        }
+
+        fptr = (float*)data[LOD_REF_TABLE1];
+        if (fptr) SET(fptr, _lmconfig.lod.lodRefReplay);
+        fptr = (float*)data[LOD_REF_TABLE2];
+        if (fptr) SET(fptr, _lmconfig.lod.lodRefInplay);
+
+        LOG(L"LOD levels set");
+    }
 }
 
 void initLodMixer()
@@ -190,53 +234,9 @@ void initLodMixer()
 
     getConfig("lodmixer", "picture.quality", DT_DWORD, 23, lodmixerConfig);
 
-    HookCallPoint(
-        code[C_SETTINGS_READ], lodAtSettingsReadPoint, 6, 1, false);
+    //HookCallPoint(
+    //    code[C_SETTINGS_READ], lodAtSettingsReadPoint, 6, 1, false);
 
-    if (1)
-    {
-        // LOD modifications
-        float* fptr =(float*)data[LOD_PLAYERS_TABLE1];
-        if (fptr)
-        {
-            SET(fptr+0, _lmconfig.lod.lodPlayersMiscS1);
-            SET(fptr+1, _lmconfig.lod.lodPlayersMiscS2);
-            SET(fptr+2, _lmconfig.lod.lodPlayersMiscS3);
-            SET(fptr+3, _lmconfig.lod.lodPlayersReplayS1);
-            SET(fptr+4, _lmconfig.lod.lodPlayersReplayS2);
-            SET(fptr+5, _lmconfig.lod.lodPlayersReplayS3);
-            // active player: corner kicks
-            SET(fptr+6, _lmconfig.lod.lodActivePlayerCKs1); 
-            SET(fptr+7, _lmconfig.lod.lodActivePlayerCKs2); 
-            SET(fptr+8, _lmconfig.lod.lodActivePlayerCKs3); 
-            // active player: free kicks
-            SET(fptr+9, _lmconfig.lod.lodActivePlayerFKs1); 
-            SET(fptr+10, _lmconfig.lod.lodActivePlayerFKs2); 
-            SET(fptr+11, _lmconfig.lod.lodActivePlayerFKs3); 
-        }
-
-        fptr = (float*)data[LOD_PLAYERS_TABLE2];
-        if (fptr)
-        {
-            SET(fptr-3, _lmconfig.lod.lodPlayersEntranceS1);
-            SET(fptr-2, _lmconfig.lod.lodPlayersEntranceS2);
-            SET(fptr-1, _lmconfig.lod.lodPlayersEntranceS3);
-            SET(fptr+0, _lmconfig.lod.lodPlayersEntranceS1);
-            SET(fptr+1, _lmconfig.lod.lodPlayersEntranceS2);
-            SET(fptr+2, _lmconfig.lod.lodPlayersEntranceS3);
-
-            SET(fptr+3, _lmconfig.lod.lodPlayersInplayS1);
-            SET(fptr+4, _lmconfig.lod.lodPlayersInplayS2);
-            SET(fptr+5, _lmconfig.lod.lodPlayersInplayS3);
-        }
-
-        fptr = (float*)data[LOD_REF_TABLE1];
-        if (fptr) SET(fptr, _lmconfig.lod.lodRefReplay);
-        fptr = (float*)data[LOD_REF_TABLE2];
-        if (fptr) SET(fptr, _lmconfig.lod.lodRefInplay);
-
-        LOG(L"LOD levels set");
-    }
 
     LOG(L"Initialization complete.");
     unhookFunction(hk_D3D_Create, initLodMixer);

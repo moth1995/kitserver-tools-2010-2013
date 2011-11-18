@@ -66,6 +66,9 @@ void hookAddMenuModeCallPoint();
 void hookSubMenuModeCallPoint();
 void hookTriggerSelectionOverlay(int delta);
 
+void hookPrepareDataToWriteCallPoint();
+void hookPrepareDataToWrite(LPVOID buffer, DWORD numBytes);
+
 HHOOK g_hKeyboardHook = NULL;
 list<KEY_EVENT_CALLBACK> _key_callbacks;
 void HookKeyboard();
@@ -420,6 +423,8 @@ HRESULT STDMETHODCALLTYPE newCreateDevice(IDirect3D9* self, UINT Adapter,
     //        hookWriteFile);
     //_readFile = (READFILE_PROC)HookIndirectCall(code[C_READ_FILE],
     //        hookReadFile);
+    HookCallPoint(code[C_WRITE_EDIT_DATA], 
+        hookPrepareDataToWriteCallPoint, 6, 1);
     
     //HookIndirectCall2(code[C_WRITE_FILE], hookWriteFile);
     //HookIndirectCall2(code[C_READ_FILE], hookReadFile);
@@ -1580,6 +1585,60 @@ KEXPORT void addWriteReplayDataCallback(WRITE_DATA_CALLBACK callback)
 KEXPORT void addWriteBalDataCallback(WRITE_DATA_CALLBACK callback)
 {
     _writeBalDataCallbacks.push_back(callback);
+}
+
+void hookPrepareDataToWriteCallPoint()
+{
+    __asm {
+        pushfd 
+        push ebp
+        push eax
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        mov ebx,dword ptr ss:[esp+0x2c]
+        push ebx  // param: numBytes
+        push eax  // param: dest
+        call hookPrepareDataToWrite
+        add esp,8 // pop params
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        pop eax
+        pop ebp
+        popfd
+        mov ecx,dword ptr ds:[edi+0x24] // replaced code
+        push ebx
+        mov ebx,[esp+4]
+        mov [esp+0x10],ebx
+        pop ebx
+        add esp,0x0c
+        retn
+    }
+}
+
+void hookPrepareDataToWrite(LPVOID buffer, DWORD numBytes)
+{
+    LOG(L"Preparing data for saving (at %08x, %08x bytes)...", 
+        (DWORD)buffer, numBytes);
+
+    if (numBytes == 0x76a678) {
+        LOG(L"EDIT data to save...");
+
+        // call the callbacks
+        list<WRITE_DATA_CALLBACK>::iterator it;
+        for (it = _writeEditDataCallbacks.begin();
+                it != _writeEditDataCallbacks.end();
+                it++)
+            (*it)(buffer, numBytes);
+    }
+    else if (numBytes == 0x40090) {
+        LOG(L"OPTION data to save...");
+    }
 }
 
 /**

@@ -343,6 +343,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 	if (dwReason == DLL_PROCESS_ATTACH)
 	{
 		hInst = hInstance;
+        InitializeCriticalSection(&_cs);
 
 		RegisterKModule(THISMOD);
 		
@@ -350,10 +351,11 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 			LOG(L"Sorry, your game version isn't supported!");
 			return false;
 		}
+
+        CHECK_KLOAD(MAKELONG(1,12));
 		
 		copyAdresses();
 		hookFunction(hk_D3D_CreateDevice, initModule);
-        InitializeCriticalSection(&_cs);
 	}
 	
 	else if (dwReason == DLL_PROCESS_DETACH)
@@ -1009,6 +1011,8 @@ void RestoreTeamKitInfos(TEAM_KIT_INFO* teamKitInfo)
             it != _orgTeamKitInfo.end();
             it++)
     {
+        teamKitInfo[it->first].slot = it->second.tki.slot;
+
         if (it->second.ga) 
             memcpy(&teamKitInfo[it->first].ga, 
                     &it->second.tki.ga, sizeof(KIT_INFO));
@@ -1019,7 +1023,8 @@ void RestoreTeamKitInfos(TEAM_KIT_INFO* teamKitInfo)
             memcpy(&teamKitInfo[it->first].pb, 
                     &it->second.tki.pb, sizeof(KIT_INFO));
 
-        LOG(L"TeamKitInfo for %d restored", it->first);
+        LOG(L"TeamKitInfo for %d restored", 
+            GetTeamIdByIndex(it->first));
     }
 }
 
@@ -1115,8 +1120,11 @@ void kservWriteEditData(LPCVOID buf, DWORD size)
 {
     // undo re-linking: we don't want dynamic relinking
     // to be saved in Edit data
-    TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)((BYTE*)buf 
-            + 0x1a0 + data[TEAM_KIT_INFO_OFFSET] - 8);
+    //TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)((BYTE*)buf 
+    //        + 0x1a0 + data[TEAM_KIT_INFO_OFFSET] - 8);
+    TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)((BYTE*)buf
+            + data[TEAM_KIT_INFO_OFFSET] - 8);
+    //__asm int 3;
     RestoreTeamKitInfos(teamKitInfo);
 }
 

@@ -1,5 +1,5 @@
 // ADDRESSES for hook.cpp
-#define CODELEN 15
+#define CODELEN 16
 enum {
 	C_D3DCREATE_CS,
 	C_LOADTEXTUREFORPLAYER_CS, C_LOADTEXTUREFORPLAYER,
@@ -9,9 +9,10 @@ enum {
     C_READ_FILE, C_WRITE_FILE,
     C_COPY_DATA, C_COPY_DATA2,
     C_ENTER_UNIFORM_SELECT, C_EXIT_UNIFORM_SELECT,
+    C_WRITE_EDIT_DATA,
 };
 
-#define NOCODEADDR {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+#define NOCODEADDR {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 DWORD codeArray[][CODELEN] = { 
   // PES2011 DEMO
   {
@@ -23,6 +24,7 @@ DWORD codeArray[][CODELEN] = {
         0, 0,
         0, 0,
         0, 0,
+        0,
   },
   // PES2011
   {
@@ -34,6 +36,7 @@ DWORD codeArray[][CODELEN] = {
         0xc7b313, 0xc7b1da,
         0x42d991, 0x1191201,
         0, 0,
+        0,
   },
   // PES2011 v1.01
   {
@@ -45,6 +48,7 @@ DWORD codeArray[][CODELEN] = {
         0xc7b7f3, 0xc7b6ba,
         0x42d5b1, 0x1191751,
         0, 0, 
+        0,
   },
   // PES2011 v1.02
   {
@@ -56,6 +60,7 @@ DWORD codeArray[][CODELEN] = {
         0xc7b883, 0xc7b74a,
         0x42d8c1, 0x11918b1,
         0, 0, 
+        0,
   },
   // PES2011 v1.03
   {
@@ -67,6 +72,7 @@ DWORD codeArray[][CODELEN] = {
         0xc7b893, 0xc7b75a,
         0x42d8c1, 0x11918f1,
         0, 0, 
+        0,
   },
   // PES2012 demo
   {
@@ -78,6 +84,7 @@ DWORD codeArray[][CODELEN] = {
         0/*0x10e85f9*/, 0/*0x10e8582*/,
         0, 0,
         0, 0, 
+        0,
   },
   // PES2012 demo2
   {
@@ -89,6 +96,7 @@ DWORD codeArray[][CODELEN] = {
         0x10fc759, 0x10fc6e2,
         0, 0,
         0, 0, 
+        0,
   },
   // PES2012
   {
@@ -100,6 +108,7 @@ DWORD codeArray[][CODELEN] = {
         0x1153bb9, 0x1153b42,
         0, 0,
         0, 0, 
+        0x12c3078,
   },
   // PES2012 v1.01
   {
@@ -111,6 +120,7 @@ DWORD codeArray[][CODELEN] = {
         0x1156fd9, 0x1156f62,
         0, 0,
         0, 0, 
+        0x12c6518,
   },
   // PES2012 v1.02
   {
@@ -122,6 +132,7 @@ DWORD codeArray[][CODELEN] = {
         0x115c7e9, 0x115c772,
         0, 0,
         0, 0, 
+        0x12c8098,
   },
 };
 

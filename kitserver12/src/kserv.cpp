@@ -421,9 +421,9 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
 	
 	// hooks
     HookCallPoint(code[C_AFTER_READ_NAMES], 
-            kservAfterReadNamesCallPoint, 6, 0);
+            kservAfterReadNamesCallPoint, 6, 1);
     HookCallPoint(code[C_AFTER_APPLY_CONTENT], 
-            kservAfterReadNamesCallPoint2, 6, 2);
+            kservAfterReadNamesCallPoint2, 6, 1);
     //HookCallPoint(code[C_AFTER_APPLY_CONTENT], 
     //        kservAfterReadNamesCallPoint2, 6, 0);
 
@@ -564,8 +564,7 @@ const D3DXVECTOR2* pTexelSize, LPVOID pData)
 void kservAfterReadNamesCallPoint()
 {
     __asm {
-        mov [eax], esi  // execute replaced code
-        mov [esp+0x20], ecx  // ...
+        lea edx, dword ptr ds:[esi+0x42f2a0] // replaced code
         pushfd 
         push ebp
         push eax
@@ -590,7 +589,6 @@ void kservAfterReadNamesCallPoint()
 void kservAfterReadNamesCallPoint2()
 {
     __asm {
-        mov dword ptr [edi+0x40], 0x000001f4 // execute replaced code
         pushfd 
         push ebp
         push eax
@@ -599,8 +597,10 @@ void kservAfterReadNamesCallPoint2()
         push edx
         push esi
         push edi
+        cmp eax,0
+        je skip
         call kservAfterReadNames
-        pop edi
+skip:   pop edi
         pop esi
         pop edx
         pop ecx
@@ -608,6 +608,12 @@ void kservAfterReadNamesCallPoint2()
         pop eax
         pop ebp
         popfd
+        push ebx
+        mov ebx,[esp+4]
+        mov [esp+0x10],ebx
+        pop ebx
+        add esp,0x0c
+        cmp eax, dword ptr ds:[esi+8] // replaced code
         retn
     }
 }
@@ -721,7 +727,7 @@ WORD GetNextXslot()
 
 DWORD WINAPI InitSlotMap(LPCVOID param)
 {
-    Sleep(10000);
+    //Sleep(10000);
 
     EnterCriticalSection(&_cs);
     TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)param;

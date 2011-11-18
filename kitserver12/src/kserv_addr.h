@@ -83,7 +83,7 @@ DWORD codeArray[][CODELEN] = {
         //0x10cfcdc, 0x10d078c, 0x119deda,
         //0, 0,//**
         //0, 0,//**
-        0x831955, 0x11a61e2,
+        0x11a5b7c, 0x12c8d9c, //0x831955, 0x11a61e2,
         0x11f0a9c, 0x11f154c, 0x12d35aa,
         0, 0,//**
         0, 0,//**

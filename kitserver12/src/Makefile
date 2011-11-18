@@ -30,27 +30,27 @@ all: dlls apps
 	if exist output (rd /S /Q output)
 	mkdir output
 	copy *.dll output
-#	copy $(LIBPNGDLL) output
-#	copy $(ZLIBDLL) output
+	copy $(LIBPNGDLL) output
+	copy $(ZLIBDLL) output
 	copy manager.exe output
 	copy config.exe output
 #	copy krun.exe output
-#	copy lang_*.txt output
+	copy lang_*.txt output
 	
 all_dlls: dlls
 	if exist output (rd /S /Q output)
 	mkdir output
 	copy *.dll output
-#	copy $(LIBPNGDLL) output
-#	copy $(ZLIBDLL) output
-#	copy lang_*.txt output
+	copy $(LIBPNGDLL) output
+	copy $(ZLIBDLL) output
+	copy lang_*.txt output
 	
 all_apps: apps
 	if exist output (rd /S /Q output)
 	mkdir output
 	copy manager.exe output
 	copy config.exe output
-#	copy lang_*.txt output
+	copy lang_*.txt output
 
 pngdib:
 	(cd soft\pngdib && nmake EXTRA_CFLAGS=$(EXTRA_CFLAGS))

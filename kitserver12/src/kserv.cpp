@@ -53,16 +53,60 @@
 #define BIN_KIT_FIRST    5758
 #define BIN_KIT_LAST     6269
 
-#define XBIN_KIT_FIRST    10366
-#define XBIN_KIT_LAST     10877
-#define XBIN_FONT_FIRST   11074
-#define XBIN_FONT_LAST    12097
-#define XBIN_NUMBER_FIRST 12098
-#define XBIN_NUMBER_LAST  13122
+//#define XBIN_KIT_FIRST    10366
+//#define XBIN_KIT_LAST     10877
+//#define XBIN_FONT_FIRST   11074
+//#define XBIN_FONT_LAST    12097
+//#define XBIN_NUMBER_FIRST 12098
+//#define XBIN_NUMBER_LAST  13122
 
-#define XSLOT_FIRST 0x900
-#define XSLOT_LAST  0x9ff
-#define XBIN_LAST XBIN_NUMBER_LAST
+//#define XSLOT_FIRST 0x900
+//#define XSLOT_LAST  0x9ff
+//#define XBIN_LAST XBIN_NUMBER_LAST
+
+// virtual slot banks
+#define XSLOT_A_FIRST 0x1000
+#define XSLOT_A_LAST  0x10ff
+#define XSLOT_B_FIRST 0x1200
+#define XSLOT_B_LAST  0x12ff
+#define XSLOT_C_FIRST 0x1400
+#define XSLOT_C_LAST  0x14ff
+#define XSLOT_D_FIRST 0x1600
+#define XSLOT_D_LAST  0x16ff
+
+// bin bank A
+#define XBIN_A_KIT_FIRST (BIN_KIT_FIRST+XSLOT_A_FIRST*2)
+#define XBIN_A_KIT_LAST (BIN_KIT_FIRST+XSLOT_A_LAST*2+1)
+#define XBIN_A_FONT_FIRST (BIN_FONT_FIRST+XSLOT_A_FIRST*4)
+#define XBIN_A_FONT_LAST (BIN_FONT_FIRST+XSLOT_A_LAST*4+3)
+#define XBIN_A_NUMBER_FIRST (BIN_NUMBER_FIRST+XSLOT_A_FIRST*4)
+#define XBIN_A_NUMBER_LAST (BIN_NUMBER_FIRST+XSLOT_A_LAST*4+3)
+
+// bin bank B
+#define XBIN_B_KIT_FIRST (BIN_KIT_FIRST+XSLOT_B_FIRST*2)
+#define XBIN_B_KIT_LAST (BIN_KIT_FIRST+XSLOT_B_LAST*2+1)
+#define XBIN_B_FONT_FIRST (BIN_FONT_FIRST+XSLOT_B_FIRST*4)
+#define XBIN_B_FONT_LAST (BIN_FONT_FIRST+XSLOT_B_LAST*4+3)
+#define XBIN_B_NUMBER_FIRST (BIN_NUMBER_FIRST+XSLOT_B_FIRST*4)
+#define XBIN_B_NUMBER_LAST (BIN_NUMBER_FIRST+XSLOT_B_LAST*4+3)
+
+// bin bank C
+#define XBIN_C_KIT_FIRST (BIN_KIT_FIRST+XSLOT_C_FIRST*2)
+#define XBIN_C_KIT_LAST (BIN_KIT_FIRST+XSLOT_C_LAST*2+1)
+#define XBIN_C_FONT_FIRST (BIN_FONT_FIRST+XSLOT_C_FIRST*4)
+#define XBIN_C_FONT_LAST (BIN_FONT_FIRST+XSLOT_C_LAST*4+3)
+#define XBIN_C_NUMBER_FIRST (BIN_NUMBER_FIRST+XSLOT_C_FIRST*4)
+#define XBIN_C_NUMBER_LAST (BIN_NUMBER_FIRST+XSLOT_C_LAST*4+3)
+
+// bin bank D
+#define XBIN_D_KIT_FIRST (BIN_KIT_FIRST+XSLOT_D_FIRST*2)
+#define XBIN_D_KIT_LAST (BIN_KIT_FIRST+XSLOT_D_LAST*2+1)
+#define XBIN_D_FONT_FIRST (BIN_FONT_FIRST+XSLOT_D_FIRST*4)
+#define XBIN_D_FONT_LAST (BIN_FONT_FIRST+XSLOT_D_LAST*4+3)
+#define XBIN_D_NUMBER_FIRST (BIN_NUMBER_FIRST+XSLOT_D_FIRST*4)
+#define XBIN_D_NUMBER_LAST (BIN_NUMBER_FIRST+XSLOT_D_LAST*4+3)
+
+#define XBIN_LAST XBIN_D_NUMBER_LAST
 
 #define KITS_IMG        0x0c   // dt0c.img
 #define EXPANSION_IMG   0x0f   // dt0f.img
@@ -75,6 +119,10 @@
 #define DT0F_BIN_KIT_FIRST    2117
 #define DT0F_BIN_KIT_LAST     2372
 
+#define EURO_ATTR_IMG   0x04   // dt04.img
+#define EURO_ATTR_EXPANSION_IMG 0x0f // dt0f.img
+#define EURO_ATTR_BIN 21
+#define EURO_ATTR_EXPANSION_BIN 1832
 
 HINSTANCE hInst = NULL;
 KMOD k_kserv = {MODID, NAMELONG, NAMESHORT, DEFAULT_DEBUG};
@@ -94,6 +142,10 @@ enum
     BIN_NUMS_PA,
     BIN_NUMS_PB,
 };
+
+// table for quick bin-type lookups
+short _fastBinTypeTable[0x10000];
+short _fastBinTypeTableExp[0x10000];
 
 class kserv_config_t 
 {
@@ -256,8 +308,7 @@ map<wstring,Kit>::iterator g_iterHomeGB_end;
 map<wstring,Kit>::iterator g_iterAwayGA_end;
 map<wstring,Kit>::iterator g_iterAwayGB_end;
 
-WORD _firstXslot = XSLOT_FIRST;
-WORD _nextXslot = XSLOT_FIRST;
+WORD _nextXslot = XSLOT_A_FIRST;
 bool _home1st = true;
 bool _away1st = true;
 
@@ -447,6 +498,73 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     LOG(L"debug = %d", k_kserv.debug);
     LOG(L"use.description = %d", _kserv_config._use_description);
 
+    // populate tables for fast bin-type lookups
+    
+    // dt0f
+    memset(_fastBinTypeTable, 0xff, sizeof(_fastBinTypeTable));
+    for (int i=BIN_KIT_FIRST; i<=BIN_KIT_LAST; i++) {
+        _fastBinTypeTable[i] = BIN_KIT_GK + ((i - BIN_KIT_FIRST)%2);
+    }
+    for (int i=BIN_FONT_FIRST; i<=BIN_FONT_LAST; i++) {
+        _fastBinTypeTable[i] = BIN_FONT_GA + ((i - BIN_FONT_FIRST)%4);
+    }
+    for (int i=BIN_NUMBER_FIRST; i<=BIN_NUMBER_LAST; i++) {
+        _fastBinTypeTable[i] = BIN_NUMS_GA + ((i - BIN_NUMBER_FIRST)%4);
+    }
+
+    for (int i=XBIN_A_KIT_FIRST; i<=XBIN_A_KIT_LAST; i++) {
+        _fastBinTypeTable[i] = BIN_KIT_GK + ((i - XBIN_A_KIT_FIRST)%2);
+    }
+    for (int i=XBIN_A_FONT_FIRST; i<=XBIN_A_FONT_LAST; i++) {
+        _fastBinTypeTable[i] = BIN_FONT_GA + ((i - XBIN_A_FONT_FIRST)%4);
+    }
+    for (int i=XBIN_A_NUMBER_FIRST; i<=XBIN_A_NUMBER_LAST; i++) {
+        _fastBinTypeTable[i] = BIN_NUMS_GA + ((i - XBIN_A_NUMBER_FIRST)%4);
+    }
+
+    for (int i=XBIN_B_KIT_FIRST; i<=XBIN_B_KIT_LAST; i++) {
+        _fastBinTypeTable[i] = BIN_KIT_GK + ((i - XBIN_B_KIT_FIRST)%2);
+    }
+    for (int i=XBIN_B_FONT_FIRST; i<=XBIN_B_FONT_LAST; i++) {
+        _fastBinTypeTable[i] = BIN_FONT_GA + ((i - XBIN_B_FONT_FIRST)%4);
+    }
+    for (int i=XBIN_B_NUMBER_FIRST; i<=XBIN_B_NUMBER_LAST; i++) {
+        _fastBinTypeTable[i] = BIN_NUMS_GA + ((i - XBIN_B_NUMBER_FIRST)%4);
+    }
+
+    for (int i=XBIN_C_KIT_FIRST; i<=XBIN_C_KIT_LAST; i++) {
+        _fastBinTypeTable[i] = BIN_KIT_GK + ((i - XBIN_C_KIT_FIRST)%2);
+    }
+    for (int i=XBIN_C_FONT_FIRST; i<=XBIN_C_FONT_LAST; i++) {
+        _fastBinTypeTable[i] = BIN_FONT_GA + ((i - XBIN_C_FONT_FIRST)%4);
+    }
+    for (int i=XBIN_C_NUMBER_FIRST; i<=XBIN_C_NUMBER_LAST; i++) {
+        _fastBinTypeTable[i] = BIN_NUMS_GA + ((i - XBIN_C_NUMBER_FIRST)%4);
+    }
+
+    for (int i=XBIN_D_KIT_FIRST; i<=XBIN_D_KIT_LAST; i++) {
+        _fastBinTypeTable[i] = BIN_KIT_GK + ((i - XBIN_D_KIT_FIRST)%2);
+    }
+    for (int i=XBIN_D_FONT_FIRST; i<=XBIN_D_FONT_LAST; i++) {
+        _fastBinTypeTable[i] = BIN_FONT_GA + ((i - XBIN_D_FONT_FIRST)%4);
+    }
+    for (int i=XBIN_D_NUMBER_FIRST; i<=XBIN_D_NUMBER_LAST; i++) {
+        _fastBinTypeTable[i] = BIN_NUMS_GA + ((i - XBIN_D_NUMBER_FIRST)%4);
+    }
+
+    // dt0f
+    memset(_fastBinTypeTableExp, 0xff, sizeof(_fastBinTypeTableExp));
+    for (int i=DT0F_BIN_KIT_FIRST; i<=DT0F_BIN_KIT_LAST; i++) {
+        _fastBinTypeTableExp[i] = BIN_KIT_GK + ((i - DT0F_BIN_KIT_FIRST)%2);
+    }
+    for (int i=DT0F_BIN_FONT_FIRST; i<=DT0F_BIN_FONT_LAST; i++) {
+        _fastBinTypeTableExp[i] = BIN_FONT_GA + ((i - DT0F_BIN_FONT_FIRST)%4);
+    }
+    for (int i=DT0F_BIN_NUMBER_FIRST; i<=DT0F_BIN_NUMBER_LAST; i++) {
+        _fastBinTypeTableExp[i] = 
+            BIN_NUMS_GA + ((i - DT0F_BIN_NUMBER_FIRST)%4);
+    }
+
     // Load GDB
     LOG(L"pesDir: {%s}",getPesInfo()->pesDir);
     LOG(L"myDir : {%s}",getPesInfo()->myDir);
@@ -494,8 +612,9 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
            _kserv_config._techfit[defaults[i]] = 1;
        }
 
-       LOG(L"defaulting to these tight models: 22");
+       LOG(L"defaulting to these tight models: 22, 83");
        _kserv_config._techfit[22] = 2;
+       _kserv_config._techfit[83] = 2;
     }
 
     // initialize iterators
@@ -673,9 +792,9 @@ void DumpSlotsInfo(TEAM_KIT_INFO* teamKitInfo, TEAM_NAME* teamNames)
         if (teamId == 0xffff)
             continue;
         //fprintf(f, "slot: %6d\tteam: %3d (%04x) %s\n", 
-        fprintf(f, "slot: %6d\tteam: %3d (%d) %s\n", 
+        fprintf(f, "slot: %6d\tteam: %3d (%d/%04x) %s\n", 
             (short)teamKitInfo[i].slot, 
-            i, teamId, GetTeamNameByIndex(i, teamNames));
+            i, teamId, teamId, GetTeamNameByIndex(i, teamNames));
         //char* name = GetTeamNameByIndex(i, teamNames);
         //if (name[0]!='\0')
         //    fprintf(f, "%3d, %s\n", i, name);
@@ -721,9 +840,19 @@ void SetSlot(map<wstring,Kit>& m, const wchar_t* key, WORD slot)
  */
 WORD GetNextXslot()
 {
-    WORD slot = _nextXslot++;
-    if (_nextXslot > XSLOT_LAST)
-        _nextXslot = _firstXslot;
+    WORD slot = ++_nextXslot;
+    if (_nextXslot > XSLOT_A_LAST && _nextXslot < XSLOT_B_FIRST) {
+        _nextXslot = XSLOT_B_FIRST;
+    }
+    else if (_nextXslot > XSLOT_B_LAST && _nextXslot < XSLOT_C_FIRST) {
+        _nextXslot = XSLOT_C_FIRST;
+    }
+    else if (_nextXslot > XSLOT_C_LAST && _nextXslot < XSLOT_D_FIRST) {
+        _nextXslot = XSLOT_D_FIRST;
+    }
+    else if (_nextXslot > XSLOT_D_LAST) {
+        _nextXslot = XSLOT_A_FIRST;
+    }
     return slot;
 }
 
@@ -793,7 +922,7 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
     LOG(L"Normal slots taken: %d", _takenSlots.size());
 
     // GDB teams
-    WORD nextSlot = XSLOT_FIRST;
+    WORD nextSlot = _nextXslot = XSLOT_A_FIRST;
     for (hash_map<WORD,KitCollection>::iterator git = _gdb->uni.begin();
             git != _gdb->uni.end();
             git++)
@@ -847,6 +976,8 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
 
         // apply attributes
         ApplyKitAttributes(git->second.goalkeepers, 
+                L"gb",teamKitInfo[i].ga);
+        ApplyKitAttributes(git->second.goalkeepers, 
                 L"ga",teamKitInfo[i].ga);
         ApplyKitAttributes(git->second.players, 
                 L"pa",teamKitInfo[i].pa);
@@ -856,6 +987,7 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         if (k_kserv.debug)
             LOG(L"setting *a/*b slots for team: %d", git->first);
         SetSlot(git->second.goalkeepers,L"ga",teamKitInfo[i].slot);
+        SetSlot(git->second.goalkeepers,L"gb",teamKitInfo[i].slot);
         SetSlot(git->second.players,L"pa",teamKitInfo[i].slot);
         SetSlot(git->second.players,L"pb",teamKitInfo[i].slot);
 
@@ -871,17 +1003,15 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         if ((o.ga||o.pa||o.pb) && (
                 gaRelink||paRelink||pbRelink))
         {
-            LOG(L"team %d dynamically relinked to x-slot 0x%x", i, nextSlot); 
-            nextSlot++;
+            LOG(L"team %d dynamically relinked to x-slot 0x%x", 
+                git->first, nextSlot); 
+            nextSlot = GetNextXslot();
         }
     }
     size_t numTaken = _slotMaps.ga.size();
     numTaken = max(numTaken, _slotMaps.pa.size());
     numTaken = max(numTaken, _slotMaps.pb.size());
     LOG(L"Total slots taken: %d", numTaken);
-
-    // keep track of slots for extra kits
-    _firstXslot = _nextXslot = nextSlot;
 
     // extend dt0c.img
     afsioExtendSlots(KITS_IMG, XBIN_LAST+1);
@@ -1133,34 +1263,37 @@ void kservWriteEditData(LPCVOID buf, DWORD size)
  */
 bool kservGetFileInfo(DWORD afsId, DWORD binId, HANDLE& hfile, DWORD& fsize)
 {
-    if (afsId == KITS_IMG)
-    {
-        // regular slots
-        if (BIN_KIT_FIRST <= binId && binId <= BIN_KIT_LAST) 
-            return CreatePipeForKitBin(afsId, binId, hfile, fsize);
-        else if (BIN_NUMBER_FIRST <= binId && binId <= BIN_NUMBER_LAST) 
-            return CreatePipeForNumbersBin(afsId, binId, hfile, fsize);
-        else if (BIN_FONT_FIRST <= binId && binId <= BIN_FONT_LAST) 
-            return CreatePipeForFontBin(afsId, binId, hfile, fsize);
-
-        // x-slots
-        else if (XBIN_KIT_FIRST <= binId && binId <= XBIN_KIT_LAST) 
-            return CreatePipeForKitBin(afsId, binId, hfile, fsize);
-        else if (XBIN_NUMBER_FIRST <= binId && binId <= XBIN_NUMBER_LAST) 
-            return CreatePipeForNumbersBin(afsId, binId, hfile, fsize);
-        else if (XBIN_FONT_FIRST <= binId && binId <= XBIN_FONT_LAST) 
-            return CreatePipeForFontBin(afsId, binId, hfile, fsize);
+    if (afsId == KITS_IMG || afsId == EXPANSION_IMG) {
+        switch (GetBinType(afsId, binId)) {
+            case BIN_KIT_GK:
+            case BIN_KIT_PL:
+                return CreatePipeForKitBin(afsId, binId, hfile, fsize);
+            case BIN_FONT_GA:
+            case BIN_FONT_GB:
+            case BIN_FONT_PA:
+            case BIN_FONT_PB:
+                return CreatePipeForFontBin(afsId, binId, hfile, fsize);
+            case BIN_NUMS_GA:
+            case BIN_NUMS_GB:
+            case BIN_NUMS_PA:
+            case BIN_NUMS_PB:
+                return CreatePipeForNumbersBin(afsId, binId, hfile, fsize);
+        }
     }
-    else if (afsId == EXPANSION_IMG)
-    {
-        //LOG(L"Loading expansion BIN: afdId=0x%02x, binId=%d",
-        //        afsId, binId);
-        if (DT0F_BIN_KIT_FIRST<=binId && binId<=DT0F_BIN_KIT_LAST) 
-            return CreatePipeForKitBin(afsId, binId, hfile, fsize);
-        else if (DT0F_BIN_NUMBER_FIRST<=binId && binId<=DT0F_BIN_NUMBER_LAST) 
-            return CreatePipeForNumbersBin(afsId, binId, hfile, fsize);
-        else if (DT0F_BIN_FONT_FIRST<=binId && binId<=DT0F_BIN_FONT_LAST) 
-            return CreatePipeForFontBin(afsId, binId, hfile, fsize);
+
+    // EURO kit attributes
+    if (afsId == EURO_ATTR_IMG) {
+        if (binId == EURO_ATTR_BIN) {
+            LOG(L"Loading euro-kit attributes: (0x%02x, %d)",
+                afsId, binId);
+        }
+    }
+    else if (afsId == EURO_ATTR_EXPANSION_IMG) {
+        if (binId == EURO_ATTR_EXPANSION_BIN) {
+            LOG(L"Loading euro-kit attribues (expanded): (0x%02x, %d)",
+                afsId, binId);
+            //__asm int 3;
+        }
     }
 
     return false;
@@ -1170,48 +1303,11 @@ int GetBinType(DWORD afsId, DWORD id)
 {
     if (afsId == KITS_IMG)
     {
-        // normal slots
-        if (BIN_KIT_FIRST <= id && id <= BIN_KIT_LAST)
-        {
-            return BIN_KIT_GK + ((id - BIN_KIT_FIRST)%2);
-        }
-        else if (BIN_FONT_FIRST <= id && id <= BIN_FONT_LAST)
-        {
-            return BIN_FONT_GA + ((id - BIN_FONT_FIRST)%4);
-        }
-        else if (BIN_NUMBER_FIRST <= id && id <= BIN_NUMBER_LAST)
-        {
-            return BIN_NUMS_GA + ((id - BIN_NUMBER_FIRST)%4);
-        }
-
-        // x-slots
-        else if (XBIN_KIT_FIRST <= id && id <= XBIN_KIT_LAST)
-        {
-            return BIN_KIT_GK + ((id - XBIN_KIT_FIRST)%2);
-        }
-        else if (XBIN_FONT_FIRST <= id && id <= XBIN_FONT_LAST)
-        {
-            return BIN_FONT_GA + ((id - XBIN_FONT_FIRST)%4);
-        }
-        else if (XBIN_NUMBER_FIRST <= id && id <= XBIN_NUMBER_LAST)
-        {
-            return BIN_NUMS_GA + ((id - XBIN_NUMBER_FIRST)%4);
-        }
+        return _fastBinTypeTable[id];
     }
     else if (afsId == EXPANSION_IMG)
     {
-        if (DT0F_BIN_KIT_FIRST <= id && id <= DT0F_BIN_KIT_LAST)
-        {
-            return BIN_KIT_GK + ((id - DT0F_BIN_KIT_FIRST)%2);
-        }
-        else if (DT0F_BIN_FONT_FIRST <= id && id <= DT0F_BIN_FONT_LAST)
-        {
-            return BIN_FONT_GA + ((id - DT0F_BIN_FONT_FIRST)%4);
-        }
-        else if (DT0F_BIN_NUMBER_FIRST <= id && id <= DT0F_BIN_NUMBER_LAST)
-        {
-            return BIN_NUMS_GA + ((id - DT0F_BIN_NUMBER_FIRST)%4);
-        }
+        return _fastBinTypeTableExp[id];
     }
 
     return -1;
@@ -1264,6 +1360,7 @@ void GetTeamIndexesBySlot(WORD slot, int binType, WORD& teamA, WORD& teamB)
             sit = _slotMaps.ga.find(slot);
             if (sit != _slotMaps.ga.end()) {
                 teamA = sit->second;
+                teamB = sit->second;
             }
             break;
         case BIN_KIT_PL:
@@ -2019,8 +2116,8 @@ void kservReadNumSlotsCallPoint4()
 KEXPORT DWORD kservReadNumSlots(DWORD slot)
 {
     DWORD* pNumSlots = (DWORD*)data[NUM_SLOTS_PTR];
-    if (slot >= XSLOT_FIRST)
-        return XSLOT_LAST+1;
+    if (slot >= XSLOT_A_FIRST)
+        return XSLOT_D_LAST+1;
     return *pNumSlots;
 }
 

@@ -626,7 +626,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     InitIterators();
 
     // add callbacks
-    addReadEditDataCallback(kservReadEditData);
+    //addReadEditDataCallback(kservReadEditData);
     addWriteEditDataCallback(kservWriteEditData);
     afsioAddCallback(kservGetFileInfo);
 
@@ -747,8 +747,8 @@ skip:   pop edi
 KEXPORT void kservAfterReadNames()
 {
     // dump slot information
-    if (k_kserv.debug)
-        DumpSlotsInfo();
+    //if (k_kserv.debug)
+    DumpSlotsInfo();
 
     // initialize kit slots
     InitSlotMapInThread();
@@ -779,13 +779,13 @@ void DumpSlotsInfo(TEAM_KIT_INFO* teamKitInfo, TEAM_NAME* teamNames)
     if (!teamKitInfo)
         teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)data[PLAYERS_DATA] 
                 + data[TEAM_KIT_INFO_OFFSET]);
-    LOG(L"teamKitInfo = %08x", (DWORD)teamKitInfo);
-    LOG(L"teamNames = %08x", (DWORD)teamNames);
-    LOG(L"sizeof(KIT_INFO) = %08x", sizeof(KIT_INFO));
-    LOG(L"sizeof(TEAM_KIT_INFO) = %08x", sizeof(TEAM_KIT_INFO));
+    TRACE(L"teamKitInfo = %08x", (DWORD)teamKitInfo);
+    TRACE(L"teamNames = %08x", (DWORD)teamNames);
+    TRACE(L"sizeof(KIT_INFO) = %08x", sizeof(KIT_INFO));
+    TRACE(L"sizeof(TEAM_KIT_INFO) = %08x", sizeof(TEAM_KIT_INFO));
 
     wstring filename(getPesInfo()->myDir);
-    filename += L"\\relinks.txt";
+    filename += L"\\teamlist.txt";
     //filename += L"\\uni.txt";
     FILE* f = _wfopen(filename.c_str(),L"wt");
     if (!f)
@@ -797,9 +797,13 @@ void DumpSlotsInfo(TEAM_KIT_INFO* teamKitInfo, TEAM_NAME* teamNames)
         if (teamId == 0xffff)
             continue;
         //fprintf(f, "slot: %6d\tteam: %3d (%04x) %s\n", 
-        fprintf(f, "slot: %6d\tteam: %3d (%d/%04x) %s\n", 
-            (short)teamKitInfo[i].slot, 
-            i, teamId, teamId, GetTeamNameByIndex(i, teamNames));
+        
+        //fprintf(f, "slot: %6d\tteam: %d (%04x) %s\n", 
+        //    (short)teamKitInfo[i].slot, 
+        //    i, teamId, teamId, GetTeamNameByIndex(i, teamNames));
+        fprintf(f, "id:%5d (%04x) %s\n", 
+            teamId, teamId, GetTeamNameByIndex(i, teamNames));
+
         //char* name = GetTeamNameByIndex(i, teamNames);
         //if (name[0]!='\0')
         //    fprintf(f, "%3d, %s\n", i, name);
@@ -1023,8 +1027,7 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
     LOG(L"KITS_IMG extended to %d bins", XBIN_LAST+1);
 
     // dump slot information
-    if (k_kserv.debug)
-        DumpSlotsInfo();
+    DumpSlotsInfo();
 
     InitEuroKitAttributes();
  
@@ -1394,8 +1397,7 @@ void kservReadEditData(LPCVOID buf, DWORD size)
             + 0x1a0 + data[TEAM_NAMES_OFFSET] - 8); 
 
     // dump slot information again
-    if (k_kserv.debug)
-        DumpSlotsInfo(teamKitInfo, teamNames);
+    DumpSlotsInfo(teamKitInfo, teamNames);
 }
 
 /**

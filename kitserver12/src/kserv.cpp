@@ -1107,6 +1107,23 @@ void InitEuroKitAttributes()
                 tki.id, tki));
             _fastEuroSlotTable[euroSlot] = 1;
         }
+        else {
+            // already has a slot --> just apply attributes then
+            WORD euroSlot = eit->second.slot;
+
+            if (git->second.euro_ga != git->second.goalkeepers.end()) {
+                ApplyKitAttributes(git->second.euro_ga, eit->second.ga);
+                git->second.euro_ga->second.slot = euroSlot;
+            }
+            if (git->second.euro_pa != git->second.players.end()) {
+                ApplyKitAttributes(git->second.euro_pa, eit->second.pa);
+                git->second.euro_pa->second.slot = euroSlot;
+            }
+            if (git->second.euro_pb != git->second.players.end()) {
+                ApplyKitAttributes(git->second.euro_pb, eit->second.pb);
+                git->second.euro_pb->second.slot = euroSlot;
+            }
+        }
     }
 
     // third, add euro slots to slot maps

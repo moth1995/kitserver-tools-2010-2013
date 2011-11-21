@@ -86,14 +86,14 @@ DWORD codeArray[][CODELEN] = {
     },
 };
 
-#define DATALEN 5 
+#define DATALEN 6 
 enum {
 	NEXT_MATCH_DATA_PTR, PLAYERS_DATA,
     TEAM_NAMES_OFFSET, TEAM_KIT_INFO_OFFSET,
-    NUM_SLOTS_PTR,
+    NUM_SLOTS_PTR, EURO_TEAM_KIT_INFO_PTR,
 };
 
-#define NODATAADDR {0,0,0,0,0}
+#define NODATAADDR {0,0,0,0,0,0}
 DWORD dataArray[][DATALEN] = {
     // PES2011 demo
     NODATAADDR,
@@ -101,55 +101,55 @@ DWORD dataArray[][DATALEN] = {
     {
         0, 0x1940b08,
         0x3ac8c8, 0x249918,
-        0x15a2c50,
+        0x15a2c50, 0,
     },
     // PES2011 v1.01
     {
         0, 0x1940b60,
         0x3ac8c8, 0x249918,
-        0x15a2c50,
+        0x15a2c50, 0,
     },
     // PES2011 v1.02
     {
         0, 0x1940b58,
         0x3ac8c8, 0x249918,
-        0x15a2c50,
+        0x15a2c50, 0,
     },
     // PES2011 v1.03
     {
         0, 0x1940b5c,
         0x3ac8c8, 0x249918,
-        0x15a2c50,
+        0x15a2c50, 0,
     },
     // PES2012 demo
     {
         0, 0,
         0, 0,
-        0,
+        0, 0,
     },
     // PES2012 demo2
     {
         0, 0,
         0, 0,
-        0,
+        0, 0,
     },
     // PES2012
     {
         0, 0x1a15874,
         0x42f2a0, 0x2b8e58,
-        0x16d4d94,
+        0x16d4d94, 0x1a1588c,
     },
     // PES2012 v1.01
     {
         0, 0x1a26a3c,
         0x42f2a0, 0x2b8e58,
-        0x16e5eac,
+        0x16e5eac, 0x1a26a54,
     },
     // PES2012 v1.02
     {
         0, 0x1a28a4c,
         0x42f2a0, 0x2b8e58,
-        0x16e7eac,
+        0x16e7eac, 0x1a28a64,
     },
 };
 

@@ -109,6 +109,10 @@ public:
     map<wstring,Kit>::iterator pb;
     map<wstring,Kit>::iterator ga;
     map<wstring,Kit>::iterator gb;
+    map<wstring,Kit>::iterator euro_pa;
+    map<wstring,Kit>::iterator euro_pb;
+    map<wstring,Kit>::iterator euro_ga;
+    map<wstring,Kit>::iterator euro_gb;
     bool loaded;
     bool disabled;
 
@@ -119,7 +123,11 @@ public:
         pa(players.end()),
         pb(players.end()),
         ga(players.end()),
-        gb(players.end())
+        gb(players.end()),
+        euro_pa(players.end()),
+        euro_pb(players.end()),
+        euro_ga(players.end()),
+        euro_gb(players.end())
     {}
 };
 
@@ -144,7 +152,7 @@ public:
 private:
     void load();
     void findKitsForTeam(WORD teamId);
-    void fillKitCollection(KitCollection& col, int kitType);
+    void fillKitCollection(KitCollection& col, int kitType, bool extra=false);
 };
 
 #endif

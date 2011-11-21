@@ -35,6 +35,8 @@ wchar_t slog[WBUFLEN];
 
 #define PLAYERS 0
 #define GOALKEEPERS 1
+#define EURO_PLAYERS 2
+#define EURO_GOALKEEPERS 3
 
 enum {
     ATT_MODEL,
@@ -180,15 +182,19 @@ void GDB::load()
  * Enumerate all kits in this team folder.
  * and for each one parse the "config.txt" file.
  */
-void GDB::fillKitCollection(KitCollection& col, int kitType)
+void GDB::fillKitCollection(KitCollection& col, int kitType, bool extra)
 {
 	WIN32_FIND_DATA fData;
     wstring pattern(this->dir);
 
 	if (kitType == PLAYERS) {
 		pattern += L"GDB\\uni\\" + col.foldername + L"\\p*";
-    } else if (kitType == GOALKEEPERS) {
+    } else if (kitType == GOALKEEPERS) { 
 		pattern += L"GDB\\uni\\" + col.foldername + L"\\g*";
+    } else if (kitType == EURO_PLAYERS) {
+		pattern += L"GDB\\uni\\" + col.foldername + L"\\euro-p*";
+    } else if (kitType == EURO_GOALKEEPERS) {
+		pattern += L"GDB\\uni\\" + col.foldername + L"\\euro-g*";
     }
 
     // pre-insert pa/pb kits
@@ -218,12 +224,16 @@ void GDB::fillKitCollection(KitCollection& col, int kitType)
 	if (hff == INVALID_HANDLE_VALUE) 
 	{
 		// none found.
-        LOG(L"WARNING: no kit folders found for search pattern: {%s}", pattern.c_str());
+        if (!extra) {
+            LOG(L"WARNING: no kit folders found for search pattern: {%s}", 
+                pattern.c_str());
+        }
 		return;
 	}
 	while(true)
 	{
         GDB_DEBUG(wlog,(slog,L"found: {%s}\n",fData.cFileName));
+        //LOG(L"found: {%s}",fData.cFileName);
         // check if this is a directory
         if (fData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
             wstring key(fData.cFileName);
@@ -238,17 +248,18 @@ void GDB::fillKitCollection(KitCollection& col, int kitType)
                 if (this->readConfigs)
                     this->loadConfig(kit);
 
-                // make sure extra kits follow *a,*pb
+                // make sure extra kits follow *a,*b
                 if (key!=L"pa" && key!=L"pb" && key!=L"ga" && key!=L"gb")
                 {
                     key = L"x-";
                     key += fData.cFileName;
+                    //LOG(L"kit-key: %s", key.c_str());
                 }
 
                 // insert kit object into KitCollection map
-                if (kitType == PLAYERS)
+                if (kitType == PLAYERS || kitType == EURO_PLAYERS)
                     col.players.insert(pair<wstring,Kit>(key,kit));
-                else if (kitType == GOALKEEPERS)
+                else if (kitType == GOALKEEPERS || kitType == EURO_GOALKEEPERS)
                     col.goalkeepers.insert(pair<wstring,Kit>(key,kit));
             }
 		}
@@ -271,14 +282,42 @@ void GDB::findKitsForTeam(WORD teamId)
     {
         // players
         this->fillKitCollection(it->second, PLAYERS);
+        this->fillKitCollection(it->second, EURO_PLAYERS, true);
         // goalkeepers
         this->fillKitCollection(it->second, GOALKEEPERS);
+        this->fillKitCollection(it->second, EURO_GOALKEEPERS, true);
 
         // initialize iterators to main kits
         it->second.pa = it->second.players.find(L"pa");
         it->second.pb = it->second.players.find(L"pb");
         it->second.ga = it->second.goalkeepers.find(L"ga");
         it->second.gb = it->second.goalkeepers.find(L"gb");
+        /*
+        if (it->second.pa != it->second.players.end())
+            LOG(L"@found pa");
+        if (it->second.pb != it->second.players.end())
+            LOG(L"@found pb");
+        if (it->second.ga != it->second.goalkeepers.end())
+            LOG(L"@found ga");
+        if (it->second.gb != it->second.goalkeepers.end())
+            LOG(L"@found gb");
+        */
+
+        // initialize iterators to euro kits
+        it->second.euro_pa = it->second.players.find(L"x-euro-pa");
+        it->second.euro_pb = it->second.players.find(L"x-euro-pb");
+        it->second.euro_ga = it->second.goalkeepers.find(L"x-euro-ga");
+        it->second.euro_gb = it->second.goalkeepers.find(L"x-euro-gb");
+        /*
+        if (it->second.euro_pa != it->second.players.end())
+            LOG(L"@found euro_pa");
+        if (it->second.euro_pb != it->second.players.end())
+            LOG(L"@found euro_pb");
+        if (it->second.euro_ga != it->second.goalkeepers.end())
+            LOG(L"@found euro_ga");
+        if (it->second.euro_gb != it->second.goalkeepers.end())
+            LOG(L"@found euro_gb");
+        */
 
         // mark kit collection as loaded
         it->second.loaded = true;

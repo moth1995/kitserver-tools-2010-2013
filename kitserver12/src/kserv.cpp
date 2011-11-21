@@ -143,6 +143,10 @@ enum
     BIN_NUMS_PB,
 };
 
+map<DWORD,TEAM_KIT_INFO> _euroKitAttributesMap;
+TEAM_KIT_INFO* _euroTeamKitInfo;
+BYTE _fastEuroSlotTable[0x10000];
+
 // table for quick bin-type lookups
 short _fastBinTypeTable[0x10000];
 short _fastBinTypeTableExp[0x10000];
@@ -353,6 +357,7 @@ void kservReadEditData(LPCVOID data, DWORD size);
 void kservWriteEditData(LPCVOID data, DWORD size);
 void InitSlotMapInThread(TEAM_KIT_INFO* teamKitInfo=NULL);
 DWORD WINAPI InitSlotMap(LPCVOID param=NULL);
+void InitEuroKitAttributes();
 void RelinkKit(WORD teamIndex, WORD slot, TEAM_KIT_INFO& teamKitInfo);
 void ResetTeamKitInfo(WORD teamIndex, WORD slot, TEAM_KIT_INFO* tki=NULL);
 void RestoreTeamKitInfos(TEAM_KIT_INFO* tki=NULL);
@@ -1020,9 +1025,142 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
     // dump slot information
     if (k_kserv.debug)
         DumpSlotsInfo();
+
+    InitEuroKitAttributes();
  
     LeaveCriticalSection(&_cs);
     return 0;
+}
+
+bool IsEuroSlot(short slot) {
+    if (slot >= 0) {
+        return _fastEuroSlotTable[slot]==1;
+    }
+    return false;
+}
+
+void InitEuroKitAttributes()
+{
+    TEAM_KIT_INFO* prev = _euroTeamKitInfo;
+    _euroKitAttributesMap.clear();
+    memset(_fastEuroSlotTable, 0, sizeof(_fastEuroSlotTable));
+
+    // first, enumerate all existing ones
+    EURO_TEAM_STRUCT** p = (EURO_TEAM_STRUCT**)data[EURO_TEAM_KIT_INFO_PTR];
+    if (p && *p) {
+        EURO_TEAM_STRUCT* euroKits = *p;
+        TEAM_KIT_INFO* pTKI = euroKits->begin;
+        for (; pTKI != euroKits->end; pTKI++) {
+            //LOG(L"european kits: team(%04x) --> slot (%04x)",
+            //    pTKI->id, pTKI->slot);
+
+            TEAM_KIT_INFO teamKitInfo;
+            memcpy(&teamKitInfo, pTKI, sizeof(teamKitInfo));
+
+            _euroKitAttributesMap.insert(pair<DWORD,TEAM_KIT_INFO>(
+                pTKI->id, teamKitInfo));
+            _fastEuroSlotTable[pTKI->slot] = 1;
+        }
+    }
+
+    // second, add teams from GDB that have euro kits
+    for (hash_map<WORD,KitCollection>::iterator git = _gdb->uni.begin();
+            git != _gdb->uni.end();
+            git++)
+    {
+        LOG(L"processing team %d...", git->first);
+        bool hasEuroPA = 
+            git->second.euro_pa != git->second.players.end();
+        bool hasEuroPB = 
+            git->second.euro_pb != git->second.players.end();
+        bool hasEuroKits = (hasEuroPA || hasEuroPB);
+
+        if (!hasEuroKits) {
+            continue;
+        }
+
+        LOG(L"team %d has EuroKits");
+
+        map<DWORD,TEAM_KIT_INFO>::iterator eit;
+        eit = _euroKitAttributesMap.find(git->first);
+        if (eit == _euroKitAttributesMap.end()) {
+            // does not yet have a slot --> allocate one
+            WORD euroSlot = GetNextXslot();
+            TEAM_KIT_INFO tki;
+            memset(&tki, 0, sizeof(TEAM_KIT_INFO));
+            tki.id = git->first;
+            tki.slot = euroSlot;
+            if (git->second.euro_ga != git->second.goalkeepers.end()) {
+                ApplyKitAttributes(git->second.euro_ga, tki.ga);
+                git->second.euro_ga->second.slot = euroSlot;
+            }
+            if (git->second.euro_pa != git->second.players.end()) {
+                ApplyKitAttributes(git->second.euro_pa, tki.pa);
+                git->second.euro_pa->second.slot = euroSlot;
+            }
+            if (git->second.euro_pb != git->second.players.end()) {
+                ApplyKitAttributes(git->second.euro_pb, tki.pb);
+                git->second.euro_pb->second.slot = euroSlot;
+            }
+
+            _euroKitAttributesMap.insert(pair<DWORD,TEAM_KIT_INFO>(
+                tki.id, tki));
+            _fastEuroSlotTable[euroSlot] = 1;
+        }
+    }
+
+    // third, add euro slots to slot maps
+    map <DWORD,TEAM_KIT_INFO>::iterator it;
+    for (it = _euroKitAttributesMap.begin(); 
+            it != _euroKitAttributesMap.end();
+            it++) {
+        if (_gdb->uni.find(it->second.id) != _gdb->uni.end()) {
+            // only interested if we have this team in GDB
+            WORD teamIndex = GetTeamIndexById(it->second.id);
+
+            _slotMaps.ga.insert(pair<WORD,WORD>(it->second.slot, teamIndex));
+            _reverseSlotMaps.ga.insert(pair<WORD,WORD>(
+                teamIndex, it->second.slot));
+            _slotMaps.pa.insert(pair<WORD,WORD>(it->second.slot, teamIndex));
+            _reverseSlotMaps.pa.insert(pair<WORD,WORD>(
+                teamIndex, it->second.slot));
+            _slotMaps.pb.insert(pair<WORD,WORD>(it->second.slot, teamIndex));
+            _reverseSlotMaps.pb.insert(pair<WORD,WORD>(
+                teamIndex, it->second.slot));
+        }
+    }
+
+    // fourth, re-create the original structure, but with
+    // GDB teams now added
+    size_t newSize = 4 + sizeof(TEAM_KIT_INFO)*_euroKitAttributesMap.size();
+    _euroTeamKitInfo = (TEAM_KIT_INFO*)HeapAlloc(
+        GetProcessHeap(), HEAP_ZERO_MEMORY, newSize);
+    if (!_euroTeamKitInfo) {
+        LOG(L"ERROR: cannot allocate new structure for EuroKit attributes!");
+        return;
+    }
+
+    TEAM_KIT_INFO* tki = _euroTeamKitInfo;
+    for (it = _euroKitAttributesMap.begin();
+            it != _euroKitAttributesMap.end();
+            it++, tki++) {
+        memcpy(tki, &(it->second), sizeof(TEAM_KIT_INFO));
+        LOG(L"new: team %04x --> slot %04x", tki->id, tki->slot);
+    }
+
+    // point to new structure
+    p = (EURO_TEAM_STRUCT**)data[EURO_TEAM_KIT_INFO_PTR];
+    if (p && *p) {
+        EURO_TEAM_STRUCT* euroKits = *p;
+        euroKits->begin = _euroTeamKitInfo;
+        euroKits->end = _euroTeamKitInfo + _euroKitAttributesMap.size();
+        euroKits->end_again = euroKits->end;
+    }
+
+    // free old structure if was created by us
+    if (prev) {
+        HeapFree(GetProcessHeap(), 0, prev);
+    }
 }
 
 void RelinkKit(WORD teamIndex, WORD slot, TEAM_KIT_INFO& teamKitInfo)
@@ -1428,6 +1566,9 @@ bool CreatePipeForKitBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
         return false; // not in GDB: rely on afs kit
     }
 
+    // determine if this is a euro-slot
+    bool isEuroSlot = IsEuroSlot(slot);
+
     // check disabled flag
     if (kcolA->disabled && kcolB->disabled)
     {
@@ -1503,31 +1644,43 @@ bool CreatePipeForKitBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
         {
             case BIN_KIT_GK:
                 kkit_end = kcols[i]->goalkeepers.end();
-                kkit = (i==0)?
-                    kcols[i]->goalkeepers.find(L"ga"):
-                    kcols[i]->goalkeepers.find(L"gb");
-                if (kkit == kcols[i]->goalkeepers.end())
-                {
-                    LOG(L"WARN: %s kit not found!", 
-                            ((i==0)?L"ga":L"gb"));
+                if (!isEuroSlot) {
+                    kkit = (i==0)?  kcols[i]->ga: kcols[i]->gb;
+                    if (kkit == kcols[i]->goalkeepers.end())
+                    {
+                        LOG(L"WARN: %s kit not found!", 
+                                ((i==0)?L"ga":L"gb"));
+                    }
+                } 
+                else {
+                    kkit = (i==0)?  kcols[i]->euro_ga: kcols[i]->euro_gb;
+                    if (kkit == kcols[i]->goalkeepers.end())
+                    {
+                        LOG(L"WARN: %s kit not found!", 
+                                ((i==0)?L"euro-ga":L"euro-gb"));
+                    }
                 }
                 break;
             case BIN_KIT_PL:
                 kkit_end = kcols[i]->players.end();
                 zit = _kitPicks.find(slot);
-                if (zit != _kitPicks.end())
-                {
+                if (zit != _kitPicks.end()) {
                     kkit = kcols[i]->players.find(zit->second.kitKey);
                 }
-                else
-                {
-                    kkit = (i==0)?
-                        kcols[i]->players.find(L"pa"):
-                        kcols[i]->players.find(L"pb");
+                else if (!isEuroSlot) {
+                    kkit = (i==0)?  kcols[i]->pa: kcols[i]->pb;
                     if (kkit == kcols[i]->players.end())
                     {
                         LOG(L"WARN: %s kit not found!", 
                                 ((i==0)?L"pa":L"pb"));
+                    }
+                }
+                else {
+                    kkit = (i==0)?  kcols[i]->euro_pa: kcols[i]->euro_pb;
+                    if (kkit == kcols[i]->players.end())
+                    {
+                        LOG(L"WARN: %s kit not found!", 
+                                ((i==0)?L"euro-pa":L"euro-pb"));
                     }
                 }
                 break;
@@ -1602,6 +1755,9 @@ bool CreatePipeForFontBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
         return false;
     }
 
+    // determine if this is a euro-slot
+    bool isEuroSlot = IsEuroSlot(slot);
+
     // create the unpacked bin-data in memory
     kserv_buffer_manager_t bm;
     DWORD texSize = sizeof(TEXTURE_ENTRY_HEADER) + 256*sizeof(PALETTE_ENTRY)
@@ -1646,9 +1802,12 @@ bool CreatePipeForFontBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
     switch (binType)
     {
         case BIN_FONT_GA:
+            kkit_end = kcol->goalkeepers.end();
+            kkit = (isEuroSlot) ? kcol->euro_ga : kcol->ga;
+            break;
         case BIN_FONT_GB:
             kkit_end = kcol->goalkeepers.end();
-            kkit = kcol->goalkeepers.find(L"ga");
+            kkit = (isEuroSlot) ? kcol->euro_gb : kcol->gb;
             break;
         case BIN_FONT_PA:
             kkit_end = kcol->players.end();
@@ -1659,7 +1818,7 @@ bool CreatePipeForFontBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
             }
             else
             {
-                kkit = kcol->players.find(L"pa");
+                kkit = (isEuroSlot) ? kcol->euro_pa : kcol->pa;
             }
             break;
         case BIN_FONT_PB:
@@ -1671,7 +1830,7 @@ bool CreatePipeForFontBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
             }
             else
             {
-                kkit = kcol->players.find(L"pb");
+                kkit = (isEuroSlot) ? kcol->euro_pb : kcol->pb;
             }
             break;
     }
@@ -1746,6 +1905,9 @@ bool CreatePipeForNumbersBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& si
         return false;
     }
 
+    // determine if this is a euro-slot
+    bool isEuroSlot = IsEuroSlot(slot);
+
     // create the unpacked bin-data in memory
     kserv_buffer_manager_t bm;
     DWORD texSize = sizeof(TEXTURE_ENTRY_HEADER) + 256*sizeof(PALETTE_ENTRY)
@@ -1789,9 +1951,12 @@ bool CreatePipeForNumbersBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& si
     switch (binType)
     {
         case BIN_NUMS_GA:
+            kkit_end = kcol->goalkeepers.end();
+            kkit = (isEuroSlot) ? kcol->euro_ga : kcol->ga;
+            break;
         case BIN_NUMS_GB:
             kkit_end = kcol->goalkeepers.end();
-            kkit = kcol->goalkeepers.find(L"ga");
+            kkit = (isEuroSlot) ? kcol->euro_gb : kcol->gb;
             break;
         case BIN_NUMS_PA:
             kkit_end = kcol->players.end();
@@ -1802,7 +1967,7 @@ bool CreatePipeForNumbersBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& si
             }
             else
             {
-                kkit = kcol->players.find(L"pa");
+                kkit = (isEuroSlot) ? kcol->euro_pa : kcol->pa;
             }
             break;
         case BIN_NUMS_PB:
@@ -1814,7 +1979,7 @@ bool CreatePipeForNumbersBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& si
             }
             else
             {
-                kkit = kcol->players.find(L"pb");
+                kkit = (isEuroSlot) ? kcol->euro_pb : kcol->pb;
             }
             break;
 

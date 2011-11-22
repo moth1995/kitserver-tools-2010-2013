@@ -440,16 +440,22 @@ available to team #101. Inside it, you must create an individual folder for each
 
 For players, 1st kit must have a folder name <b>pa</b>, 2nd - <b>pb</b>. Extra kits can have 
 any folder names that start with letter "p". I found it useful to prefix all extra kits with 
-<b>px-</b>. For example, <b>px-redwhite</b>. For the goalkeepers, 1st kit must be in the folder
+<b>px-</b>. For example, <b>px-redwhite</b>.--> For the goalkeepers, 1st kit must be in the folder
 <b>ga</b>, 2nd - in the <b>gb</b>. Extra kits can have any folder names that start with letter "g".
 </p>
 
+<div class="note">Please note, that currently (as of <b>kserv 12.1.0</b>)
+    extra kits for players and goalkeepers are not yet supported. I may
+    implement them in the future releases.</div>
+
+<!--
 <div class="note">IMPORTANT: Folder name acts as a kind of ID for kitserver, which puts the 
 additional restriction on all those folder names: they cannot contain spaces, and preferably
 they should be relatively short, and in English,French or other language withing Latin1 
 (iso8859-1) character set. Typically, if you want to make sure kitserver can properly
 find/read the folder, just use latin characters, digits, underscore, and the dash (minus sign).
 </div>
+-->
 
 <img src="kserv-exhib.png" />
 
@@ -537,7 +543,7 @@ The summary table of all the supported attributes:</p>
     <tr><th>Attribute name</th><th>Meaning</th><th>Format</th><th>Example</th></tr>
     <tr>
         <td><b>collar</b></td>
-        <td>Collar-type (note that different models will have different interpratations of the collar value)</td>
+        <td>Collar-type (note that different models will have different interpretations of the collar value)</td>
         <td>1/2/3/4</td>
         <td><nobr>collar = 1</nobr></td>
     </tr>
@@ -768,7 +774,7 @@ tight.model = 83
 <h3>7. LOD Mixer (lodmixer.dll)</h3>
 
 <p>
-LOD-Mixer is the module that allows to fine-tune some aspects of PES2011 graphics engine.<br />
+LOD-Mixer is the module that allows to fine-tune some aspects of PES 2012 graphics engine.<br />
 These settings can be configured manually in kitserver's main 
 configuration file (kitserver/config.txt), but it is probably easier 
 to use Kitserver's <a href="#config">configuration tool</a> 
@@ -841,7 +847,7 @@ model of the object, and it typically looks better, when drawn in small size,
 because it suffers less from aliasing. In theory, at least, 
 that is how it is supposed to work.
 </p>
-<p>PES 2011 has 4 different ways it can render a player. The choice of the
+<p>PES 2012 has 4 different ways it can render a player. The choice of the
 rendering used at any given moment depends on several circumstances: how far
 the player is from the camera, is this an active player (currently controlled
 by human), is this a gameplay rendering or a replay, and so for. Here's the picture that shows how these LODs differ visually:
@@ -864,7 +870,7 @@ Unfortunately, PES series had always suffered from an overly-
 conservative LOD configuration, where the switch to low-poly models would 
 happen way too soon, and that would result in various visible artifacts. 
 In PES4-PES6, examples were: balding players, and missing details on kits. 
-In PES2008-PES2011, the players and referees appear to have blurred generic 
+In PES2008-PES2012, the players and referees appear to have blurred generic 
 faces, once they move slightly away from the camera.
 </p>
 <p>

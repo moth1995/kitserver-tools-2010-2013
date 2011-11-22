@@ -2,6 +2,13 @@ Kitserver 12 HISTORY notes
 ==========================
 
 
+2011-11-21
+----------
+v12.1.0
+- kserv module. Support for 1st/2nd kits
+  and also European kits for all teams
+
+
 2011-11-07
 ----------
 v12.0.8

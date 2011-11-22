@@ -1165,7 +1165,9 @@ void InitEuroKitAttributes()
             it != _euroKitAttributesMap.end();
             it++, tki++) {
         memcpy(tki, &(it->second), sizeof(TEAM_KIT_INFO));
-        LOG(L"new: team %04x --> slot %04x", tki->id, tki->slot);
+        if (k_kserv.debug) {
+            LOG(L"new: team %04x --> slot %04x", tki->id, tki->slot);
+        }
     }
 
     // point to new structure

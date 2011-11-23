@@ -30,7 +30,7 @@ all: dlls apps
 	if exist output (rd /S /Q output)
 	mkdir output
 	copy *.dll output
-	copy $(LIBPNGDLL) output
+#	copy $(LIBPNGDLL) output
 	copy $(ZLIBDLL) output
 	copy manager.exe output
 	copy config.exe output
@@ -41,7 +41,7 @@ all_dlls: dlls
 	if exist output (rd /S /Q output)
 	mkdir output
 	copy *.dll output
-	copy $(LIBPNGDLL) output
+#	copy $(LIBPNGDLL) output
 	copy $(ZLIBDLL) output
 	copy lang_*.txt output
 	

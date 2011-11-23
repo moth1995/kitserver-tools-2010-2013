@@ -1,11 +1,11 @@
 syntax: glob
 
 *.obj
-*.res
-*.exe
-*.RES
-*.dll
+src/*.res
+src/*.exe
+src/*.RES
+src/*.dll
 *~
-*.lib
-*.exp
+src/*.lib
+src/*.exp
 output/*

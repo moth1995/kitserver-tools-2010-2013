@@ -1082,7 +1082,7 @@ void InitEuroKitAttributes()
             continue;
         }
 
-        LOG(L"team %d has EuroKits");
+        LOG(L"team %d has EuroKits", git->first);
 
         map<DWORD,TEAM_KIT_INFO>::iterator eit;
         eit = _euroKitAttributesMap.find(git->first);
@@ -1093,17 +1093,29 @@ void InitEuroKitAttributes()
             memset(&tki, 0, sizeof(TEAM_KIT_INFO));
             tki.id = git->first;
             tki.slot = euroSlot;
+            // ga
             if (git->second.euro_ga != git->second.goalkeepers.end()) {
                 ApplyKitAttributes(git->second.euro_ga, tki.ga);
                 git->second.euro_ga->second.slot = euroSlot;
             }
+            else if (git->second.ga != git->second.goalkeepers.end()) {
+                ApplyKitAttributes(git->second.ga, tki.ga);
+            }
+            // pa
             if (git->second.euro_pa != git->second.players.end()) {
                 ApplyKitAttributes(git->second.euro_pa, tki.pa);
                 git->second.euro_pa->second.slot = euroSlot;
             }
+            else if (git->second.pa != git->second.players.end()) {
+                ApplyKitAttributes(git->second.pa, tki.pa);
+            }
+            // pb
             if (git->second.euro_pb != git->second.players.end()) {
                 ApplyKitAttributes(git->second.euro_pb, tki.pb);
                 git->second.euro_pb->second.slot = euroSlot;
+            }
+            else if (git->second.pb != git->second.players.end()) {
+                ApplyKitAttributes(git->second.pb, tki.pb);
             }
 
             _euroKitAttributesMap.insert(pair<DWORD,TEAM_KIT_INFO>(
@@ -1667,18 +1679,22 @@ bool CreatePipeForKitBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
                 kkit_end = kcols[i]->goalkeepers.end();
                 if (!isEuroSlot) {
                     kkit = (i==0)?  kcols[i]->ga: kcols[i]->gb;
-                    if (kkit == kcols[i]->goalkeepers.end())
-                    {
+                    if (kkit == kkit_end) {
                         LOG(L"WARN: %s kit not found!", 
                                 ((i==0)?L"ga":L"gb"));
                     }
                 } 
                 else {
                     kkit = (i==0)?  kcols[i]->euro_ga: kcols[i]->euro_gb;
-                    if (kkit == kcols[i]->goalkeepers.end())
-                    {
+                    if (kkit == kkit_end) {
+                        // try to fall back on non-euro kits
                         LOG(L"WARN: %s kit not found!", 
                                 ((i==0)?L"euro-ga":L"euro-gb"));
+                        kkit = (i==0)? kcols[i]->ga: kcols[i]->gb;
+                    }
+                    if (kkit == kkit_end) {
+                        LOG(L"WARN: %s kit not found!", 
+                                ((i==0)?L"ga":L"gb"));
                     }
                 }
                 break;
@@ -1690,18 +1706,22 @@ bool CreatePipeForKitBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
                 }
                 else if (!isEuroSlot) {
                     kkit = (i==0)?  kcols[i]->pa: kcols[i]->pb;
-                    if (kkit == kcols[i]->players.end())
-                    {
+                    if (kkit == kkit_end) {
                         LOG(L"WARN: %s kit not found!", 
                                 ((i==0)?L"pa":L"pb"));
                     }
                 }
                 else {
                     kkit = (i==0)?  kcols[i]->euro_pa: kcols[i]->euro_pb;
-                    if (kkit == kcols[i]->players.end())
-                    {
+                    if (kkit == kkit_end) {
+                        // try to fall back on non-euro kits
                         LOG(L"WARN: %s kit not found!", 
                                 ((i==0)?L"euro-pa":L"euro-pb"));
+                        kkit = (i==0)? kcols[i]->pa: kcols[i]->pb;
+                    }
+                    if (kkit == kkit_end) {
+                        LOG(L"WARN: %s kit not found!", 
+                                ((i==0)?L"pa":L"pb"));
                     }
                 }
                 break;
@@ -1825,33 +1845,45 @@ bool CreatePipeForFontBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
         case BIN_FONT_GA:
             kkit_end = kcol->goalkeepers.end();
             kkit = (isEuroSlot) ? kcol->euro_ga : kcol->ga;
+            if (kkit == kkit_end) {
+                // try to fallback on non-euro font
+                kkit = kcol->ga;
+            }
             break;
         case BIN_FONT_GB:
             kkit_end = kcol->goalkeepers.end();
             kkit = (isEuroSlot) ? kcol->euro_gb : kcol->gb;
+            if (kkit == kkit_end) {
+                // try to fallback on non-euro font
+                kkit = kcol->gb;
+            }
             break;
         case BIN_FONT_PA:
             kkit_end = kcol->players.end();
             zit = _kitPicks.find(slot);
-            if (zit != _kitPicks.end())
-            {
+            if (zit != _kitPicks.end()) {
                 kkit = kcol->players.find(zit->second.kitKey);
             }
-            else
-            {
+            else {
                 kkit = (isEuroSlot) ? kcol->euro_pa : kcol->pa;
+                if (kkit == kkit_end) {
+                    // try to fallback on non-euro font
+                    kkit = kcol->pa;
+                }
             }
             break;
         case BIN_FONT_PB:
             kkit_end = kcol->players.end();
             zit = _kitPicks.find(slot);
-            if (zit != _kitPicks.end())
-            {
+            if (zit != _kitPicks.end()) {
                 kkit = kcol->players.find(zit->second.kitKey);
             }
-            else
-            {
+            else {
                 kkit = (isEuroSlot) ? kcol->euro_pb : kcol->pb;
+                if (kkit == kkit_end) {
+                    // try to fallback on non-euro font
+                    kkit = kcol->pb;
+                }
             }
             break;
     }
@@ -1974,33 +2006,45 @@ bool CreatePipeForNumbersBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& si
         case BIN_NUMS_GA:
             kkit_end = kcol->goalkeepers.end();
             kkit = (isEuroSlot) ? kcol->euro_ga : kcol->ga;
+            if (kkit == kkit_end) {
+                // try to fall back on non-euro numbers
+                kkit = kcol->ga;
+            }
             break;
         case BIN_NUMS_GB:
             kkit_end = kcol->goalkeepers.end();
             kkit = (isEuroSlot) ? kcol->euro_gb : kcol->gb;
+            if (kkit == kkit_end) {
+                // try to fall back on non-euro numbers
+                kkit = kcol->gb;
+            }
             break;
         case BIN_NUMS_PA:
             kkit_end = kcol->players.end();
             zit = _kitPicks.find(slot);
-            if (zit != _kitPicks.end())
-            {
+            if (zit != _kitPicks.end()) {
                 kkit = kcol->players.find(zit->second.kitKey);
             }
-            else
-            {
+            else {
                 kkit = (isEuroSlot) ? kcol->euro_pa : kcol->pa;
+                if (kkit == kkit_end) {
+                    // try to fall back on non-euro numbers
+                    kkit = kcol->pa;
+                }
             }
             break;
         case BIN_NUMS_PB:
             kkit_end = kcol->players.end();
             zit = _kitPicks.find(slot);
-            if (zit != _kitPicks.end())
-            {
+            if (zit != _kitPicks.end()) {
                 kkit = kcol->players.find(zit->second.kitKey);
             }
-            else
-            {
+            else {
                 kkit = (isEuroSlot) ? kcol->euro_pb : kcol->pb;
+                if (kkit == kkit_end) {
+                    // try to fall back on non-euro numbers
+                    kkit = kcol->pb;
+                }
             }
             break;
 

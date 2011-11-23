@@ -23,7 +23,7 @@ EXTRA_CFLAGS=/DMYDLL_RELEASE_BUILD
 CFLAGS=/nologo /Od /EHsc /wd4731 $(EXTRA_CFLAGS)
 LFLAGS=/NOLOGO
 LIBS=user32.lib gdi32.lib advapi32.lib comctl32.lib
-LIBSDLL=pngdib.obj libpng.lib zdll.lib $(LIBS)
+LIBSDLL=pngdib.obj libpng.a zdll.lib $(LIBS)
 
 
 all: dlls apps

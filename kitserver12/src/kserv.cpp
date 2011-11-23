@@ -617,9 +617,14 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
            _kserv_config._techfit[defaults[i]] = 1;
        }
 
-       LOG(L"defaulting to these tight models: 22, 83");
-       _kserv_config._techfit[22] = 2;
-       _kserv_config._techfit[83] = 2;
+       LOG(L"defaulting to these tight models: "
+           L"5, 6, 7, 8, 22, 83, 89, 90");
+       WORD tightDefaults[] = {
+             5, 6, 7, 8, 22, 83, 89, 90
+       };
+       for (int i=0; i<sizeof(defaults)/sizeof(WORD); i++) {
+           _kserv_config._techfit[tightDefaults[i]] = 2;
+       }
     }
 
     // initialize iterators
@@ -796,13 +801,10 @@ void DumpSlotsInfo(TEAM_KIT_INFO* teamKitInfo, TEAM_NAME* teamNames)
         WORD teamId = teamKitInfo[i].id;
         if (teamId == 0xffff)
             continue;
-        //fprintf(f, "slot: %6d\tteam: %3d (%04x) %s\n", 
-        
-        //fprintf(f, "slot: %6d\tteam: %d (%04x) %s\n", 
-        //    (short)teamKitInfo[i].slot, 
-        //    i, teamId, teamId, GetTeamNameByIndex(i, teamNames));
-        fprintf(f, "id:%5d (%04x) %s\n", 
-            teamId, teamId, GetTeamNameByIndex(i, teamNames));
+        //fprintf(f, "index:%04x slot:%04x id:%5d (%04x) %s\n", 
+        fprintf(f, "id:%5d (0x%04x) %s\n", 
+            //i, (short)teamKitInfo[i].slot, 
+            teamId, teamId, GetTeamNameById(teamId));
 
         //char* name = GetTeamNameByIndex(i, teamNames);
         //if (name[0]!='\0')
@@ -977,6 +979,13 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
             o.pb = true;
         }
 
+        // show current linked slot, if exists
+        hash_map<WORD,WORD>::iterator rit = _reverseSlotMaps.ga.find(i);
+        if (rit != _reverseSlotMaps.ga.end()) {
+            LOG(L"team %d statically linked to slot 0x%x", 
+                git->first, rit->second); 
+        }
+
         if (gaRelink||paRelink||pbRelink) {
             RelinkKit(i, nextSlot, teamKitInfo[i]);
         }
@@ -1042,6 +1051,23 @@ bool IsEuroSlot(short slot) {
     return false;
 }
 
+/**
+ * utility method to set some basic
+ * kit attributes to reasonable defaults
+ */
+void SetSomeDefaults(KIT_INFO* ki)
+{
+    ki->nameShow = 1;
+    ki->nameSize = 22;
+    ki->nameY = 24;
+    ki->numberSize = 18;
+    ki->numberY = 12;
+    ki->shortsNumberPosition = 1;
+    ki->shortsNumberSize = 14;
+    ki->shortsNumberX = 14;
+    ki->shortsNumberY = 6;
+}
+
 void InitEuroKitAttributes()
 {
     TEAM_KIT_INFO* prev = _euroTeamKitInfo;
@@ -1084,60 +1110,60 @@ void InitEuroKitAttributes()
 
         LOG(L"team %d has EuroKits", git->first);
 
+        TEAM_KIT_INFO tki;
+        TEAM_KIT_INFO* pTKI;
+        bool toInsert(false);
+
         map<DWORD,TEAM_KIT_INFO>::iterator eit;
         eit = _euroKitAttributesMap.find(git->first);
         if (eit == _euroKitAttributesMap.end()) {
             // does not yet have a slot --> allocate one
-            WORD euroSlot = GetNextXslot();
-            TEAM_KIT_INFO tki;
             memset(&tki, 0, sizeof(TEAM_KIT_INFO));
             tki.id = git->first;
-            tki.slot = euroSlot;
-            // ga
-            if (git->second.euro_ga != git->second.goalkeepers.end()) {
-                ApplyKitAttributes(git->second.euro_ga, tki.ga);
-                git->second.euro_ga->second.slot = euroSlot;
-            }
-            else if (git->second.ga != git->second.goalkeepers.end()) {
-                ApplyKitAttributes(git->second.ga, tki.ga);
-            }
-            // pa
-            if (git->second.euro_pa != git->second.players.end()) {
-                ApplyKitAttributes(git->second.euro_pa, tki.pa);
-                git->second.euro_pa->second.slot = euroSlot;
-            }
-            else if (git->second.pa != git->second.players.end()) {
-                ApplyKitAttributes(git->second.pa, tki.pa);
-            }
-            // pb
-            if (git->second.euro_pb != git->second.players.end()) {
-                ApplyKitAttributes(git->second.euro_pb, tki.pb);
-                git->second.euro_pb->second.slot = euroSlot;
-            }
-            else if (git->second.pb != git->second.players.end()) {
-                ApplyKitAttributes(git->second.pb, tki.pb);
-            }
-
-            _euroKitAttributesMap.insert(pair<DWORD,TEAM_KIT_INFO>(
-                tki.id, tki));
-            _fastEuroSlotTable[euroSlot] = 1;
+            tki.slot = GetNextXslot();
+            SetSomeDefaults(&tki.ga);
+            SetSomeDefaults(&tki.pa);
+            SetSomeDefaults(&tki.pb);
+            toInsert = true;
+            pTKI = &tki;
         }
         else {
-            // already has a slot --> just apply attributes then
-            WORD euroSlot = eit->second.slot;
+            // already have a slot
+            pTKI = &(eit->second);
+        }
 
-            if (git->second.euro_ga != git->second.goalkeepers.end()) {
-                ApplyKitAttributes(git->second.euro_ga, eit->second.ga);
-                git->second.euro_ga->second.slot = euroSlot;
-            }
-            if (git->second.euro_pa != git->second.players.end()) {
-                ApplyKitAttributes(git->second.euro_pa, eit->second.pa);
-                git->second.euro_pa->second.slot = euroSlot;
-            }
-            if (git->second.euro_pb != git->second.players.end()) {
-                ApplyKitAttributes(git->second.euro_pb, eit->second.pb);
-                git->second.euro_pb->second.slot = euroSlot;
-            }
+        // ga
+        if (git->second.euro_ga != git->second.goalkeepers.end()) {
+            ApplyKitAttributes(git->second.euro_ga, pTKI->ga);
+            git->second.euro_ga->second.slot = pTKI->slot;
+        }
+        else if (git->second.ga != git->second.goalkeepers.end()) {
+            // fallback on ga
+            ApplyKitAttributes(git->second.ga, pTKI->ga);
+        }
+        // pa
+        if (git->second.euro_pa != git->second.players.end()) {
+            ApplyKitAttributes(git->second.euro_pa, pTKI->pa);
+            git->second.euro_pa->second.slot = pTKI->slot;
+        }
+        else if (git->second.pa != git->second.players.end()) {
+            // fallback on pa
+            ApplyKitAttributes(git->second.pa, pTKI->pa);
+        }
+        // pb
+        if (git->second.euro_pb != git->second.players.end()) {
+            ApplyKitAttributes(git->second.euro_pb, pTKI->pb);
+            git->second.euro_pb->second.slot = pTKI->slot;
+        }
+        else if (git->second.pb != git->second.players.end()) {
+            // fallback on pb
+            ApplyKitAttributes(git->second.pb, pTKI->pb);
+        }
+
+        if (toInsert) {
+            _euroKitAttributesMap.insert(pair<DWORD,TEAM_KIT_INFO>(
+                tki.id, tki));
+            _fastEuroSlotTable[tki.slot] = 1;
         }
     }
 

@@ -622,7 +622,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
        WORD tightDefaults[] = {
              5, 6, 7, 8, 22, 83, 89, 90
        };
-       for (int i=0; i<sizeof(defaults)/sizeof(WORD); i++) {
+       for (int i=0; i<sizeof(tightDefaults)/sizeof(WORD); i++) {
            _kserv_config._techfit[tightDefaults[i]] = 2;
        }
     }

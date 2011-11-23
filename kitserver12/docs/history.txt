@@ -2,6 +2,15 @@ Kitserver 12 HISTORY notes
 ==========================
 
 
+2011-11-23
+----------
+v12.1.1
+- bug-fixes for kserv:
+  * correct ids now reported in teamlist.txt
+  * falling back on regular kit, if a euro-kit is missing 
+- static linking with libpng for kserv
+
+
 2011-11-21
 ----------
 v12.1.0

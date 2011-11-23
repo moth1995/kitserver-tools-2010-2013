@@ -146,7 +146,7 @@ anything of that sort, so removal is very simple.
 <p>
 In order for Kitserver features to work in the game, you need to "attach"
 the Kitserver to your game main executable (typically called pes2012.exe).
-To do that, go to kitserver11 folder, and run <b>manager.exe</b>. 
+To do that, go to kitserver12 folder, and run <b>manager.exe</b>. 
 If you placed the files correctly during installation steps, then you will 
 see manager showing you the list of game
 executables that you can Attach/Detach kitserver to. Click [Attach] button,
@@ -755,17 +755,18 @@ techfit.model = 44
 It allows to make any normal kit become tight-fitting kit (good examples of
 that are kits worn by African teams)</p>
 
-<p>As of November 2011, only models 22 and 83 are like that, and Kitserver 
-supports those without any additional configuration. However, if another 
-update is released and more models like that are added, it is possible to 
-specify them in the [kserv] section of config.txt. You need to list <b>all</b>
-of them like this:
+<p>As of November 2011, models 5, 6, 7, 8, 22, 83, 89 and 90 are like 
+that, and Kitserver supports those without any additional configuration. 
+However, if another update is released and more models like that are added, 
+it is possible to specify them in the [kserv] section of config.txt. 
+You need to list <b>all</b> of them like this:
 </p>
 
 <pre>
 [kserv]
-tight.model = 22
-tight.model = 83
+tight.model = 5
+tight.model = 6
+tight.model = 7
 ...
 </pre>
 

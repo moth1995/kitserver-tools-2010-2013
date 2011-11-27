@@ -144,7 +144,9 @@ enum
 };
 
 map<DWORD,TEAM_KIT_INFO> _euroKitAttributesMap;
-TEAM_KIT_INFO* _euroTeamKitInfo;
+TEAM_KIT_INFO* _euroTeamKitInfo = NULL;
+TEAM_KIT_INFO* _orgEuroTeamKitInfo_begin = NULL;
+TEAM_KIT_INFO* _orgEuroTeamKitInfo_end = NULL;
 BYTE _fastEuroSlotTable[0x10000];
 
 // table for quick bin-type lookups
@@ -851,7 +853,7 @@ void SetSlot(map<wstring,Kit>& m, const wchar_t* key, WORD slot)
  */
 WORD GetNextXslot()
 {
-    WORD slot = ++_nextXslot;
+    WORD slot = _nextXslot++;
     if (_nextXslot > XSLOT_A_LAST && _nextXslot < XSLOT_B_FIRST) {
         _nextXslot = XSLOT_B_FIRST;
     }
@@ -933,7 +935,7 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
     LOG(L"Normal slots taken: %d", _takenSlots.size());
 
     // GDB teams
-    WORD nextSlot = _nextXslot = XSLOT_A_FIRST;
+    _nextXslot = XSLOT_A_FIRST;
     for (hash_map<WORD,KitCollection>::iterator git = _gdb->uni.begin();
             git != _gdb->uni.end();
             git++)
@@ -987,7 +989,7 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         }
 
         if (gaRelink||paRelink||pbRelink) {
-            RelinkKit(i, nextSlot, teamKitInfo[i]);
+            RelinkKit(i, GetNextXslot(), teamKitInfo[i]);
         }
 
         _orgTeamKitInfo.insert(pair<int,ORG_TEAM_KIT_INFO>(i,o));
@@ -1015,15 +1017,6 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         {
             LOG(L"WARNING: team %d (%s) appears to have no GDB kits", 
                     i, git->second.foldername.c_str()); 
-        }
-
-        // move to next slot
-        if ((o.ga||o.pa||o.pb) && (
-                gaRelink||paRelink||pbRelink))
-        {
-            LOG(L"team %d dynamically relinked to x-slot 0x%x", 
-                git->first, nextSlot); 
-            nextSlot = GetNextXslot();
         }
     }
     size_t numTaken = _slotMaps.ga.size();
@@ -1070,16 +1063,23 @@ void SetSomeDefaults(KIT_INFO* ki)
 
 void InitEuroKitAttributes()
 {
+    if (!_orgEuroTeamKitInfo_begin) {
+        EURO_TEAM_STRUCT** p = (EURO_TEAM_STRUCT**)data[EURO_TEAM_KIT_INFO_PTR];
+        if (p && *p) {
+            EURO_TEAM_STRUCT* euroKits = *p;
+            _orgEuroTeamKitInfo_begin = euroKits->begin;
+            _orgEuroTeamKitInfo_end = euroKits->end;
+        }
+    }
+
     TEAM_KIT_INFO* prev = _euroTeamKitInfo;
     _euroKitAttributesMap.clear();
     memset(_fastEuroSlotTable, 0, sizeof(_fastEuroSlotTable));
 
     // first, enumerate all existing ones
-    EURO_TEAM_STRUCT** p = (EURO_TEAM_STRUCT**)data[EURO_TEAM_KIT_INFO_PTR];
-    if (p && *p) {
-        EURO_TEAM_STRUCT* euroKits = *p;
-        TEAM_KIT_INFO* pTKI = euroKits->begin;
-        for (; pTKI != euroKits->end; pTKI++) {
+    if (_orgEuroTeamKitInfo_begin) {
+        TEAM_KIT_INFO* pTKI = _orgEuroTeamKitInfo_begin;
+        for (; pTKI != _orgEuroTeamKitInfo_end; pTKI++) {
             //LOG(L"european kits: team(%04x) --> slot (%04x)",
             //    pTKI->id, pTKI->slot);
 
@@ -1097,7 +1097,7 @@ void InitEuroKitAttributes()
             git != _gdb->uni.end();
             git++)
     {
-        LOG(L"processing team %d...", git->first);
+        //LOG(L"processing team %d...", git->first);
         bool hasEuroPA = 
             git->second.euro_pa != git->second.players.end();
         bool hasEuroPB = 
@@ -1126,6 +1126,9 @@ void InitEuroKitAttributes()
             SetSomeDefaults(&tki.pb);
             toInsert = true;
             pTKI = &tki;
+
+            LOG(L"team %d got dynamic euro-slot: 0x%04x", 
+                tki.id, tki.slot);
         }
         else {
             // already have a slot
@@ -1209,7 +1212,7 @@ void InitEuroKitAttributes()
     }
 
     // point to new structure
-    p = (EURO_TEAM_STRUCT**)data[EURO_TEAM_KIT_INFO_PTR];
+    EURO_TEAM_STRUCT** p = (EURO_TEAM_STRUCT**)data[EURO_TEAM_KIT_INFO_PTR];
     if (p && *p) {
         EURO_TEAM_STRUCT* euroKits = *p;
         euroKits->begin = _euroTeamKitInfo;
@@ -1232,6 +1235,9 @@ void RelinkKit(WORD teamIndex, WORD slot, TEAM_KIT_INFO& teamKitInfo)
     _reverseSlotMaps.pa.insert(pair<WORD,WORD>(teamIndex,slot));
     _slotMaps.pb.insert(pair<WORD,WORD>(slot,teamIndex));
     _reverseSlotMaps.pb.insert(pair<WORD,WORD>(teamIndex,slot));
+
+    LOG(L"team %d dynamically relinked to x-slot 0x%x", 
+        GetTeamIdByIndex(teamIndex), slot); 
 }
 
 void ApplyKitAttributes(map<wstring,Kit>& m, const wchar_t* kitKey, KIT_INFO& ki)

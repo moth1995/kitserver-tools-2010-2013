@@ -2,6 +2,14 @@ Kitserver 12 HISTORY notes
 ==========================
 
 
+2011-11-27
+----------
+v12.1.2
+- bug-fix for kserv:
+  sometimes euro-kits got mixed with regular kits
+  of another team.
+
+
 2011-11-23
 ----------
 v12.1.1

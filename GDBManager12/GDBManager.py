@@ -1577,7 +1577,11 @@ Do you want to save them?""",
                         try:
                             id = int(tok[0])
                         except ValueError:
-                            id = int(tok[0],16)
+                            try:
+                                id = int(tok[0],16)
+                            except ValueError:
+                                # skip this line
+                                continue
                         val = tok[1].strip()
                         if val[0]=='"' and val[-1]=='"': val = val[1:-1]
                         folder = os.path.normcase(self.gdbPath + "/uni/" + val)

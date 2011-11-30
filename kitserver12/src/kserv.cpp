@@ -15,6 +15,7 @@
 #include "commctrl.h"
 #include "afsio.h"
 #include "afsreader.h"
+#include "crc32.h"
 #include "soft\zlib123-dll\include\zlib.h"
 #include "d3dx9.h"
 
@@ -208,6 +209,36 @@ public:
     list<BYTE*> _buffers;
 };
 
+class bm_cache_t
+{
+public:
+    bm_cache_t() : 
+        afsId(0xffffffff),
+        binId(0xffffffff),
+        size(0),
+        pBM(NULL),
+        result(false) 
+    {}
+    ~bm_cache_t() 
+    {
+        freeBuffers();
+    }
+    void freeBuffers() 
+    {
+        if (pBM) { 
+            LOG(L"freeing cached buffers");
+            delete pBM; 
+            pBM = NULL; 
+        }
+    }
+
+    DWORD afsId;
+    DWORD binId;
+    DWORD size;
+    kserv_buffer_manager_t* pBM;
+    bool result;
+};
+
 typedef struct _ORG_TEAM_KIT_INFO
 {
     TEAM_KIT_INFO tki;
@@ -272,6 +303,10 @@ hash_map<WORD,WORD> _slotMap;
 hash_map<WORD,WORD> _reverseSlotMap;
 typedef hash_map<WORD,KitCollection>::iterator kc_iter_t;
 CRITICAL_SECTION _cs;
+
+bm_cache_t _lastKit;
+bm_cache_t _lastFont;
+bm_cache_t _lastNumbers;
 
 typedef hash_map<WORD,WORD> slot_map_t;
 class slot_maps_t 
@@ -753,6 +788,8 @@ skip:   pop edi
 
 KEXPORT void kservAfterReadNames()
 {
+    LOG(L"kservAfterReadNames:: CALLED.");
+
     // dump slot information
     //if (k_kserv.debug)
     DumpSlotsInfo();
@@ -879,6 +916,8 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)data[PLAYERS_DATA] 
                 + data[TEAM_KIT_INFO_OFFSET]);
 
+    LOG(L"**** InitSlotMap ****");
+
     //_slotMap.clear();
     //_reverseSlotMap.clear();
     _slotMaps.ga.clear();
@@ -888,7 +927,6 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
     _reverseSlotMaps.pa.clear();
     _reverseSlotMaps.pb.clear();
     _takenSlots.clear();
-    _orgTeamKitInfo.clear();
 
     // linked (or re-linked teams)
     for (WORD i=0; i<NUM_TEAMS; i++)
@@ -906,18 +944,18 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
 
         short slot;
         slot = (short)teamKitInfo[i].slot;
-        if (slot >= 0) {
+        if (slot >= 0 && slot < XSLOT_A_FIRST) {
             _slotMaps.ga.insert(pair<WORD,WORD>((WORD)slot,i));
             _reverseSlotMaps.ga.insert(pair<WORD,WORD>(i, (WORD)slot));
             _takenSlots.insert(pair<WORD,bool>(slot,true));
 
             _slotMaps.pa.insert(pair<WORD,WORD>((WORD)slot,i));
             _reverseSlotMaps.pa.insert(pair<WORD,WORD>(i, (WORD)slot));
-            _takenSlots.insert(pair<WORD,bool>(slot,true));
+            //_takenSlots.insert(pair<WORD,bool>(slot,true));
 
             _slotMaps.pb.insert(pair<WORD,WORD>((WORD)slot,i));
             _reverseSlotMaps.pb.insert(pair<WORD,WORD>(i, (WORD)slot));
-            _takenSlots.insert(pair<WORD,bool>(slot,true));
+            //_takenSlots.insert(pair<WORD,bool>(slot,true));
         }
 
         /*
@@ -992,8 +1030,6 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
             RelinkKit(i, GetNextXslot(), teamKitInfo[i]);
         }
 
-        _orgTeamKitInfo.insert(pair<int,ORG_TEAM_KIT_INFO>(i,o));
-
         // apply attributes
         ApplyKitAttributes(git->second.goalkeepers, 
                 L"gb",teamKitInfo[i].ga);
@@ -1003,6 +1039,20 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
                 L"pa",teamKitInfo[i].pa);
         ApplyKitAttributes(git->second.players, 
                 L"pb",teamKitInfo[i].pb);
+
+        // store originals
+        //hash_map<int,ORG_TEAM_KIT_INFO>::iterator oit;
+        //oit = _orgTeamKitInfo.find(i);
+        //bool toStore = (oit == _orgTeamKitInfo.end()) ||
+        //    memcmp(&teamKitInfo[i], &o, sizeof(TEAM_KIT_INFO))!=0;
+        
+        bool toStore = memcmp(&teamKitInfo[i], &o, sizeof(TEAM_KIT_INFO))!=0;
+        if (toStore) {
+            LOG(L"storing original kit attributes for team %d",
+                git->first);
+            _orgTeamKitInfo[i] = o;
+        }
+
 
         if (k_kserv.debug)
             LOG(L"setting *a/*b slots for team: %d", git->first);
@@ -1466,8 +1516,30 @@ void kservWriteEditData(LPCVOID buf, DWORD size)
  */
 bool kservGetFileInfo(DWORD afsId, DWORD binId, HANDLE& hfile, DWORD& fsize)
 {
+    /*
+    // EURO kit attributes
+    if (afsId == EURO_ATTR_IMG) {
+        if (binId == EURO_ATTR_BIN) {
+            LOG(L"Loading euro-kit attributes: (0x%02x, %d)",
+                afsId, binId);
+        }
+    }
+    else if (afsId == EURO_ATTR_EXPANSION_IMG) {
+        if (binId == EURO_ATTR_EXPANSION_BIN) {
+            LOG(L"Loading euro-kit attribues (expanded): (0x%02x, %d)",
+                afsId, binId);
+            //__asm int 3;
+        }
+    }
+    */
+
     if (afsId == KITS_IMG || afsId == EXPANSION_IMG) {
-        switch (GetBinType(afsId, binId)) {
+        int binType = GetBinType(afsId, binId);
+        if (binType == -1) {
+            return false;  // check for fast return
+        }
+
+        switch (binType) {
             case BIN_KIT_GK:
             case BIN_KIT_PL:
                 return CreatePipeForKitBin(afsId, binId, hfile, fsize);
@@ -1481,21 +1553,6 @@ bool kservGetFileInfo(DWORD afsId, DWORD binId, HANDLE& hfile, DWORD& fsize)
             case BIN_NUMS_PA:
             case BIN_NUMS_PB:
                 return CreatePipeForNumbersBin(afsId, binId, hfile, fsize);
-        }
-    }
-
-    // EURO kit attributes
-    if (afsId == EURO_ATTR_IMG) {
-        if (binId == EURO_ATTR_BIN) {
-            LOG(L"Loading euro-kit attributes: (0x%02x, %d)",
-                afsId, binId);
-        }
-    }
-    else if (afsId == EURO_ATTR_EXPANSION_IMG) {
-        if (binId == EURO_ATTR_EXPANSION_BIN) {
-            LOG(L"Loading euro-kit attribues (expanded): (0x%02x, %d)",
-                afsId, binId);
-            //__asm int 3;
         }
     }
 
@@ -1607,6 +1664,36 @@ bool CreatePipeForKitBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
     if (k_kserv.debug)
         LOG(L"Kit-Bin:: Loading binId=%d", binId);
 
+    // checked for cached BM
+    bool useCached(false);
+    if (_lastKit.afsId == afsId && _lastKit.binId == binId) {
+        if (_lastKit.pBM) {
+            useCached = true;
+        }
+    }
+    else {
+        _lastKit.freeBuffers();
+    }
+
+    hash_map<WORD,KIT_PICK>::iterator zit;
+    wstring files[2];
+
+    // new buffer manager for keeping track of in-memory structures
+    kserv_buffer_manager_t* pBM = ((useCached) ?
+        _lastKit.pBM : new kserv_buffer_manager_t());
+    kserv_buffer_manager_t& bm(*pBM);
+
+    if (useCached) {
+        size = _lastKit.size;
+        LOG(L"using cached buffers");
+        goto output;
+    }
+
+    _lastKit.afsId = afsId;
+    _lastKit.binId = binId;
+    _lastKit.pBM = NULL;
+    _lastKit.result = false;
+
     // first step: determine the team, and see if we have
     // this team in the GDB
     WORD slot = (binId - BIN_KIT_FIRST) >> 1;
@@ -1645,7 +1732,7 @@ bool CreatePipeForKitBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
     }
 
     // create the unpacked bin-data in memory
-    kserv_buffer_manager_t bm;
+    //kserv_buffer_manager_t& bm = new kserv_buffer_manager_t();
     DWORD texSize = sizeof(TEXTURE_ENTRY_HEADER) + 256*sizeof(PALETTE_ENTRY)
         + 1024*512; /*data*/ 
     uLongf unpackedSize = sizeof(UNPACKED_BIN_HEADER) + sizeof(ENTRY_INFO)*2
@@ -1690,8 +1777,8 @@ bool CreatePipeForKitBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
     tcount++;
     TRACE(L"******** tcount = %d *******", tcount);
 
-    hash_map<WORD,KIT_PICK>::iterator zit;
-    wstring files[2];
+    //hash_map<WORD,KIT_PICK>::iterator zit;
+    //wstring files[2];
     KitCollection* kcols[2];
     kcols[0] = kcolA;
     kcols[1] = kcolB;
@@ -1781,6 +1868,7 @@ bool CreatePipeForKitBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
     bm._packed->header.sizeUnpacked = unpackedSize;
     size = packedSize + 0x10;
 
+output:
     // write the data to a pipe
     HANDLE pipeRead, pipeWrite;
     if (!CreatePipe(&pipeRead, &pipeWrite, NULL, size*2))
@@ -1795,6 +1883,11 @@ bool CreatePipeForKitBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
         return false;
     }
     handle = pipeRead;
+
+    // cache the buffer manager
+    _lastKit.pBM = pBM;
+    _lastKit.size = size;
+    _lastKit.result = true;
     return true;
 }
 
@@ -1805,6 +1898,39 @@ bool CreatePipeForFontBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
 {
     if (k_kserv.debug)
         LOG(L"Font-Bin:: Loading binId=%d", binId);
+
+    // checked for cached BM
+    bool useCached(false);
+    if (_lastFont.afsId == afsId && _lastFont.binId == binId) {
+        if (_lastFont.pBM) {
+            useCached = true;
+        }
+    }
+    else {
+        _lastFont.freeBuffers();
+    }
+
+    hash_map<WORD,KIT_PICK>::iterator zit;
+    wstring files[1];
+    map<wstring,Kit>::iterator kkit;
+    map<wstring,Kit>::iterator kkit_end;
+    wstring filename(getPesInfo()->gdbDir);
+
+    // new buffer manager for keeping track of in-memory structures
+    kserv_buffer_manager_t* pBM = ((useCached) ?
+        _lastFont.pBM : new kserv_buffer_manager_t());
+    kserv_buffer_manager_t& bm(*pBM);
+
+    if (useCached) {
+        size = _lastFont.size;
+        LOG(L"using cached buffers");
+        goto output;
+    }
+
+    _lastFont.afsId = afsId;
+    _lastFont.binId = binId;
+    _lastFont.pBM = NULL;
+    _lastFont.result = false;
 
     // first step: determine the team, and see if we have
     // this team in the GDB
@@ -1832,7 +1958,7 @@ bool CreatePipeForFontBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
     bool isEuroSlot = IsEuroSlot(slot);
 
     // create the unpacked bin-data in memory
-    kserv_buffer_manager_t bm;
+    //kserv_buffer_manager_t bm;
     DWORD texSize = sizeof(TEXTURE_ENTRY_HEADER) + 256*sizeof(PALETTE_ENTRY)
         + 256*64; /*data*/ 
     uLongf unpackedSize = sizeof(UNPACKED_BIN_HEADER) + sizeof(ENTRY_INFO)*2
@@ -1868,10 +1994,10 @@ bool CreatePipeForFontBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
     te->palette[0].b = 0xa8; // the font didn't load from GDB
     te->palette[0].a = 0xff;
 
-    wstring filename(getPesInfo()->gdbDir);
-    map<wstring,Kit>::iterator kkit;
-    map<wstring,Kit>::iterator kkit_end;
-    hash_map<WORD,KIT_PICK>::iterator zit;
+    //wstring filename(getPesInfo()->gdbDir);
+    //map<wstring,Kit>::iterator kkit;
+    //map<wstring,Kit>::iterator kkit_end;
+    //hash_map<WORD,KIT_PICK>::iterator zit;
     switch (binType)
     {
         case BIN_FONT_GA:
@@ -1919,7 +2045,7 @@ bool CreatePipeForFontBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
             }
             break;
     }
-    wstring files[1];
+    //wstring files[1];
     files[0] = filename;
     if (kkit != kkit_end)
         files[0] += kkit->second.foldername;
@@ -1943,6 +2069,7 @@ bool CreatePipeForFontBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
     size = packedSize + 0x10;
     //DumpData(bm._packed, size);
 
+output:
     // write the data to a pipe
     HANDLE pipeRead, pipeWrite;
     if (!CreatePipe(&pipeRead, &pipeWrite, NULL, size*2))
@@ -1957,6 +2084,11 @@ bool CreatePipeForFontBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
         return false;
     }
     handle = pipeRead;
+
+    // cache the buffer manager
+    _lastFont.pBM = pBM;
+    _lastFont.size = size;
+    _lastFont.result = true;
     return true;
 }
 
@@ -1967,6 +2099,39 @@ bool CreatePipeForNumbersBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& si
 {
     if (k_kserv.debug)
         LOG(L"Numbers-Bin:: Loading binId=%d", binId);
+
+    // checked for cached BM
+    bool useCached(false);
+    if (_lastNumbers.afsId == afsId && _lastNumbers.binId == binId) {
+        if (_lastNumbers.pBM) {
+            useCached = true;
+        }
+    }
+    else {
+        _lastNumbers.freeBuffers();
+    }
+
+    hash_map<WORD,KIT_PICK>::iterator zit;
+    wstring files[1];
+    map<wstring,Kit>::iterator kkit;
+    map<wstring,Kit>::iterator kkit_end;
+    wstring dirname(getPesInfo()->gdbDir);
+
+    // new buffer manager for keeping track of in-memory structures
+    kserv_buffer_manager_t* pBM = ((useCached) ?
+        _lastNumbers.pBM : new kserv_buffer_manager_t());
+    kserv_buffer_manager_t& bm(*pBM);
+
+    if (useCached) {
+        size = _lastNumbers.size;
+        LOG(L"using cached buffers");
+        goto output;
+    }
+
+    _lastNumbers.afsId = afsId;
+    _lastNumbers.binId = binId;
+    _lastNumbers.pBM = NULL;
+    _lastNumbers.result = false;
 
     // first step: determine the team, and see if we have
     // this team in the GDB
@@ -1994,7 +2159,7 @@ bool CreatePipeForNumbersBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& si
     bool isEuroSlot = IsEuroSlot(slot);
 
     // create the unpacked bin-data in memory
-    kserv_buffer_manager_t bm;
+    //kserv_buffer_manager_t bm;
     DWORD texSize = sizeof(TEXTURE_ENTRY_HEADER) + 256*sizeof(PALETTE_ENTRY)
         + 512*256; /*data*/ 
     uLongf unpackedSize = sizeof(UNPACKED_BIN_HEADER) + sizeof(ENTRY_INFO)*2
@@ -2029,10 +2194,10 @@ bool CreatePipeForNumbersBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& si
     te->palette[0].b = 0xc8; // the numbers didn't load from GDB
     te->palette[0].a = 0xff;
 
-    wstring dirname(getPesInfo()->gdbDir);
-    map<wstring,Kit>::iterator kkit;
-    map<wstring,Kit>::iterator kkit_end;
-    hash_map<WORD,KIT_PICK>::iterator zit;
+    //wstring dirname(getPesInfo()->gdbDir);
+    //map<wstring,Kit>::iterator kkit;
+    //map<wstring,Kit>::iterator kkit_end;
+    //hash_map<WORD,KIT_PICK>::iterator zit;
     switch (binType)
     {
         case BIN_NUMS_GA:
@@ -2081,7 +2246,7 @@ bool CreatePipeForNumbersBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& si
             break;
 
     }
-    wstring files[1];
+    //wstring files[1];
     files[0] = dirname;
     if (kkit != kkit_end)
         files[0] += kkit->second.foldername;
@@ -2104,6 +2269,7 @@ bool CreatePipeForNumbersBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& si
     size = packedSize + 0x10;
     //DumpData(bm._packed, size);
 
+output:
     // write the data to a pipe
     HANDLE pipeRead, pipeWrite;
     if (!CreatePipe(&pipeRead, &pipeWrite, NULL, size*2))
@@ -2118,6 +2284,11 @@ bool CreatePipeForNumbersBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& si
         return false;
     }
     handle = pipeRead;
+
+    // cache the buffer manager
+    _lastNumbers.pBM = pBM;
+    _lastNumbers.size = size;
+    _lastNumbers.result = true;
     return true;
 }
 

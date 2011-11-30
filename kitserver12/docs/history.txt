@@ -2,6 +2,16 @@ Kitserver 12 HISTORY notes
 ==========================
 
 
+2011-11-29
+----------
+v12.1.3
+- bug-fix for kserv:
+  fixed problem with kits getting mixed up 
+  among different teams
+- speed improvements for kit loading
+  (compressed buffers cached and re-used)
+
+
 2011-11-27
 ----------
 v12.1.2

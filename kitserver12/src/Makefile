@@ -128,9 +128,9 @@ fserv.obj: fserv.cpp fserv.h fserv_addr.h fserv.rc replay.h player.h bal.h
 fserv.res: 
 	$(RC) -r -fo fserv.res fserv.rc
 	
-kserv.lib: kserv.obj gdb.obj configs.obj afsio.dll kload.dll pngdib
+kserv.lib: kserv.obj gdb.obj configs.obj crc32.obj afsio.dll kload.dll pngdib
 kserv.dll: kserv.lib kserv.res
-	$(LINK) $(LFLAGS) /out:kserv.dll /LIBPATH:$(LPPNGDIB) /LIBPATH:$(LPLIBPNG) /LIBPATH:$(LPZLIB) /DLL kserv.obj gdb.obj configs.obj kserv.res $(LIBS) $(D3DX9) kload.lib afsio.lib $(LIBSDLL)
+	$(LINK) $(LFLAGS) /out:kserv.dll /LIBPATH:$(LPPNGDIB) /LIBPATH:$(LPLIBPNG) /LIBPATH:$(LPZLIB) /DLL kserv.obj gdb.obj configs.obj crc32.obj kserv.res $(LIBS) $(D3DX9) kload.lib afsio.lib $(LIBSDLL)
 kserv.obj: kserv.cpp kserv.h kserv_addr.h kserv.rc dllinit.h afsio.h teaminfo.h
 gdb.obj: gdb.cpp gdb.h configs.hpp
 

@@ -1,5 +1,5 @@
 # GDB Manager
-# Version 12.0.0
+# Version 12.0.1
 # by Juce.
 
 import wx
@@ -9,7 +9,7 @@ import string, math, re
 import sys, os, cStringIO, codecs
 import yaml
 
-VERSION, DATE = "12.0.0", "11/2012"
+VERSION, DATE = "12.0.1", "12/2012"
 DEFAULT_PNG = os.getcwd() + "/default.png"
 CONFIG_FILE = os.getcwd() + "/gdbm.yaml"
 WINDOW_TITLE = "GDB Manager 12"
@@ -131,11 +131,6 @@ def readAttributes(kit):
     kit.attributes.clear()
 
     #print "Reading attributes for %s" % kit.foldername
-    path, kitKey = os.path.split(kit.foldername)
-    # set goalkeeper flag
-    if kitKey[0] == 'g':
-        kit.isKeeper = True
-
     att, section = None, ""
     try:
         att = codecs.open("%s/%s" % (kit.foldername, "config.txt"), "rt", "utf-8")
@@ -1169,7 +1164,7 @@ class KitPanel(wx.Panel):
         gkFrontRect = wx.Rect(320+32*1,0,32,64)
         plShortsRect = wx.Rect(320+32*4,128+64,32,64) # shorts number
         gkShortsRect = wx.Rect(320+32*1,128+0,32,64)
-        if os.path.split(kit.foldername)[1][0] == 'g':
+        if kit.isKeeper:
             rect = gkRect
             frontRect = gkFrontRect
             shortsRect = gkShortsRect
@@ -1403,6 +1398,11 @@ class Kit:
         self.isKeeper = False # flag to indicate a GK kit
         self.attribRead = False # flag to indicate that attributes were already read
         self.teamId = -1
+
+        # set goalkeeper flag
+        path, kitKey = os.path.split(foldername)
+        if kitKey[0] == 'g' or kitKey[:6] == 'euro-g':
+            self.isKeeper = True
 
 
 class GDBTree(wx.TreeCtrl):

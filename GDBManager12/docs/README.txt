@@ -1,6 +1,6 @@
-GDB Manager                                               November 30, 2011
+GDB Manager                                                December 2, 2011
 ===========================================================================
-Version 12.0.0
+Version 12.0.1
 
 
 1. INTRODUCTION

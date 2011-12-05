@@ -3,11 +3,13 @@
 #ifndef _PLAYER_H
 #define _PLAYER_H
 
-#define MAX_PLAYERS 0x27b0
+#define MAX_PLAYERS 0x2f80
 
 #define SPECIAL_FACE 0x20
 #define SPECIAL_HAIR 0x40
 #define EDITED_FACEHAIR 0x10
+
+#pragma pack(push, 1)
 
 typedef struct _PLAYER_INFO
 {
@@ -28,7 +30,7 @@ typedef struct _PLAYER_INFO
     WORD unknown7;
     WORD index;
 
-} PLAYER_INFO;
+} PLAYER_INFO;  //sizeof = 0xe4
 
 typedef struct _PLAYER_DETAILS
 {
@@ -44,6 +46,8 @@ typedef struct _PLAYER_DETAILS
     WORD index;
 
 } PLAYER_DETAILS; 
+
+#pragma pack(pop)
 
 /*****************************************
  * Face/Hair bits:

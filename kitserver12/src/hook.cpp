@@ -127,6 +127,11 @@ void hookCopyPlayerData(
 void hookAtCopyEditData(DWORD dest, DWORD numBytes, int place);
 list<COPY_PLAYER_DATA_CALLBACK> _copyPlayerDataCallbacks;
 
+void hookAfterReadNamesCallPoint();
+void hookAfterReadNamesCallPoint2();
+void hookAfterReadNames();
+list<READ_NAMES_CALLBACK> _readNamesCallbacks;
+
 list<READ_DATA_CALLBACK> _writeEditDataCallbacks;
 list<READ_DATA_CALLBACK> _writeReplayDataCallbacks;
 list<READ_DATA_CALLBACK> _writeBalDataCallbacks;
@@ -452,6 +457,11 @@ HRESULT STDMETHODCALLTYPE newCreateDevice(IDirect3D9* self, UINT Adapter,
         code[C_COPY_DATA], hookAtCopyEditDataCallPoint1, 6, 0);
     HookCallPoint(
         code[C_COPY_DATA2], hookAtCopyEditDataCallPoint2, 6, 1);
+
+    HookCallPoint(code[C_READ_NAMES], 
+            hookAfterReadNamesCallPoint, 6, 1);
+    HookCallPoint(code[C_READ_NAMES2], 
+            hookAfterReadNamesCallPoint2, 6, 1);
 
 	CALLCHAIN_BEGIN(hk_D3D_CreateDevice, it) {
 		PFNCREATEDEVICEPROC NextCall = (PFNCREATEDEVICEPROC)*it;
@@ -1833,6 +1843,7 @@ void hookCopyPlayerData(PLAYER_INFO* players, DWORD numBytes, int place, bool wr
 
 void hookAtCopyEditData(DWORD dest, DWORD numBytes, int place)
 {
+    LOG(L"hootAtCopyEditData CALLED!");
     DWORD* pData = (DWORD*)data[PLAYERDATA];
     if (pData && *pData == dest-8) {
         // copying player data
@@ -1911,5 +1922,77 @@ void hookAtCopyEditDataCallPoint2()
         cmp eax,dword ptr ss:[esi+8]  // ...
         retn
     }
+}
+
+KEXPORT void addReadNamesCallback(READ_NAMES_CALLBACK callback)
+{
+    _readNamesCallbacks.push_back(callback);
+}
+
+void hookAfterReadNamesCallPoint()
+{
+    __asm {
+        lea edx, dword ptr ds:[esi+0x42f2a0] // replaced code
+        pushfd 
+        push ebp
+        push eax
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        call hookAfterReadNames
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        pop eax
+        pop ebp
+        popfd
+        retn
+    }
+}
+
+void hookAfterReadNamesCallPoint2()
+{
+    __asm {
+        pushfd 
+        push ebp
+        push eax
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        cmp eax,0
+        je skip
+        call hookAfterReadNames
+skip:   pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        pop eax
+        pop ebp
+        popfd
+        push ebx
+        mov ebx,[esp+4]
+        mov [esp+0x10],ebx
+        pop ebx
+        add esp,0x0c
+        cmp eax, dword ptr ds:[esi+8] // replaced code
+        retn
+    }
+}
+
+void hookAfterReadNames()
+{
+    // call the callbacks
+    list<READ_NAMES_CALLBACK>::iterator it;
+    for (it = _readNamesCallbacks.begin();
+            it != _readNamesCallbacks.end();
+            it++)
+        (*it)();
 }
 

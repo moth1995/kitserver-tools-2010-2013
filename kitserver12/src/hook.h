@@ -137,4 +137,7 @@ KEXPORT void addCopyPlayerDataCallback(COPY_PLAYER_DATA_CALLBACK callback);
 
 typedef void (*UNIFORM_SELECT_EVENT_CALLBACK)(bool enter);
 KEXPORT void addUniformSelectCallback(UNIFORM_SELECT_EVENT_CALLBACK callback);
+
+typedef void (*READ_NAMES_CALLBACK)();
+KEXPORT void addReadNamesCallback(READ_NAMES_CALLBACK callback);
 #endif

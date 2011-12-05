@@ -383,8 +383,6 @@ void GetTeamIndexesBySlot(WORD slot, int binType, WORD& teamA, WORD& teamB);
 bool FindTeamInGDB(WORD teamIndex, KitCollection*& kcol);
 char* GetTeamNameByIndex(int index, TEAM_NAME*);
 char* GetTeamNameById(WORD id);
-void kservAfterReadNamesCallPoint();
-void kservAfterReadNamesCallPoint2();
 KEXPORT void kservAfterReadNames();
 DWORD WINAPI kservAfterReadNamesDelayed(LPCVOID param=NULL);
 void kservAfterReadNamesAsync();
@@ -445,7 +443,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 			return false;
 		}
 
-        CHECK_KLOAD(MAKELONG(1,12));
+        CHECK_KLOAD(MAKELONG(2,12));
 		
 		copyAdresses();
 		hookFunction(hk_D3D_CreateDevice, initModule);
@@ -515,13 +513,8 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     LOG(L"Initializing Kserv Module");
 	
 	// hooks
-    HookCallPoint(code[C_AFTER_READ_NAMES], 
-            kservAfterReadNamesCallPoint, 6, 1);
-    HookCallPoint(code[C_AFTER_APPLY_CONTENT], 
-            kservAfterReadNamesCallPoint2, 6, 1);
-    //HookCallPoint(code[C_AFTER_APPLY_CONTENT], 
-    //        kservAfterReadNamesCallPoint2, 6, 0);
-
+    addReadNamesCallback(kservAfterReadNames);
+    
     HookCallPoint(code[C_READ_NUM_SLOTS1], kservReadNumSlotsCallPoint1, 6, 1);
     HookCallPoint(code[C_READ_NUM_SLOTS2], kservReadNumSlotsCallPoint1, 6, 1);
     HookCallPoint(code[C_READ_NUM_SLOTS3], kservReadNumSlotsCallPoint4, 6, 0);
@@ -727,63 +720,6 @@ const D3DXVECTOR2* pTexelSize, LPVOID pData)
 {
 	// blue
     *pOut = D3DXVECTOR4(0.3f, 0.3f, 0.7f, 1.0f);
-}
-
-void kservAfterReadNamesCallPoint()
-{
-    __asm {
-        lea edx, dword ptr ds:[esi+0x42f2a0] // replaced code
-        pushfd 
-        push ebp
-        push eax
-        push ebx
-        push ecx
-        push edx
-        push esi
-        push edi
-        call kservAfterReadNames
-        pop edi
-        pop esi
-        pop edx
-        pop ecx
-        pop ebx
-        pop eax
-        pop ebp
-        popfd
-        retn
-    }
-}
-
-void kservAfterReadNamesCallPoint2()
-{
-    __asm {
-        pushfd 
-        push ebp
-        push eax
-        push ebx
-        push ecx
-        push edx
-        push esi
-        push edi
-        cmp eax,0
-        je skip
-        call kservAfterReadNames
-skip:   pop edi
-        pop esi
-        pop edx
-        pop ecx
-        pop ebx
-        pop eax
-        pop ebp
-        popfd
-        push ebx
-        mov ebx,[esp+4]
-        mov [esp+0x10],ebx
-        pop ebx
-        add esp,0x0c
-        cmp eax, dword ptr ds:[esi+8] // replaced code
-        retn
-    }
 }
 
 KEXPORT void kservAfterReadNames()

@@ -95,8 +95,6 @@ hash_map<DWORD,wstring> _player_hair;
 hash_map<DWORD,WORD> _player_face_slot;
 hash_map<DWORD,WORD> _player_hair_slot;
 
-//hash_map<DWORD,player_facehair_t> _saved_facehair;
-
 hash_map<DWORD,BYTE> _saved_facebit;
 hash_map<DWORD,BYTE> _saved_hairbit;
 
@@ -416,13 +414,35 @@ bool IsSpecialFaceByte(BYTE b)
     return (b & SPECIAL_FACE) != 0;
 }
 
-void SetSpecialHair(PLAYER_INFO* p)
+void SetSpecialHair(PLAYER_INFO* p, DWORD index)
 {
+    LOG(L"setting hair bit for player %d. WAS: %02x, NOW: %02x",
+        p->id, 
+        p->specialHair, 
+        p->specialHair | SPECIAL_HAIR);
+
+    // save original hair bit, if changing
+    if (p->index == 0) {
+        _saved_hairbit[index] = p->specialHair & SPECIAL_HAIR;
+        LOG(L"saved org: %02x", _saved_hairbit[index]);
+    }
+
     p->specialHair |= SPECIAL_HAIR;
 }
 
-void SetSpecialFace(PLAYER_INFO* p)
+void SetSpecialFace(PLAYER_INFO* p, DWORD index)
 {
+    LOG(L"setting face bit for player %d. WAS: %02x, NOW: %02x",
+        p->id, 
+        p->specialFace, 
+        p->specialFace | SPECIAL_FACE);
+
+    // save original face bit, if haven't done for this player yet
+    if (p->index == 0) {
+        _saved_facebit[index] = p->specialFace & SPECIAL_FACE;
+        LOG(L"saved org: %02x", _saved_facebit[index]);
+    }
+
     p->specialFace |= SPECIAL_FACE;
 }
 
@@ -451,24 +471,20 @@ void fservAfterReadNames()
     hash_map<int,bool> hairsUsed;
     hash_map<int,bool> facesUsed;
 
-    //_saved_facehair.clear();
-    _saved_facebit.clear();
-    _saved_hairbit.clear();
+    bool indexTaken(false);
+    WORD numPlayers = (numBytes)?(numBytes/sizeof(PLAYER_INFO)):MAX_PLAYERS;
+
+    //_saved_facebit.clear();
+    //_saved_hairbit.clear();
     
     _player_face_slot.clear();
     _player_hair_slot.clear();
     ZeroMemory(_fast_bin_exists, sizeof(_fast_bin_exists));
     ZeroMemory(_fast_bin_table, sizeof(_fast_bin_table));
 
-    bool indexTaken(false);
-    WORD numPlayers = (numBytes)?(numBytes/sizeof(PLAYER_INFO)):MAX_PLAYERS;
-
     multimap<string,DWORD> mm;
     for (WORD i=0; i<numPlayers; i++)
     {
-        // assign index
-        players[i].index = i;
-
         if (players[i].id == 0) {
             continue;  // no player at this player slot
         }
@@ -486,10 +502,9 @@ void fservAfterReadNames()
             _fast_bin_table[slot - FIRST_FACE_SLOT] = &sit->second;
             _player_face_slot.insert(pair<DWORD,WORD>(sit->first,slot));
 
-            // save original face bit
-            _saved_facebit.insert(pair<DWORD,BYTE>(
-                i, players[i].specialFace & SPECIAL_FACE));
-            
+            // set new face
+            SetSpecialFace(&players[i], i);
+            modified = true;
         }
         sit = _player_hair.find(players[i].id);
         if (sit != _player_hair.end()) {
@@ -497,57 +512,22 @@ void fservAfterReadNames()
             _fast_bin_table[slot - FIRST_FACE_SLOT] = &sit->second;
             _player_hair_slot.insert(pair<DWORD,WORD>(sit->first,slot));
 
-            // save original hair bit
-            _saved_hairbit.insert(pair<DWORD,BYTE>(
-                i, players[i].specialHair & SPECIAL_HAIR));
-        }
-
-        hash_map<DWORD,WORD>::iterator it = 
-            _player_face_slot.find(players[i].id);
-        if (it != _player_face_slot.end())
-        {
-            LOG(L"player %d assigned slot (face) #%d (index=0x%x)",
-                    players[i].id,it->second, i);
-            // if not unique face, remember that for later restoring
-            //if (!(IsSpecialFace(&players[i]))) {
-            //    _non_unique_face.push_back(i);
-            //}
-            // set new face
-            SetSpecialFace(&players[i]);
-        }
-        it = _player_hair_slot.find(players[i].id);
-        if (it != _player_hair_slot.end())
-        {
-            LOG(L"player %d assigned slot (hair) #%d (index=0x%x)",
-                    players[i].id,it->second, i);
-            // if not unique hair, remember that for later restoring
-            //if (!(IsSpecialHair(&players[i]))) {
-            //    _non_unique_hair.push_back(i);
-            //}
             // set new hair
-            SetSpecialHair(&players[i]);
+            SetSpecialHair(&players[i], i);
+            modified = true;
         }
 
+        // assign index, if we modified the player
+        if (modified) {
+            players[i].index = i;
+        }
+
+        // add to player list
         if (writeList && players[i].name[0]!='\0') {
             string name(players[i].name);
             mm.insert(pair<string,DWORD>(name,players[i].id));
         }
 
-        /*
-        WORD faceId = GetFaceId(players[i].faceHairBits);
-        WORD hairId = GetHairId(players[i].faceHairBits);
-        if (IsSpecialFace(&players[i])) {
-            if (faceId < minFaceId) minFaceId = faceId;
-            if (faceId > maxFaceId) maxFaceId = faceId;
-            facesUsed.insert(pair<WORD,bool>(faceId,true));
-        }
-        if (IsSpecialHair(&players[i])) {
-            if (hairId < minHairId) minHairId = hairId;
-            if (hairId > maxHairId) maxHairId = hairId;
-            hairsUsed.insert(pair<WORD,bool>(hairId,true));
-        }
-        */
-        
         //LOG(L"Player (%d): faceHairBits: %08x", i, players[i].faceHairBits);
 
         int faceBin = GetFaceBin(&players[i]);
@@ -813,33 +793,6 @@ void fservAtOnlineEnter(DWORD src, DWORD dest, DWORD size)
                     pDest->specialHair |= it->second;
                 }
             }
-
-            /*
-            hash_map<DWORD,player_facehair_t>::iterator it;
-            it = _saved_facehair.find(pSrc->index);
-            if (it != _saved_facehair.end()) {
-                //LOG(L"index/face/hair: %d/%02x/%02x --> %d/%02x/%02x",
-                //        pSrc->index,
-                //        pSrc->specialFace, pSrc->specialHair,
-                //        0,
-                //        it->second.specialFace,
-                //        it->second.specialHair);
-
-                DWORD addr;
-                addr = (DWORD)&(pDest->specialFace);
-                if (dest <= addr && addr < dest+size) {
-                    pDest->specialFace = it->second.specialFace;
-                }
-                addr = (DWORD)&(pDest->specialHair);
-                if (dest <= addr && addr < dest+size) {
-                    pDest->specialHair = it->second.specialHair;
-                }
-                addr = (DWORD)&(pDest->index);
-                if (dest <= addr && addr < dest+size) {
-                    pDest->index = 0;
-                }
-            }
-            */
         }
     }
 }
@@ -1215,28 +1168,21 @@ void fservWriteEditData(LPCVOID data, DWORD size)
     LOG(L"Restoring face/hair settings");
 
     // restore face/hair settings
-    //PLAYER_INFO* players = (PLAYER_INFO*)((BYTE*)data + 0x1a0);
     PLAYER_INFO* players = (PLAYER_INFO*)data;
-    /*
-    hash_map<DWORD,player_facehair_t>::iterator it;
-    for (it = _saved_facehair.begin(); it != _saved_facehair.end(); it++) {
-        players[it->first].index = 0;
-        players[it->first].specialFace &= ~SPECIAL_FACE;
-        players[it->first].specialFace |= it->second.specialFace & SPECIAL_FACE;
-        players[it->first].specialHair &= ~SPECIAL_HAIR;
-        players[it->first].specialHair |= it->second.specialHair & SPECIAL_HAIR;
-    }
-    */
     hash_map<DWORD,BYTE>::iterator it;
     for (it = _saved_facebit.begin(); it != _saved_facebit.end(); it++) {
         players[it->first].index = 0;
         players[it->first].specialFace &= ~SPECIAL_FACE;
         players[it->first].specialFace |= it->second;
+        LOG(L"restored face for player: %d. Face byte: %02x", 
+            players[it->first].id, players[it->first].specialFace);
     }
     for (it = _saved_hairbit.begin(); it != _saved_hairbit.end(); it++) {
         players[it->first].index = 0;
         players[it->first].specialHair &= ~SPECIAL_HAIR;
         players[it->first].specialHair |= it->second;
+        LOG(L"restored hair for player: %d. Hair byte: %02x",
+            players[it->first].id, players[it->first].specialHair);
     }
 }
 

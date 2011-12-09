@@ -226,7 +226,9 @@ public:
     void freeBuffers() 
     {
         if (pBM) { 
-            LOG(L"freeing cached buffers");
+            if (k_kserv.debug) {
+                LOG(L"freeing cached buffers");
+            }
             try { delete pBM; }
             catch (...) {}
             pBM = NULL; 
@@ -1623,7 +1625,9 @@ bool CreatePipeForKitBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
 
     if (useCached) {
         size = _lastKit.size;
-        LOG(L"using cached buffers");
+        if (k_kserv.debug) {
+            LOG(L"using cached buffers");
+        }
         goto output;
     }
 
@@ -1861,7 +1865,9 @@ bool CreatePipeForFontBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
 
     if (useCached) {
         size = _lastFont.size;
-        LOG(L"using cached buffers");
+        if (k_kserv.debug) {
+            LOG(L"using cached buffers");
+        }
         goto output;
     }
 
@@ -2062,7 +2068,9 @@ bool CreatePipeForNumbersBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& si
 
     if (useCached) {
         size = _lastNumbers.size;
-        LOG(L"using cached buffers");
+        if (k_kserv.debug) {
+            LOG(L"using cached buffers");
+        }
         goto output;
     }
 

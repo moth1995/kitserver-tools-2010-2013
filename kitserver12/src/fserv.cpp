@@ -147,6 +147,7 @@ void InitMaps();
 //void fservCopyPlayerData(
 //    PLAYER_INFO* players, DWORD numBytes, int place, bool writeList);
 void fservAfterReadNames();
+void fservApplyChanges(PLAYER_INFO* players=NULL);
 
 void fservReadEditData(LPCVOID data, DWORD size);
 void fservWriteEditData(LPCVOID data, DWORD size);
@@ -451,8 +452,16 @@ void SetSpecialFace(PLAYER_INFO* p, DWORD index)
 //
 void fservAfterReadNames()
 {
-    DWORD playerBase = *(DWORD*)data[EDIT_DATA_PTR]+8;
-    PLAYER_INFO* players = (PLAYER_INFO*)playerBase;
+    LOG(L"fservAfterReadNames:: CALLED.");
+    fservApplyChanges();
+}
+    
+void fservApplyChanges(PLAYER_INFO* players)
+{
+    if (!players) {
+        DWORD playerBase = *(DWORD*)data[EDIT_DATA_PTR]+8;
+        players = (PLAYER_INFO*)playerBase;
+    }
 
     bool writeList(true);
     DWORD numBytes(0);
@@ -589,7 +598,7 @@ void fservAfterReadNames()
         }
     }
 
-    LOG(L"fservAfterReadNames() done: players (%p) updated.",
+    LOG(L"fservApplyChanges() done: players (%p) updated.",
         players);
 }
 
@@ -1156,8 +1165,8 @@ void fservReadEditData(LPCVOID data, DWORD size)
 {
     LOG(L"Setting face/hair settings");
 
-    PLAYER_INFO* players = (PLAYER_INFO*)((BYTE*)data + 0x1a0);
-    //fservCopyPlayerData(players, 0, 3, true);
+    PLAYER_INFO* players = (PLAYER_INFO*)data;
+    fservApplyChanges(players);
 }
 
 /**
@@ -1189,28 +1198,57 @@ void fservWriteEditData(LPCVOID data, DWORD size)
 void fservReadReplayData(LPCVOID data, DWORD size)
 {
     LOG(L"Reading replay data:");
-    REPLAY_DATA* replay = (REPLAY_DATA*)data;
-    if (memcmp(replay->ksSignature, REPLAY_SIG, 
-                sizeof(replay->ksSignature))==0) {
-        // check faceId/hairId for players
-        // if we have the extended slots mapped, then ok
-        // --> otherwise, clear the corresponding bits
-        for (int i=0; i<22; i++) {
-            // debug
-            wchar_t* wname = Utf8::utf8ToUnicode(
-                (BYTE*)(replay->payload.players[i].name));
-            LOG(L"Player #%02d: %s", i, wname);
-            Utf8::free(wname);
+
+    REPLAY_DATA_PAYLOAD* rp = (REPLAY_DATA_PAYLOAD*)data;
+    for (int i=0; i<22; i++) {
+        wchar_t* wname = Utf8::utf8ToUnicode(
+            (BYTE*)(rp->players[i].name));
+        LOG(L"Player #%02d: %s (index: 0x%04x)", i+1, wname,
+                rp->players[i].index);
+
+        hash_map<DWORD,BYTE>::iterator sit;
+        sit = _saved_facebit.find(rp->players[i].index);
+        if (sit != _saved_facebit.end()) {
+            rp->players[i].specialFace |= SPECIAL_FACE;
+            LOG(L"Set face bit for {%s}", wname);
         }
+        sit = _saved_hairbit.find(rp->players[i].index);
+        if (sit != _saved_hairbit.end()) {
+            rp->players[i].specialHair |= SPECIAL_HAIR;
+            LOG(L"Set hair bit for {%s}", wname);
+        }
+
+        Utf8::free(wname);
     }
 }
 
 void fservWriteReplayData(LPCVOID data, DWORD size)
 {
     LOG(L"Writing replay data:");
-    REPLAY_DATA* replay = (REPLAY_DATA*)data;
-    // set kitserver signature
-    memcpy(replay->ksSignature, REPLAY_SIG, sizeof(replay->ksSignature));
+
+    REPLAY_DATA_PAYLOAD* rp = (REPLAY_DATA_PAYLOAD*)data;
+    for (int i=0; i<22; i++) {
+        wchar_t* wname = Utf8::utf8ToUnicode(
+            (BYTE*)(rp->players[i].name));
+        LOG(L"Player #%02d: %s (index: 0x%04x)", i+1, wname,
+                rp->players[i].index);
+
+        hash_map<DWORD,BYTE>::iterator sit;
+        sit = _saved_facebit.find(rp->players[i].index);
+        if (sit != _saved_facebit.end()) {
+            rp->players[i].specialFace &= ~SPECIAL_FACE;
+            rp->players[i].specialFace |= sit->second;
+            LOG(L"Restored face bit for {%s}", wname);
+        }
+        sit = _saved_hairbit.find(rp->players[i].index);
+        if (sit != _saved_hairbit.end()) {
+            rp->players[i].specialHair &= ~SPECIAL_HAIR;
+            rp->players[i].specialHair |= sit->second;
+            LOG(L"Restored hair bit for {%s}", wname);
+        }
+
+        Utf8::free(wname);
+    }
 }
 
 KEXPORT DWORD fservGetFaceBin(DWORD faceId)
@@ -1261,91 +1299,105 @@ KEXPORT DWORD fservGetHairBin(DWORD hairId)
 
 void fservReadBalData(LPCVOID data, DWORD size)
 {
+    //DumpData((void*)data, size);
+
     BAL* bal = (BAL*)data;
-    wchar_t* wideName = Utf8::utf8ToUnicode((BYTE*)bal->bal1.player.name);
+    wchar_t* wideName = Utf8::utf8ToUnicode((BYTE*)bal->bal2.player.name);
     LOG(L"BAL player: id=%d, name={%s}, faceHairBits=%08x, "
         L"sHair=%02x, sFace=%02x",
-            bal->bal1.player.id, wideName, 
-            bal->bal2.playerDetails.faceHairBits,
-            bal->bal2.playerDetails.specialHair, 
-            bal->bal2.playerDetails.specialFace);
+            bal->bal2.player.id, wideName, 
+            bal->bal1.playerDetails.faceHairBits,
+            bal->bal1.playerDetails.specialHair, 
+            bal->bal1.playerDetails.specialFace);
     Utf8::free(wideName);
 
     // Adjust face/hair bytes, if specified.
     hash_map<DWORD,WORD>::iterator it;
-    it = _player_face_slot.find(bal->bal1.player.id);
+    it = _player_face_slot.find(bal->bal2.player.id);
     if (it != _player_face_slot.end())
     {
-        WORD index = MAX_PLAYERS + (bal->bal1.player.id - FIRST_BAL_ID);
+        WORD index = MAX_PLAYERS + (bal->bal2.player.id - FIRST_BAL_ID);
         LOG(L"BAL player %d has face slot=#%d (index=0x%x)",
-                bal->bal1.player.id, it->second, index);
+                bal->bal2.player.id, it->second, index);
 
-        bal->bal4.faceBit = bal->bal2.playerDetails.specialFace & SPECIAL_FACE;
+        BYTE faceBit = bal->bal1.playerDetails.specialFace & SPECIAL_FACE;
+        bal->bal4.faceBit = faceBit | 0x80;
+        bal->bal5.faceBit = faceBit | 0x80;
         LOG(L"faceBit = %02x", bal->bal4.faceBit);
 
-        bal->bal2.playerDetails.index = index;
-        bal->bal2.playerDetails.specialFace |= SPECIAL_FACE;
-        bal->bal3.player.index = index;
-        bal->bal3.player.specialFace |= SPECIAL_FACE;
+        bal->bal1.playerDetails.index = index;
+        bal->bal1.playerDetails.specialFace |= SPECIAL_FACE;
+        bal->bal2.player.index = index;
+        bal->bal2.player.specialFace |= SPECIAL_FACE;
     }
-    it = _player_hair_slot.find(bal->bal1.player.id);
+    it = _player_hair_slot.find(bal->bal2.player.id);
     if (it != _player_hair_slot.end())
     {
-        WORD index = MAX_PLAYERS + (bal->bal1.player.id - FIRST_BAL_ID);
+        WORD index = MAX_PLAYERS + (bal->bal2.player.id - FIRST_BAL_ID);
         LOG(L"BAL player %d has hair slot=#%d (index=0x%x)",
-                bal->bal1.player.id, it->second, index);
+                bal->bal2.player.id, it->second, index);
 
-        bal->bal4.hairBit = bal->bal2.playerDetails.specialHair & SPECIAL_HAIR;
+        BYTE hairBit = bal->bal1.playerDetails.specialHair & SPECIAL_HAIR;
+        bal->bal4.hairBit = hairBit | 0x80;
+        bal->bal5.hairBit = hairBit | 0x80;
         LOG(L"hairBit = %02x", bal->bal4.hairBit);
 
-        bal->bal2.playerDetails.index = index;
-        bal->bal2.playerDetails.specialHair |= SPECIAL_HAIR;
-        bal->bal3.player.index = index;
-        bal->bal3.player.specialHair |= SPECIAL_HAIR;
+        bal->bal1.playerDetails.index = index;
+        bal->bal1.playerDetails.specialHair |= SPECIAL_HAIR;
+        bal->bal2.player.index = index;
+        bal->bal2.player.specialHair |= SPECIAL_HAIR;
     }
 }
 
 void fservWriteBalData(LPCVOID data, DWORD size)
 {
+    //DumpData((void*)data, size);
+
     BAL* bal = (BAL*)data;
-    wchar_t* wideName = Utf8::utf8ToUnicode((BYTE*)bal->bal1.player.name);
+    wchar_t* wideName = Utf8::utf8ToUnicode((BYTE*)bal->bal2.player.name);
     LOG(L"BAL player: id=%d, name={%s}, faceHairBits=%08x, "
         L"sHair=%02x, sFace=%02x",
-            bal->bal1.player.id, wideName, 
-            bal->bal2.playerDetails.faceHairBits,
-            bal->bal2.playerDetails.specialHair, 
-            bal->bal2.playerDetails.specialFace);
+            bal->bal2.player.id, wideName, 
+            bal->bal1.playerDetails.faceHairBits,
+            bal->bal1.playerDetails.specialHair, 
+            bal->bal1.playerDetails.specialFace);
     Utf8::free(wideName);
 
     // Restore face/hair bytes, if specified.
     hash_map<DWORD,WORD>::iterator it;
-    it = _player_face_slot.find(bal->bal1.player.id);
+    it = _player_face_slot.find(bal->bal2.player.id);
     if (it != _player_face_slot.end())
     {
-        WORD index = MAX_PLAYERS + (bal->bal1.player.id - FIRST_BAL_ID);
+        WORD index = MAX_PLAYERS + (bal->bal2.player.id - FIRST_BAL_ID);
         LOG(L"BAL player %d has face slot=#%d (index=0x%x)",
-                bal->bal1.player.id, it->second, index);
-        bal->bal2.playerDetails.index = 0;
-        bal->bal2.playerDetails.specialFace &= ~SPECIAL_FACE;
-        bal->bal2.playerDetails.specialFace |= bal->bal4.faceBit;
-        bal->bal3.player.index = 0;
-        bal->bal3.player.specialFace &= ~SPECIAL_FACE;
-        bal->bal3.player.specialFace |= bal->bal4.faceBit;
-        LOG(L"specialFace now: %02x", bal->bal3.player.specialFace);
+                bal->bal2.player.id, it->second, index);
+        bal->bal1.playerDetails.index = 0;
+        bal->bal1.playerDetails.specialFace &= ~SPECIAL_FACE;
+        bal->bal1.playerDetails.specialFace |= (
+                bal->bal4.faceBit & SPECIAL_FACE);
+        bal->bal2.player.index = 0;
+        bal->bal2.player.specialFace &= ~SPECIAL_FACE;
+        bal->bal2.player.specialFace |= (bal->bal4.faceBit & SPECIAL_FACE);
+        LOG(L"specialFace now: %02x", bal->bal2.player.specialFace);
+        bal->bal4.faceBit = 0;
+        bal->bal5.faceBit = 0;
     }
-    it = _player_hair_slot.find(bal->bal1.player.id);
+    it = _player_hair_slot.find(bal->bal2.player.id);
     if (it != _player_hair_slot.end())
     {
-        WORD index = MAX_PLAYERS + (bal->bal1.player.id - FIRST_BAL_ID);
+        WORD index = MAX_PLAYERS + (bal->bal2.player.id - FIRST_BAL_ID);
         LOG(L"BAL player %d has hair slot=#%d (index=0x%x)",
-                bal->bal1.player.id, it->second, index);
-        bal->bal2.playerDetails.index = 0;
-        bal->bal2.playerDetails.specialHair &= ~SPECIAL_HAIR;
-        bal->bal2.playerDetails.specialHair |= bal->bal4.hairBit;
-        bal->bal3.player.index = 0;
-        bal->bal3.player.specialHair &= ~SPECIAL_HAIR;
-        bal->bal3.player.specialHair |= bal->bal4.hairBit;
-        LOG(L"specialHair now: %02x", bal->bal3.player.specialHair);
+                bal->bal2.player.id, it->second, index);
+        bal->bal1.playerDetails.index = 0;
+        bal->bal1.playerDetails.specialHair &= ~SPECIAL_HAIR;
+        bal->bal1.playerDetails.specialHair |= (
+                bal->bal4.hairBit & SPECIAL_HAIR);
+        bal->bal2.player.index = 0;
+        bal->bal2.player.specialHair &= ~SPECIAL_HAIR;
+        bal->bal2.player.specialHair |= (bal->bal4.hairBit & SPECIAL_HAIR);
+        LOG(L"specialHair now: %02x", bal->bal2.player.specialHair);
+        bal->bal4.hairBit = 0;
+        bal->bal5.hairBit = 0;
     }
 }
 

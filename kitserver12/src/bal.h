@@ -1,29 +1,31 @@
 // BAL (Be-A-Legend)
 // save file structure and utils
 
+#pragma pack(push, 1)
 
 typedef struct _BAL {
     union {
         struct {
-            BYTE unknown1[0x1b86d0];
-            DWORD unknown2[3];
-            PLAYER_INFO player;
+            BYTE unknown1[0x156e94];
+            PLAYER_DETAILS playerDetails;
         } bal1;
         struct {
-            BYTE unknown1[0x1b8754];
-            PLAYER_DETAILS playerDetails;
+            BYTE unknown1[0x781598];
+            PLAYER_INFO player;
         } bal2;
         struct {
-            BYTE unknown1[0x1c2f04];
-            PLAYER_INFO player;
-        } bal3;
-        struct {
-            BYTE unknown1[0x800190];
-            BYTE unknown2[0x0e];
+            BYTE unknown1[0x781598];
+            BYTE unknown2[4+0x2c];
             BYTE faceBit;
             BYTE hairBit;
         } bal4;
+        struct {
+            BYTE unknown1[0x156e4c];
+            BYTE faceBit;
+            BYTE hairBit;
+        } bal5;
     };
-
 } BAL;
+
+#pragma pack(pop)
 

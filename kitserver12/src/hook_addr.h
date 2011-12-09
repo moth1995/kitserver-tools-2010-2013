@@ -1,5 +1,5 @@
 // ADDRESSES for hook.cpp
-#define CODELEN 18
+#define CODELEN 19
 enum {
 	C_D3DCREATE_CS,
 	C_LOADTEXTUREFORPLAYER_CS, C_LOADTEXTUREFORPLAYER,
@@ -9,11 +9,12 @@ enum {
     C_READ_FILE, C_WRITE_FILE,
     C_COPY_DATA, C_COPY_DATA2,
     C_ENTER_UNIFORM_SELECT, C_EXIT_UNIFORM_SELECT,
-    C_WRITE_EDIT_DATA,
+    C_WRITE_DATA,
     C_READ_NAMES, C_READ_NAMES2,
+    C_READ_DATA,
 };
 
-#define NOCODEADDR {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+#define NOCODEADDR {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 DWORD codeArray[][CODELEN] = { 
   // PES2011 DEMO
   {
@@ -27,6 +28,7 @@ DWORD codeArray[][CODELEN] = {
         0, 0,
         0,
         0, 0,
+        0,
   },
   // PES2011
   {
@@ -40,6 +42,7 @@ DWORD codeArray[][CODELEN] = {
         0, 0,
         0,
         0, 0,
+        0,
   },
   // PES2011 v1.01
   {
@@ -53,6 +56,7 @@ DWORD codeArray[][CODELEN] = {
         0, 0, 
         0,
         0, 0,
+        0,
   },
   // PES2011 v1.02
   {
@@ -66,6 +70,7 @@ DWORD codeArray[][CODELEN] = {
         0, 0, 
         0,
         0, 0,
+        0,
   },
   // PES2011 v1.03
   {
@@ -79,6 +84,7 @@ DWORD codeArray[][CODELEN] = {
         0, 0, 
         0,
         0, 0,
+        0,
   },
   // PES2012 demo
   {
@@ -92,6 +98,7 @@ DWORD codeArray[][CODELEN] = {
         0, 0, 
         0,
         0, 0,
+        0,
   },
   // PES2012 demo2
   {
@@ -105,6 +112,7 @@ DWORD codeArray[][CODELEN] = {
         0, 0, 
         0,
         0, 0,
+        0,
   },
   // PES2012
   {
@@ -118,6 +126,7 @@ DWORD codeArray[][CODELEN] = {
         0, 0, 
         0x12c3078,
         0x119cf2c, 0x12c3d7c,
+        0,
   },
   // PES2012 v1.01
   {
@@ -131,6 +140,7 @@ DWORD codeArray[][CODELEN] = {
         0, 0, 
         0x12c6518,
         0x11a036c, 0x12c721c,
+        0,
   },
   // PES2012 v1.02
   {
@@ -144,6 +154,7 @@ DWORD codeArray[][CODELEN] = {
         0, 0, 
         0x12c8098,
         0x11a5b7c, 0x12c8d9c,
+        0xd3dbfb,
   },
 };
 

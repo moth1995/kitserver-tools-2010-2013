@@ -3,16 +3,22 @@
 #ifndef _REPLAY_H
 #define _REPLAY_H
 
+#pragma pack(push,1)
+
 typedef struct _REPLAY_PLAYER_INFO
 {
     WORD unknown1;
     BYTE unknown2;
-    BYTE specialFace;
+    BYTE specialHair;
     DWORD faceHairBits;
-    BYTE unknown3[0x3b];
+    BYTE unknown3[0x2e];
+    BYTE specialFace;
+    BYTE unknown4[7];
+    WORD index;
+    BYTE unknown5[3];
     char name[0x2e];
     char nameOnShirt[0x10];
-    BYTE unknown4[3];
+    BYTE unknown6[3];
 } REPLAY_PLAYER_INFO;
 
 typedef struct _REPLAY_DATA_PAYLOAD
@@ -21,17 +27,6 @@ typedef struct _REPLAY_DATA_PAYLOAD
     REPLAY_PLAYER_INFO players[22];
 } REPLAY_DATA_PAYLOAD;
 
-typedef struct _REPLAY_DATA
-{
-    BYTE header[0x160];
-    BYTE ksSignature[4];
-    BYTE padding[0x1c];
-    DWORD fileType;
-    DWORD size;
-    DWORD checksum;
-    DWORD unknown;
-    DWORD unknown1[4];
-    REPLAY_DATA_PAYLOAD payload;
-} REPLAY_DATA;
+#pragma pack(pop)
 
 #endif

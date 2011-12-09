@@ -68,6 +68,8 @@ void hookTriggerSelectionOverlay(int delta);
 
 void hookPrepareDataToWriteCallPoint();
 void hookPrepareDataToWrite(LPVOID buffer, DWORD numBytes);
+void hookAfterReadDataCallPoint();
+void hookAfterReadData(LPVOID buffer, DWORD numBytes);
 
 HHOOK g_hKeyboardHook = NULL;
 list<KEY_EVENT_CALLBACK> _key_callbacks;
@@ -428,8 +430,10 @@ HRESULT STDMETHODCALLTYPE newCreateDevice(IDirect3D9* self, UINT Adapter,
     //        hookWriteFile);
     //_readFile = (READFILE_PROC)HookIndirectCall(code[C_READ_FILE],
     //        hookReadFile);
-    HookCallPoint(code[C_WRITE_EDIT_DATA], 
+    HookCallPoint(code[C_WRITE_DATA], 
         hookPrepareDataToWriteCallPoint, 6, 1);
+    HookCallPoint(code[C_READ_DATA], 
+        hookAfterReadDataCallPoint, 6, 0);
     
     //HookIndirectCall2(code[C_WRITE_FILE], hookWriteFile);
     //HookIndirectCall2(code[C_READ_FILE], hookReadFile);
@@ -460,8 +464,8 @@ HRESULT STDMETHODCALLTYPE newCreateDevice(IDirect3D9* self, UINT Adapter,
 
     HookCallPoint(code[C_READ_NAMES], 
             hookAfterReadNamesCallPoint, 6, 1);
-    HookCallPoint(code[C_READ_NAMES2], 
-            hookAfterReadNamesCallPoint2, 6, 1);
+    //HookCallPoint(code[C_READ_NAMES2], 
+    //        hookAfterReadNamesCallPoint2, 6, 1);
 
 	CALLCHAIN_BEGIN(hk_D3D_CreateDevice, it) {
 		PFNCREATEDEVICEPROC NextCall = (PFNCREATEDEVICEPROC)*it;
@@ -1649,6 +1653,111 @@ void hookPrepareDataToWrite(LPVOID buffer, DWORD numBytes)
     else if (numBytes == 0x40090) {
         LOG(L"OPTION data to save...");
     }
+    else if (numBytes == 0x791968) {
+        LOG(L"BAL data to save...");
+
+        // call the callbacks
+        list<WRITE_DATA_CALLBACK>::iterator it;
+        for (it = _writeBalDataCallbacks.begin();
+                it != _writeBalDataCallbacks.end();
+                it++)
+            (*it)(buffer, numBytes);
+    }
+    else if (numBytes == 0x483c10) {
+        LOG(L"REPLAY data to save...");
+
+        // call the callbacks
+        list<WRITE_DATA_CALLBACK>::iterator it;
+        for (it = _writeReplayDataCallbacks.begin();
+                it != _writeReplayDataCallbacks.end();
+                it++)
+            (*it)(buffer, numBytes);
+    }
+}
+
+void hookAfterReadDataCallPoint()
+{
+    __asm {
+        pushfd 
+        push ebp
+        push eax
+        push ebx
+        push ecx
+        push edx
+        push esi
+        push edi
+        mov eax,edi
+        add eax,0x20
+        mov ebx,dword ptr ds:[edi+4]
+        push ebx  // param: numBytes
+        push eax  // param: buffer
+        call hookAfterReadData
+        add esp,8 // pop params
+        pop edi
+        pop esi
+        pop edx
+        pop ecx
+        pop ebx
+        pop eax
+        pop ebp
+        popfd
+        sub esp,8  // replaced code + stack manipulations
+        push eax
+        mov eax,[esp+0x0c]
+        mov [esp+4],eax
+        mov [esp+0x0c],edx
+        add esi,0x2c
+        mov [esp+0x08],esi
+        pop eax
+        retn
+    }
+}
+
+void hookAfterReadData(LPVOID buffer, DWORD numBytes)
+{
+    LOG(L"Read and decrypted data (at %08x, %08x bytes)...", 
+        (DWORD)buffer, numBytes);
+
+    if (numBytes == 0x76a678) {
+        LOG(L"EDIT data to load...");
+
+        // call the callbacks
+        list<WRITE_DATA_CALLBACK>::iterator it;
+        for (it = _readEditDataCallbacks.begin();
+                it != _readEditDataCallbacks.end();
+                it++)
+            (*it)(buffer, numBytes);
+    }
+    else if (numBytes == 0x40090) {
+        LOG(L"OPTION data to load...");
+    }
+    else if (numBytes == 0x483c10) {
+        LOG(L"REPLAY data to load...");
+
+        // call the callbacks
+        list<WRITE_DATA_CALLBACK>::iterator it;
+        for (it = _readReplayDataCallbacks.begin();
+                it != _readReplayDataCallbacks.end();
+                it++)
+            (*it)(buffer, numBytes);
+    }
+    else if (numBytes == 0x791968) {
+        LOG(L"BAL data to load...");
+
+        // call the callbacks
+        list<WRITE_DATA_CALLBACK>::iterator it;
+        for (it = _readBalDataCallbacks.begin();
+                it != _readBalDataCallbacks.end();
+                it++)
+            (*it)(buffer, numBytes);
+    }
+
+    // adjust CRC32 checksum
+    DWORD* pChecksum = (DWORD*)((BYTE*)buffer-0x18);
+    LOG(L"crc was: %08x", *pChecksum);
+    *pChecksum = 0;
+    *pChecksum = GetCRC((BYTE*)buffer-0x20, numBytes+0x20);
+    LOG(L"crc now: %08x", *pChecksum);
 }
 
 /**

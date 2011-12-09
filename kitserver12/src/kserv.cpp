@@ -227,7 +227,8 @@ public:
     {
         if (pBM) { 
             LOG(L"freeing cached buffers");
-            delete pBM; 
+            try { delete pBM; }
+            catch (...) {}
             pBM = NULL; 
         }
     }
@@ -518,6 +519,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     HookCallPoint(code[C_READ_NUM_SLOTS1], kservReadNumSlotsCallPoint1, 6, 1);
     HookCallPoint(code[C_READ_NUM_SLOTS2], kservReadNumSlotsCallPoint1, 6, 1);
     HookCallPoint(code[C_READ_NUM_SLOTS3], kservReadNumSlotsCallPoint4, 6, 0);
+
     HookCallPoint(code[C_READ_UNIFORM_PICK], kservReadUniformPickCallPoint, 
             6, 1);
     HookCallPoint(code[C_CHECK_KIT_RELOAD_FLAG], 
@@ -661,7 +663,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     InitIterators();
 
     // add callbacks
-    //addReadEditDataCallback(kservReadEditData);
+    addReadEditDataCallback(kservReadEditData);
     addWriteEditDataCallback(kservWriteEditData);
     afsioAddCallback(kservGetFileInfo);
 
@@ -1421,12 +1423,12 @@ void kservReadEditData(LPCVOID buf, DWORD size)
 {
     // initialize kit slots
     TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)((BYTE*)buf 
-            + 0x1a0 + data[TEAM_KIT_INFO_OFFSET] - 8);
+            + data[TEAM_KIT_INFO_OFFSET] - 8);
     LOG(L"teamKitInfo = %p", teamKitInfo);
     InitSlotMap(teamKitInfo);
 
     TEAM_NAME* teamNames = (TEAM_NAME*)((BYTE*)buf 
-            + 0x1a0 + data[TEAM_NAMES_OFFSET] - 8); 
+            + data[TEAM_NAMES_OFFSET] - 8); 
 
     // dump slot information again
     DumpSlotsInfo(teamKitInfo, teamNames);
@@ -2912,7 +2914,7 @@ void kservCheckKitReloadFlagCallPoint()
         pop eax
         pop ebp
         popfd
-        cmp byte ptr ds:[ebx+0x2ba],0  //execute replaced code
+        cmp byte ptr ds:[ebx+0x2da],0  //execute replaced code
         retn
     }
 }
@@ -2921,6 +2923,8 @@ KEXPORT void kservCheckKitReloadFlag(KIT_CHOICE* pKC)
 {
     if (!pKC)
         return;
+
+    //__asm int 3;
 
     // update our book-keeping structure
     switch (pKC->uniformSelection)

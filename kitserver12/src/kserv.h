@@ -174,8 +174,9 @@ typedef struct _KIT_CHOICE
     BYTE other12[2];
     BYTE other13[0x154];
     BYTE other14[2];
+    BYTE other15[0x20];
     BYTE reloadFlag;
-    BYTE other15;
+    BYTE other16;
 
 } KIT_CHOICE;
 

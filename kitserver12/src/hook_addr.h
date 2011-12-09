@@ -126,7 +126,7 @@ DWORD codeArray[][CODELEN] = {
         0, 0, 
         0x12c3078,
         0x119cf2c, 0x12c3d7c,
-        0,
+        0xd3b1bb,
   },
   // PES2012 v1.01
   {
@@ -140,7 +140,7 @@ DWORD codeArray[][CODELEN] = {
         0, 0, 
         0x12c6518,
         0x11a036c, 0x12c721c,
-        0,
+        0xd3cd1b,
   },
   // PES2012 v1.02
   {

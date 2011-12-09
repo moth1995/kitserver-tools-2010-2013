@@ -65,21 +65,21 @@ DWORD codeArray[][CODELEN] = {
     },
     // PES2012
     {
-        0x119cf2c, 0x12c3d7c,
+        0, 0,
         0x11e7e4c, 0x11e88fc, 0x12ce53a,
         0, 0,//**
         0, 0,//**
     },
     // PES2012 v1.01
     {
-        0x11a036c, 0x12c721c,
+        0, 0,
         0x11eb28c, 0x11ebd3c, 0x12d1a2a,
         0, 0,//**
         0, 0,//**
     },
     // PES2012 v1.02
     {
-        0x11a5b7c, 0x12c8d9c,
+        0, 0,
         0x11f0a9c, 0x11f154c, 0x12d35aa,
         0, 0,//**
         0, 0xd9b76c,//**

@@ -54,7 +54,7 @@
 Version history: <a href="history.txt">history.txt</a><br />
 </div>
 <div>
-    November 29, 2011 - <b>Kitserver 12.1.3</b> -
+    December 8, 2011 - <b>Kitserver 12.2.0</b> -
     <span class="emph2">"A parting gift"</span> release
 </div>
 <p class="note">
@@ -84,9 +84,13 @@ If you are new to Kitserver, please make sure you read the
         <th><b>afs2fs.dll</b></th>
         <td>Manage AFS (.img) game content using files and folders: much easier and quicker to install/remove patches, without the need modify *.img files.</td>
     </tr>
-    <tr><td><a href="#kserv">Kserv 12.1.3</a></td>
+    <tr><td><a href="#kserv">Kserv 12.2.0</a></td>
         <th><b>kserv.dll</b></th>
         <td>Organize your kits into GDB, and assign each team its own kits.</td>
+    </tr>
+    <tr><td><a href="#fserv">Faceserver 12.2.0</a></td>
+        <th><b>fserv.dll</b></th>
+        <td>Assign special face/hair (from GDB) to any player you want.</td>
     </tr>
     <tr><td><a href="#lodmixer">LOD Mixer 12.0.8</a></td>
         <th><b>lodmixer.dll</b></th>
@@ -770,9 +774,71 @@ tight.model = 7
 ...
 </pre>
 
+<a name="fserv"><br /></a>
+<p><a class="backlink" href="#">Top</a></p>
+<h3>7. Faceserver (fserv.dll)</h3>
+
+<p>
+Faceserver makes it possible to load as many faces and hair from the GDB as 
+you want. So, you can assign each player a unique face/hair combination, if 
+you want to, including custom created players. Faceserver makes use of unique 
+ids, which are assigned to each player, and it creates "virtual" face and 
+hair slots, that only exist during run-time. 
+</p>
+
+<img src="fserv.jpg"/>
+
+<h5>7.1. How to find out ID for a player</h5>
+<p>
+If you have faceserver enabled (which it is by default), just start the game, and then in the <b>kitserver12</b> folder, there should appear a text file called <span style="color:#060"><b>playerlist.txt</b></span>. It will contain the IDs for all the players that you have in your game, sorted alphabetically for easy searching, including the user-defined players that were created from scratch in Edit mode (those typically take IDs starting from 1048576).
+</p>
+
+<p>The only player ID not available in playlist.txt file is the ID for you BAL (Be-A-Legend) player. However, it looks like that ID is always: 16777376.
+</p>
+
+<h5>7.2. How to configure</h5>
+<p>
+Faceserver uses a map file (<b>GDB/faces/map.txt</b>), similar in format to Kserv: you specify player's unique ID, followed by a filename for his face, and optionally followed by a filename for his hair:<br />
+</p>
+<p class="devnote">{ID}, {face-file}, {hair-file}</p>
+
+<p>
+The filenames are relative to <b>GDB/faces</b> folder, but inside that you're free to organize them whichever way you want: either one flat directory, or a folder hierarchy. The only important thing is that you correctly specify the paths in the map.txt. The double-quotes around filenames are optional.
+</p>
+
+<p>
+Here are some examples of entries in map.txt:
+
+<pre>
+# Example 1: face and hair BINs:
+8637, Anyukov_face.bin, Anyukov_hair.bin
+</pre>
+
+<pre>
+# Example 2: face and hair BINs put into a separate folder "anyukov":
+8637, anyukov/face.bin, anyukov/hair.bin
+</pre>
+
+<pre>
+# Example 3: face only
+8637, "anyukov/face.bin"
+</pre>
+
+<pre>
+# Example 4: hair only (notice 2 commas!)
+8637, , anyukov/hair.bin
+</pre>
+</p>
+
+<h5>7.3. Network play</h5>
+<p>
+Faceserver should work fine in all online modes, although i have not 
+done a lot of testing with it.
+</p>
+
 <a name="lodmixer"><br /></a>
 <p><a class="backlink" href="#">Top</a></p>
-<h3>7. LOD Mixer (lodmixer.dll)</h3>
+<h3>8. LOD Mixer (lodmixer.dll)</h3>
 
 <p>
 LOD-Mixer is the module that allows to fine-tune some aspects of PES 2012 graphics engine.<br />
@@ -786,7 +852,7 @@ to use Kitserver's <a href="#config">configuration tool</a>
 <img src="config-video.png" />
 </p>
 
-<h5>7.1. Aspect Ratio.</h5>
+<h5>8.1. Aspect Ratio.</h5>
 <p>
 Many LCD monitors are neither 4:3 nor 16:9. Often, a 16:10 ratio is
 used, or even 16:9.6. This results in the picture being distored: players either
@@ -808,7 +874,7 @@ screen, we need to account for that. Setting aspect ratio to 1.6 (which is a
 natural AR for my laptop) does the trick.
 </p>
 
-<h5>7.2. Screen Resolution.</h5>
+<h5>8.2. Screen Resolution.</h5>
 <p>
 You can set any screen resolution you want, if you play in a Windowed mode. Even
 crazy screens like 1234x487 will work, but you're likely to suffer from 
@@ -819,7 +885,7 @@ accidently choose an unsupported fullscreen resolution, then PES should still
 be able to start in a window.
 </p>
 
-<h5>7.3. Picture Quality</h5>
+<h5>8.3. Picture Quality</h5>
 <p>
 Although this is now a rare case, there are still situations, where the
 game (and the settings.exe) do not correctly analyze the capability of the
@@ -837,7 +903,7 @@ chosen picture quality, the game will most likely crash or exit abnormally.
 </p>
 
 
-<h5>7.4. Player and referees LOD configuration.</h5>
+<h5>8.4. Player and referees LOD configuration.</h5>
 <p>
 LOD (Level-Of-Detail) algorithms are used in graphics engines to improve both
 the picture quality and the speed of rendering, when drawing objects at various
@@ -889,7 +955,7 @@ normal. This may improve the framerate, although at the expense of picture
 quality. To achieve that, <b>move the sliders to the left.</b>
 </p>
 
-<h5>7.5. Choosing optimal LOD config</h5>
+<h5>8.5. Choosing optimal LOD config</h5>
 
 <P>
 Configuring LOD well takes time and is best done via trial-and-error method. 
@@ -927,7 +993,7 @@ the smooth frame-rate.
 
 <a name="speeder"><br /></a>
 <p><a class="backlink" href="#">Top</a></p>
-<h3>8. Speeder module (speeder.dll)</h3>
+<h3>9. Speeder module (speeder.dll)</h3>
 
 <p>Not everyone is satisfied with the pace of the gameplay. It must be said
 that it is not an easy thing to get this aspect of simulating a football 
@@ -965,7 +1031,7 @@ count.factor = 0.95
 
 <a name="sides"><br /></a>
 <p><a class="backlink" href="#">Top</a></p>
-<h3>9. Sides module (sides.dll)</h3>
+<h3>10. Sides module (sides.dll)</h3>
 
 <p>This module allows to change sides freely during non-exhibition matches.
 Useful, if you like to play tournaments with your friends, and want them to
@@ -997,7 +1063,8 @@ Programming: <b>juce</b> and <b>Robbie</b>
 with contributions from <b>Stelios</b><br />
 Kit structure information for kserv module: <b>Chris00</b><br />
 Beta-testing: members and guests of Evo-Web and PesWe.com forums<br />
-Sample GDB uses artwork by: <b>Gerlamp</b>, <b>cfg</b>, <b>alepes</b><br />
+Sample GDB uses kits by: <b>Gerlamp</b>, <b>cfg</b>, <b>alepes</b>, 
+Anyukov face/hair by <b>Anat-Z</b><br />
 Kitserver 12 logo: by <b>Ariel</b><br />
 </p>
 

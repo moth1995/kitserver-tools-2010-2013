@@ -309,7 +309,7 @@ img.dir = "patch-RPL"
 </pre>
 
 <p>
-The order of the roots is significant, when it comes to resolving "collisions". Say, you have a <b>dt0b.img/ball_11.bin</b> in the second root (example-root), and <b>dt0b.img/superball_11.bin</b> in the third root (patch-RPL). Even though the files are actually named differently, they intend to replace the same BIN - #9 from dt0b.img, and therefore we have a "collision". <span class="devnote">The rule is simple: the lower root in the list wins.</span> Which means that in this situation, the <b>dt0b.img/superball_11.bin</b> file will be used, since its root is listed last in the [afs2fs] section.</p>
+The order of the roots is significant, when it comes to resolving "collisions". Say, you have a <b>dt0b.img/ball_11.bin</b> in the second root (example-root), and <b>dt0b.img/superball_11.bin</b> in the third root (patch-RPL). Even though the files are actually named differently, they intend to replace the same BIN - #11 from dt0b.img, and therefore we have a "collision". <span class="devnote">The rule is simple: the lower root in the list wins.</span> Which means that in this situation, the <b>dt0b.img/superball_11.bin</b> file will be used, since its root is listed last in the [afs2fs] section.</p>
 
 <p class="note">IMPORTANT thing to remember: 
 The root is the folder that <i>contains</i> "img", not the "img" folder itself. In other words, if the full pathname is <b>c:\mypesfiles\root1\img"</b>, then in the config.txt you should have: <b>img.dir = "c:\mypesfiles\root1"</b>
@@ -1063,7 +1063,7 @@ Programming: <b>juce</b> and <b>Robbie</b>
 with contributions from <b>Stelios</b><br />
 Kit structure information for kserv module: <b>Chris00</b><br />
 Beta-testing: members and guests of Evo-Web and PesWe.com forums<br />
-Sample GDB uses kits by: <b>Gerlamp</b>, <b>cfg</b>, <b>alepes</b><br />
+Sample GDB uses kits by: <b>Gerlamp</b>, <b>EPT-CGF</b>, <b>alepes</b><br />
 Aleksandr Anyukov and Juan Mata faces and hairs by: <b>Anat-Z</b><br />
 Kitserver 12 logo: by <b>Ariel</b><br />
 </p>

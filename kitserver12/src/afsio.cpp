@@ -11,9 +11,9 @@
 
 #define MODID 123
 #ifdef DEBUG
-#define NAMELONG L"AFSIO Module 12.0.8.0 (DEBUG)"
+#define NAMELONG L"AFSIO Module 12.2.1.0 (DEBUG)"
 #else
-#define NAMELONG L"AFSIO Module 12.0.8.0"
+#define NAMELONG L"AFSIO Module 12.2.1.0"
 #endif
 #define NAMESHORT L"AFSIO"
 #define DEFAULT_DEBUG 0
@@ -825,6 +825,7 @@ KEXPORT bool afsioExtendSlots(int afsId, int num_slots)
     newTable->numItems2 = num_slots;
     newTable->entryIsDword = 1;
     tabArray[afsId] = newTable; // point to new structure
+    LOG(L"AFS img (0x%02x) extended to %d slots", afsId, num_slots);
     return true;
 }
 

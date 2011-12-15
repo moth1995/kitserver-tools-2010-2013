@@ -1,14 +1,15 @@
 // ADDRESSES for lodmixer.cpp
 BYTE allowedGames[] = {
-    gvPES2011,
-    gvPES2011v101,
-    gvPES2011v102,
-    gvPES2011v103,
+    //gvPES2011,
+    //gvPES2011v101,
+    //gvPES2011v102,
+    //gvPES2011v103,
     gvPES2012demo,
     gvPES2012demo2,
     gvPES2012,
     gvPES2012v101,
     gvPES2012v102,
+    gvPES2012v103,
 };
 
 #define CODELEN 3
@@ -56,9 +57,13 @@ DWORD codeArray[][CODELEN] = {
     {
         0x1255d93, 0x1258f9f, 0x1258d21,
     },
+    // PES2012 v1.03
+    {
+        0x1256a13, 0x1259c1f, 0x12599a1,
+    },
 };
 
-#define DATALEN 11
+#define DATALEN 9
 enum {
     SCREEN_WIDTH, SCREEN_HEIGHT, WIDESCREEN_FLAG,
     RATIO_4on3, RATIO_16on9,
@@ -66,7 +71,7 @@ enum {
     LOD_REF_TABLE1, LOD_REF_TABLE2,
 };
 
-#define NODATAADDR {0,0,0,0,0,0,0,0,0,0,0}
+#define NODATAADDR {0,0,0,0,0,0,0,0,0}
 DWORD dataArray[][DATALEN] = {
     // PES2011 demo
     NODATAADDR,
@@ -132,6 +137,13 @@ DWORD dataArray[][DATALEN] = {
         0x1576ac8, 0x157706c,
         0x16e8260, 0x16e82a8,
         0x16e785c, 0x16e7884,
+    },
+    // PES2012 v1.03
+    {
+        0x1a2a280, 0x1a2a284, 0x1a2a288,
+        0x1578ab8, 0x157905c,
+        0x16ea260, 0x16ea2a8,
+        0x16e985c, 0x16e9884,
     },
 };
 

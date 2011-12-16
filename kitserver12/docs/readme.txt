@@ -1,10 +1,10 @@
-Kitserver 12.2.0
+Kitserver 12.2.1
 ================
 
-Released: December 9, 2011
+Released: December 16, 2011
 
 
-Supports: PES2012 demo, demo2, PES2012 1.0, 1.01, 1.02
+Supports: PES2012 demo, demo2, PES2012 1.0, 1.01, 1.02, 1.03
 Modules implemented:
 - kserv
 - fserv

@@ -780,9 +780,9 @@ void DumpSlotsInfo(TEAM_KIT_INFO* teamKitInfo, TEAM_NAME* teamNames)
         WORD teamId = teamKitInfo[i].id;
         if (teamId == 0xffff)
             continue;
-        fprintf(f, "index:%04x slot:%04x id:%5d (%04x) %s\n", 
-        //fprintf(f, "id:%5d (0x%04x) %s\n", 
-            i, (short)teamKitInfo[i].slot, 
+        //fprintf(f, "index:%04x slot:%04x id:%5d (%04x) %s\n", 
+        fprintf(f, "id:%5d (0x%04x) %s\n", 
+        //    i, (short)teamKitInfo[i].slot, 
             teamId, teamId, GetTeamNameById(teamId));
 
         //char* name = GetTeamNameByIndex(i, teamNames);

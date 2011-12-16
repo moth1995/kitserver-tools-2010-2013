@@ -139,12 +139,17 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 		_hook_manager.SetCallHandler(MasterCallFirst);
 		
 		// read configuration
-		wchar_t cfgFile[BUFLEN];
-		ZeroMemory(cfgFile, WBUFLEN);
-		wcscpy(cfgFile, g_pesinfo.myDir); 
-		wcscat(cfgFile, L"config.txt");
-		if (!readConfig(cfgFile))
-			LOG(L"Couldn't open the config.txt!");
+        wstring cfg_file(g_pesinfo.myDir);
+        cfg_file += L"config.txt";
+        if (!readConfig(cfg_file.c_str())) {
+            // try default config
+            LOG(L"Couldn't open config.txt. Trying config-default.txt");
+            cfg_file = g_pesinfo.myDir;
+            cfg_file += L"config-default.txt";
+            if (!readConfig(cfg_file.c_str())) {
+                LOG(L"Couldn't open config-default.txt!");
+            }
+        }
 
         wchar_t currDir[BUFLEN];
         GetCurrentDirectory(BUFLEN, currDir);

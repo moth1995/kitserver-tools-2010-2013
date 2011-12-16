@@ -20,7 +20,7 @@
 #define UNDEFINED -1
 #define WM_APP_EXECHANGE WM_APP+1
 #define CFG_FILE L"config.txt"
-#define CFG_SAMPLE_FILE L"config-sample.txt"
+#define CFG_DEFAULT_FILE L"config-default.txt"
 
 HWND hWnd = NULL;
 bool g_buttonClick = true;
@@ -1745,7 +1745,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		return 0;
 
     if (!readConfig(CFG_FILE))       // try config.txt - if not there
-        readConfig(CFG_SAMPLE_FILE); // then try sample config
+        readConfig(CFG_DEFAULT_FILE); // then try default config
     _getConfig("lodmixer", "screen.width", DT_DWORD, 1, lodmixerConfig);
     _getConfig("lodmixer", "screen.height", DT_DWORD, 2, lodmixerConfig);
     _getConfig("lodmixer", "screen.aspect-ratio", DT_FLOAT, 3, lodmixerConfig);

@@ -68,7 +68,11 @@ class fserv_config_t
 {
 public:
     bool _check_map_on_load;
-    fserv_config_t() : _check_map_on_load(false) {}
+    bool _output_playerlist;
+    fserv_config_t() : 
+        _check_map_on_load(false),
+        _output_playerlist(true)
+    {}
 };
 
 fserv_config_t _fserv_config;
@@ -210,9 +214,13 @@ void fservConfig(char* pName, const void* pValue, DWORD a)
 		case 1: // debug
 			k_fserv.debug = *(DWORD*)pValue;
 			break;
-        case 2: // disable-online
+        case 2: // map-check
             _fserv_config._check_map_on_load = *(DWORD*)pValue == 1;
             LOG(L"map-check: %d", _fserv_config._check_map_on_load);
+            break;
+        case 3: // output-playerlist
+            _fserv_config._output_playerlist = *(DWORD*)pValue == 1;
+            LOG(L"playerlist: %d", _fserv_config._output_playerlist);
             break;
 	}
 	return;
@@ -239,6 +247,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
 
     getConfig("fserv", "debug", DT_DWORD, 1, fservConfig);
     getConfig("fserv", "map-check.enabled", DT_DWORD, 2, fservConfig);
+    getConfig("fserv", "playerlist.enabled", DT_DWORD, 3, fservConfig);
 
     _gotFaceBin = code[C_GOT_FACE_BIN];
     _gotHairBin = code[C_GOT_HAIR_BIN];
@@ -464,7 +473,7 @@ void fservApplyChanges(PLAYER_INFO* players)
         players = (PLAYER_INFO*)playerBase;
     }
 
-    bool writeList(true);
+    bool writeList(_fserv_config._output_playerlist);
     DWORD numBytes(0);
 
     afsioExtendSlots(0x0c, 57000);

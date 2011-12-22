@@ -157,11 +157,14 @@ short _fastBinTypeTableExp[0x10000];
 class kserv_config_t 
 {
 public:
-    kserv_config_t() : _use_description(true) 
+    kserv_config_t() : 
+        _use_description(true),
+        _output_teamlist(true)
     { 
        memset(_techfit, 0, sizeof(_techfit));
     }
     bool _use_description;
+    bool _output_teamlist;
     wstring _map_file;
     BYTE _techfit[0x10000];
 };
@@ -534,6 +537,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     getConfig("kserv", "techfit.model", DT_DWORD, C_ALL, kservConfigModels);
     getConfig("kserv", "tight.model", DT_DWORD, C_ALL, kservConfigModels2);
     getConfig("kserv", "gdb.uni.map", DT_STRING, 3, kservConfig);
+    getConfig("kserv", "teamlist.enabled", DT_DWORD, 4, kservConfig);
     LOG(L"debug = %d", k_kserv.debug);
     LOG(L"use.description = %d", _kserv_config._use_description);
 
@@ -684,6 +688,11 @@ void kservConfig(char* pName, const void* pValue, DWORD a)
             break;
         case 3: // gdb.uni.map
             _kserv_config._map_file = wstring((wchar_t*)pValue);
+            break;
+        case 4: // teamlist.enabled
+            _kserv_config._output_teamlist = *(DWORD*)pValue == 1;
+            LOG(L"teamlist: %d", _kserv_config._output_teamlist);
+            break;
 	}
 	return;
 }
@@ -759,6 +768,10 @@ void kservAfterReadNamesAsync()
 
 void DumpSlotsInfo(TEAM_KIT_INFO* teamKitInfo, TEAM_NAME* teamNames)
 {
+    if (!_kserv_config._output_teamlist) {
+        return;
+    }
+
     // team names are stored in Utf-8, so we write the bytes as is.
     if (!teamKitInfo)
         teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)data[PLAYERS_DATA] 

@@ -8,6 +8,7 @@
 #define SPECIAL_FACE 0x20
 #define SPECIAL_HAIR 0x40
 #define EDITED_FACEHAIR 0x10
+#define IMPORTED_FACE 0x80
 
 #pragma pack(push, 1)
 

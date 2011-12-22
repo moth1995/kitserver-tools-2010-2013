@@ -436,15 +436,16 @@ void SetSpecialFace(PLAYER_INFO* p, DWORD index)
     LOG(L"setting face bit for player %d. WAS: %02x, NOW: %02x",
         p->id, 
         p->specialFace, 
-        p->specialFace | SPECIAL_FACE);
+        (p->specialFace | SPECIAL_FACE) & ~IMPORTED_FACE);
 
     // save original face bit, if haven't done for this player yet
     if (p->index == 0) {
-        _saved_facebit[index] = p->specialFace & SPECIAL_FACE;
+        _saved_facebit[index] = p->specialFace & (SPECIAL_FACE | IMPORTED_FACE);
         LOG(L"saved org: %02x", _saved_facebit[index]);
     }
 
     p->specialFace |= SPECIAL_FACE;
+    p->specialFace &= ~IMPORTED_FACE;
 }
 
 //void fservCopyPlayerData(
@@ -1181,7 +1182,7 @@ void fservWriteEditData(LPCVOID data, DWORD size)
     hash_map<DWORD,BYTE>::iterator it;
     for (it = _saved_facebit.begin(); it != _saved_facebit.end(); it++) {
         players[it->first].index = 0;
-        players[it->first].specialFace &= ~SPECIAL_FACE;
+        players[it->first].specialFace &= ~(SPECIAL_FACE | IMPORTED_FACE);
         players[it->first].specialFace |= it->second;
         LOG(L"restored face for player: %d. Face byte: %02x", 
             players[it->first].id, players[it->first].specialFace);
@@ -1210,6 +1211,7 @@ void fservReadReplayData(LPCVOID data, DWORD size)
         sit = _saved_facebit.find(rp->players[i].index);
         if (sit != _saved_facebit.end()) {
             rp->players[i].specialFace |= SPECIAL_FACE;
+            rp->players[i].specialFace &= ~IMPORTED_FACE;
             LOG(L"Set face bit for {%s}", wname);
         }
         sit = _saved_hairbit.find(rp->players[i].index);
@@ -1236,7 +1238,7 @@ void fservWriteReplayData(LPCVOID data, DWORD size)
         hash_map<DWORD,BYTE>::iterator sit;
         sit = _saved_facebit.find(rp->players[i].index);
         if (sit != _saved_facebit.end()) {
-            rp->players[i].specialFace &= ~SPECIAL_FACE;
+            rp->players[i].specialFace &= ~(SPECIAL_FACE | IMPORTED_FACE);
             rp->players[i].specialFace |= sit->second;
             LOG(L"Restored face bit for {%s}", wname);
         }

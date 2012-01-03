@@ -11,9 +11,9 @@
 
 #define MODID 123
 #ifdef DEBUG
-#define NAMELONG L"AFSIO Module 12.2.1.0 (DEBUG)"
+#define NAMELONG L"AFSIO Module 12.2.2.0 (DEBUG)"
 #else
-#define NAMELONG L"AFSIO Module 12.2.1.0"
+#define NAMELONG L"AFSIO Module 12.2.2.0"
 #endif
 #define NAMESHORT L"AFSIO"
 #define DEFAULT_DEBUG 0
@@ -181,6 +181,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     HookCallPoint(code[C_AFTER_GET_OFFSET_PAGES], 
             afsioAfterGetOffsetPagesCallPoint, 6, 1);
     HookCallPoint(code[C_BEFORE_READ], afsioBeforeReadCallPoint, 6, 1);
+    HookCallPoint(code[C_BEFORE_READ2], afsioBeforeReadCallPoint, 6, 1);
     
 	TRACE(L"Hooking done.");
 
@@ -475,8 +476,13 @@ void afsioAfterGetOffsetPagesCallPoint()
         push edx
         push esi
         push edi
+        mov eax, [esp+0x24+0x40]
+        cmp edi,eax
+        je case1
         mov edx, [esp+0x24+0x08]
-        push edi // binId
+        jmp cont
+case1:  mov edx, [esp+0x24+0x3c]
+cont:   push edi // binId
         push edx // afsId
         push ebp // offset pages
         call afsioAfterGetOffsetPages

@@ -388,7 +388,7 @@ WORD GetTeamIndexBySlot(WORD slot, int binType);
 void GetTeamIndexesBySlot(WORD slot, int binType, WORD& teamA, WORD& teamB);
 bool FindTeamInGDB(WORD teamIndex, KitCollection*& kcol);
 char* GetTeamNameByIndex(int index, TEAM_NAME*);
-char* GetTeamNameById(WORD id);
+char* GetTeamNameById(WORD id, TEAM_NAME* teamNames=NULL);
 KEXPORT void kservAfterReadNames();
 DWORD WINAPI kservAfterReadNamesDelayed(LPCVOID param=NULL);
 void kservAfterReadNamesAsync();
@@ -485,10 +485,12 @@ char* GetTeamNameByIndex(int index, TEAM_NAME* teamNames)
     return (char*)&(teamNames[index].name);
 }
 
-char* GetTeamNameById(WORD id)
+char* GetTeamNameById(WORD id, TEAM_NAME* teamNames)
 {
-    TEAM_NAME* teamNames = (TEAM_NAME*)(*(DWORD*)data[PLAYERS_DATA] 
+    if (!teamNames) {
+        teamNames = (TEAM_NAME*)(*(DWORD*)data[PLAYERS_DATA] 
             + data[TEAM_NAMES_OFFSET]);
+    }
     for (int i=0; i<NUM_TEAMS_TOTAL; i++)
     {
         if (teamNames[i].teamId == id)
@@ -793,10 +795,15 @@ void DumpSlotsInfo(TEAM_KIT_INFO* teamKitInfo, TEAM_NAME* teamNames)
         WORD teamId = teamKitInfo[i].id;
         if (teamId == 0xffff)
             continue;
-        //fprintf(f, "index:%04x slot:%04x id:%5d (%04x) %s\n", 
-        fprintf(f, "id:%5d (0x%04x) %s\n", 
-        //    i, (short)teamKitInfo[i].slot, 
-            teamId, teamId, GetTeamNameById(teamId));
+        if (k_kserv.debug > 1) {
+            fprintf(f, "slot:%04x id:%5d (%04x) %s\n", 
+                teamKitInfo[i].slot, 
+                teamId, teamId, GetTeamNameById(teamId, teamNames));
+        }
+        else {
+            fprintf(f, "id:%5d (0x%04x) %s\n", 
+                teamId, teamId, GetTeamNameById(teamId, teamNames));
+        }
 
         //char* name = GetTeamNameByIndex(i, teamNames);
         //if (name[0]!='\0')

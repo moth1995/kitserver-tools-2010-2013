@@ -11,9 +11,9 @@
 
 #define MODID 123
 #ifdef DEBUG
-#define NAMELONG L"AFSIO Module 12.2.2.0 (DEBUG)"
+#define NAMELONG L"AFSIO Module 12.2.2.1 (DEBUG)"
 #else
-#define NAMELONG L"AFSIO Module 12.2.2.0"
+#define NAMELONG L"AFSIO Module 12.2.2.1"
 #endif
 #define NAMESHORT L"AFSIO"
 #define DEFAULT_DEBUG 0
@@ -343,6 +343,18 @@ DWORD GetBinSize(DWORD afsId, DWORD fileId, DWORD orgSize)
         TRACE(L"GetBinSize:: afsId=%02x, binId=%d, orgSize=%0x, newSize=%0x", 
                 afsId, fileId, orgSize, result);
     }
+    else {
+        // insert a dummy object, so that we know
+        // not to call the callbacks again
+        FILE_STRUCT fs;
+        fs.hfile = INVALID_HANDLE_VALUE;
+        fs.fsize = 0;
+        fs.offset = 0;
+        fs.binKey = 0;
+
+        DWORD binKey = (afsId << 16) + fileId;
+        g_file_map[binKey] = fs;
+    }
     return result;
 }
 
@@ -584,8 +596,15 @@ KEXPORT void afsioAfterCreateEvent(DWORD eventId, READ_EVENT_STRUCT* res, char* 
         DWORD binKey1 = (afsId << 16) + binId;
         TRACE(L"afsAfterCreateEvent:: looking for binKey1=%08x (afsId=%02x, binId=%d)",
                 binKey1, afsId, binId);
+        DWORD orgSize = 0; 
         hash_map<DWORD,FILE_STRUCT>::iterator fit = g_file_map.find(binKey1);
-        if (fit != g_file_map.end())
+        if (fit == g_file_map.end()) {
+            orgSize = GetBinSize(afsId, binId, orgSize);
+            if (orgSize) {
+                fit = g_file_map.find(binKey1);
+            }
+        }
+        if (fit != g_file_map.end() && fit->second.fsize > 0)
         {
             // remember offset for later usage
             fit->second.offset = (res->offsetPages << 0x0b)&0xfffff800;

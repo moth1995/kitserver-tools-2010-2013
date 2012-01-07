@@ -888,19 +888,18 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
     _reverseSlotMaps.pb.clear();
     _takenSlots.clear();
 
+    /*
     // linked (or re-linked teams)
     for (WORD i=0; i<NUM_TEAMS; i++)
     {
-        /*
-        short slot = (short)teamKitInfo[i].pa.slot;
-        TRACE(L"team (index=%d, id=0x%04x): slot=0x%04x",
-                i, teamKitInfo[i].id, (WORD)slot);
-        if (slot >= 0)
-        {
-            _slotMap.insert(pair<WORD,WORD>((WORD)slot,i));
-            _reverseSlotMap.insert(pair<WORD,WORD>(i,(WORD)slot));
-        }
-        */
+        //short slot = (short)teamKitInfo[i].pa.slot;
+        //TRACE(L"team (index=%d, id=0x%04x): slot=0x%04x",
+        //        i, teamKitInfo[i].id, (WORD)slot);
+        //if (slot >= 0)
+        //{
+        //    _slotMap.insert(pair<WORD,WORD>((WORD)slot,i));
+        //    _reverseSlotMap.insert(pair<WORD,WORD>(i,(WORD)slot));
+        //}
 
         short slot;
         slot = (short)teamKitInfo[i].slot;
@@ -918,19 +917,18 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
             //_takenSlots.insert(pair<WORD,bool>(slot,true));
         }
 
-        /*
         // debug
-        if (i==88) {
-            //teamKitInfo[i].pb.sleevePatchRightPosLong = 1;
-            //teamKitInfo[i].pb.sleevePatchRightPosShort = 5;
-            //teamKitInfo[i].pb.sleevePatchLeftPosLong = 1;
-            //teamKitInfo[i].pb.sleevePatchLeftPosShort = 5;
-            DumpData(&teamKitInfo[i], sizeof(TEAM_KIT_INFO));
-        }
-        */
+        //if (i==88) {
+        //    //teamKitInfo[i].pb.sleevePatchRightPosLong = 1;
+        //    //teamKitInfo[i].pb.sleevePatchRightPosShort = 5;
+        //    //teamKitInfo[i].pb.sleevePatchLeftPosLong = 1;
+        //    //teamKitInfo[i].pb.sleevePatchLeftPosShort = 5;
+        //    DumpData(&teamKitInfo[i], sizeof(TEAM_KIT_INFO));
+        //}
     }
     //LOG(L"Normal slots taken: %d", _slotMap.size());
     LOG(L"Normal slots taken: %d", _takenSlots.size());
+    */
 
     // GDB teams
     _nextXslot = XSLOT_A_FIRST;
@@ -1125,8 +1123,8 @@ void InitEuroKitAttributes()
         bool toInsert(false);
 
         map<DWORD,TEAM_KIT_INFO>::iterator eit;
-        eit = _euroKitAttributesMap.find(git->first);
-        if (eit == _euroKitAttributesMap.end()) {
+        //eit = _euroKitAttributesMap.find(git->first);
+        if (1) {//eit == _euroKitAttributesMap.end()) {
             // does not yet have a slot --> allocate one
             memset(&tki, 0, sizeof(TEAM_KIT_INFO));
             tki.id = git->first;
@@ -1140,10 +1138,10 @@ void InitEuroKitAttributes()
             LOG(L"team %d got dynamic euro-slot: 0x%04x", 
                 tki.id, tki.slot);
         }
-        else {
-            // already have a slot
-            pTKI = &(eit->second);
-        }
+        //else {
+        //    // already have a slot
+        //    pTKI = &(eit->second);
+        //}
 
         // ga
         if (git->second.euro_ga != git->second.goalkeepers.end()) {
@@ -1174,8 +1172,9 @@ void InitEuroKitAttributes()
         }
 
         if (toInsert) {
-            _euroKitAttributesMap.insert(pair<DWORD,TEAM_KIT_INFO>(
-                tki.id, tki));
+            //_euroKitAttributesMap.insert(pair<DWORD,TEAM_KIT_INFO>(
+            //    tki.id, tki));
+            _euroKitAttributesMap[tki.id] = tki;
             _fastEuroSlotTable[tki.slot] = 1;
         }
     }

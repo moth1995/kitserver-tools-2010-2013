@@ -529,9 +529,9 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
 
     HookCallPoint(code[C_READ_UNIFORM_PICK], kservReadUniformPickCallPoint, 
             6, 1);
-    HookCallPoint(code[C_CHECK_KIT_RELOAD_FLAG], 
-            kservCheckKitReloadFlagCallPoint, 
-            6, 2);
+    //HookCallPoint(code[C_CHECK_KIT_RELOAD_FLAG], 
+    //        kservCheckKitReloadFlagCallPoint, 
+    //        6, 2);
 
 
     getConfig("kserv", "debug", DT_DWORD, 1, kservConfig);

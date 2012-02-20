@@ -1,7 +1,7 @@
-Kitserver 12.2.1
+Kitserver 12.2.2
 ================
 
-Released: December 16, 2011
+Released: February 20, 2012
 
 
 Supports: PES2012 demo, demo2, PES2012 1.0, 1.01, 1.02, 1.03

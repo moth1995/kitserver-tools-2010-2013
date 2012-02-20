@@ -6,7 +6,7 @@
 #else
 #define SETUP_WINDOW_TITLE L"Kitserver 12 EXE Manager (debug build)"
 #endif
-#define CREDITS L"About: v12.2.1 (12/2011) by Juce and Robbie."
+#define CREDITS L"About: v12.2.2 (2/2012) by Juce and Robbie."
 
 #endif
 

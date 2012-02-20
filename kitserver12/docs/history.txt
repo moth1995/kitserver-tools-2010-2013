@@ -2,6 +2,19 @@ Kitserver 12 HISTORY notes
 ==========================
 
 
+2012-02-20
+----------
+v12.2.2
+- bug-fix release:
+* kserv: switching to all-virtual slots for GDB kits
+* afsio: more fixes for sound bins
+* kserv: proper names output in DumpSlotInfo; support for debug=2
+* fix for afsio: dt01.img sound files now work correctly
+* adding option disable teamlist output
+* adding option to disable playerlist output
+* fixing issue with imported faces
+
+
 2011-12-16
 ----------
 v12.2.1

@@ -60,6 +60,10 @@ DWORD codeArray[][CODELEN] = {
     // PES2012 v1.03
     {
         0x1256a13, 0x1259c1f, 0x12599a1,
+        /**
+        0x503fcb, //stadium/weather options
+        //next call: push 0 for second param
+        **/
     },
 };
 

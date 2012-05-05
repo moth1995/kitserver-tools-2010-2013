@@ -25,6 +25,8 @@ wchar_t* GAME[] = {
     L"PES2012 v1.02",
     L"PES2012 v1.03",
     L"PES2012 v1.03",
+    L"PES2012 v1.06",
+    L"PES2012 v1.06",
 };
 
 char* GAME_GUID[] = {
@@ -45,6 +47,8 @@ char* GAME_GUID[] = {
     "1.02",
     "1.03",
     "1.03",
+    "1.06",
+    "1.06",
 };
 
 DWORD GAME_GUID_OFFSETS[] = { 
@@ -65,6 +69,8 @@ DWORD GAME_GUID_OFFSETS[] = {
     0x1151fb8,
     0x11559c8,
     0x1154dc8,
+    0x1153238,
+    0x1152638,
 };
 
 DWORD GAME_GUID_MEMORY[] = { 
@@ -85,6 +91,8 @@ DWORD GAME_GUID_MEMORY[] = {
     0x1553bb8,
     0x1555bc8,
     0x1555bc8,
+    0x1553c38,
+    0x1553c38,
 };
 
 BYTE BASE_GAME[] = {
@@ -105,6 +113,8 @@ BYTE BASE_GAME[] = {
     gvPES2012v102,
     gvPES2012v103,
     gvPES2012v103,
+    gvPES2012v106,
+    gvPES2012v106,
 };
 
 bool ISGAME[] = {
@@ -125,6 +135,8 @@ bool ISGAME[] = {
     true,   // PES2012 v1.02 reloaded
     true,   // PES2012 v1.03 
     true,   // PES2012 v1.03 reloaded
+    true,   // PES2012 v1.06 
+    true,   // PES2012 v1.06 reloaded
 };
 
 // Returns the game real version id

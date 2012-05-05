@@ -4,7 +4,7 @@
 
 #ifdef _COMPILING_KLOAD
 #define MODID 0
-#define NAMELONG L"Module Loader 12.2.1.0"
+#define NAMELONG L"Module Loader 12.2.3.0"
 #define NAMESHORT L"KLOAD"
 
 #define DEFAULT_DEBUG 0

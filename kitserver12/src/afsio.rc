@@ -18,7 +18,7 @@ BEGIN
 		BLOCK "040904b0"
 		BEGIN
 			VALUE "FileDescription", "afsio module\0"
-			VALUE "FileVersion", "12.2.2.1\0"
+			VALUE "FileVersion", "12.2.3.0\0"
 			VALUE "LegalCopyright", "Copyright © 2005-2012 Juce, Robbie\0"
 			VALUE "Comments", "afsio module.\r\n\
 This module provides the base functionality for intercepting\

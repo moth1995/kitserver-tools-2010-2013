@@ -170,6 +170,20 @@ DWORD codeArray[][CODELEN] = {
         0x11a67fc, 0x12c9a5c, //0x11a5b7c, 0x12c8d9c,
         0xd3e3fb, //0xd3dbfb,
   },
+  // PES2012 v1.06
+  {
+		0, 
+		0, 0, 
+		0, 0, 
+		0, 0, 
+        0, 0,
+        0, 0,
+        0, 0,
+        0, 0, 
+        0x12cb548, //0x12c8d58, 
+        0x11a8e2c, 0x12cc24c, //0x11a67fc, 0x12c9a5c,
+        0xd40e4b, //0xd3e3fb,
+  },
 };
 
 #define DATALEN 13
@@ -264,6 +278,14 @@ DWORD dataArray[][DATALEN] = {
         123, 456, 789,
     },
     // PES2012 v1.03
+    {
+        0, 0,
+        0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        123, 456, 789,
+    },
+    // PES2012 v1.06
     {
         0, 0,
         0, 0,

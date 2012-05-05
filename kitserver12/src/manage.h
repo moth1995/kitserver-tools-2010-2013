@@ -39,6 +39,7 @@ enum {
     gvPES2012v101,   // PES2012 PC 1.01
     gvPES2012v102,   // PES2012 PC 1.02
     gvPES2012v103,   // PES2012 PC 1.03
+    gvPES2012v106,   // PES2012 PC 1.06
 };
 
 #endif

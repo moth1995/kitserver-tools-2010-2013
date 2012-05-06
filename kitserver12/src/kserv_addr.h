@@ -8,6 +8,7 @@ BYTE allowedGames[] = {
     gvPES2012v101,
     gvPES2012v102,
     gvPES2012v103,
+    gvPES2012v106,
 };
 
 #define CODELEN 9
@@ -92,6 +93,13 @@ DWORD codeArray[][CODELEN] = {
         0, 0,//**
         0, 0xd9bf6c,//**
     },
+    // PES2012 v1.06
+    {
+        0, 0,
+        0x11f3f0c, 0x11f49bc, 0x12d6a0a,
+        0, 0,//**
+        0, 0,//**
+    },
 };
 
 #define DATALEN 6 
@@ -164,6 +172,12 @@ DWORD dataArray[][DATALEN] = {
         0, 0x1a2aa64,
         0x42f2a0, 0x2b8e58,
         0x16e9eac, 0x1a2aa7c,
+    },
+    // PES2012 v1.06
+    {
+        0, 0x1a29254,
+        0x42f2a0, 0x2b8e58,
+        0x16e8664, 0x1a2926c,
     },
 };
 

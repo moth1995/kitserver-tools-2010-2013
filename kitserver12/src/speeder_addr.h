@@ -11,6 +11,7 @@ BYTE allowedGames[] = {
     gvPES2012v101,
     gvPES2012v102,
     gvPES2012v103,
+    gvPES2012v106,
 };
 
 #define CODELEN 1
@@ -54,6 +55,10 @@ DWORD codeArray[][CODELEN] = {
     {
         0x115a049,
     },
+    // PES2012 v1.06
+    {
+        0x115c659,
+    },
 };
 
 #define DATALEN 1 
@@ -83,7 +88,9 @@ DWORD dataArray[][DATALEN] = {
     NODATAADDR,
     // PES2012 v102
     NODATAADDR,
-    // PES2012 v102
+    // PES2012 v103
+    NODATAADDR,
+    // PES2012 v106
     NODATAADDR,
 };
 

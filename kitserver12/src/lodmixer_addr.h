@@ -10,6 +10,7 @@ BYTE allowedGames[] = {
     gvPES2012v101,
     gvPES2012v102,
     gvPES2012v103,
+    gvPES2012v106,
 };
 
 #define CODELEN 3
@@ -64,6 +65,10 @@ DWORD codeArray[][CODELEN] = {
         0x503fcb, //stadium/weather options
         //next call: push 0 for second param
         **/
+    },
+    // PES2012 v1.06
+    {
+        0x1259203, 0x125c40f, 0x125c191,
     },
 };
 
@@ -148,6 +153,13 @@ DWORD dataArray[][DATALEN] = {
         0x1578ab8, 0x157905c,
         0x16ea260, 0x16ea2a8,
         0x16e985c, 0x16e9884,
+    },
+    // PES2012 v1.06
+    {
+        0x1a28a70, 0x1a28a74, 0x1a28a78,
+        0x1576b68, 0x157710c,
+        0x16e8a18, 0x16e8a60,
+        0x16e8014, 0x16e803c,
     },
 };
 

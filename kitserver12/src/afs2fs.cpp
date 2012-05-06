@@ -6,6 +6,8 @@
 #include <map>
 #include <hash_map>
 #include <string>
+#include <shlobj.h>
+#include <shlwapi.h>
 
 using namespace std;
 #if _CPPLIB_VER >= 503
@@ -127,8 +129,31 @@ int GetNumItems(wstring& folder)
                 doOnce = false;
             }
         }
-        wstring afsFile(pesDir);
-        FILE* f = _wfopen((afsFile + folder).c_str(),L"rb");
+        // get short name
+        int pos = folder.rfind(L'\\');
+        wstring shortName((pos != string::npos) ? 
+            folder.substr(pos+1) : folder);
+        
+        // first try All_Users/Application_Data
+        wchar_t szPath[MAX_PATH];
+        if (SUCCEEDED(
+                SHGetFolderPath(
+                        NULL, CSIDL_COMMON_APPDATA, 
+                        NULL, 0, szPath))) 
+        {
+            PathAppend(szPath, L"KONAMI");
+            PathAppend(szPath, L"Pro Evolution Soccer 2012");
+            PathAppend(szPath, L"download");
+
+        }
+        wstring afsFile(szPath);
+        LOG(L"trying: {%s}", (afsFile + L'\\' + shortName).c_str());
+        FILE* f = _wfopen((afsFile + L'\\' + shortName).c_str(), L"rb");
+        if (!f) {
+            // now try regular location
+            afsFile = pesDir;
+            f = _wfopen((afsFile + folder).c_str(),L"rb");
+        }
         if (f) {
             AFSDIRHEADER afsDirHdr;
             ZeroMemory(&afsDirHdr,sizeof(AFSDIRHEADER));

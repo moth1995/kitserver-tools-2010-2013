@@ -22,7 +22,7 @@ EXTRA_CFLAGS=/DMYDLL_RELEASE_BUILD
 # 4731: warning about ebp modification
 CFLAGS=/nologo /Od /EHsc /wd4731 $(EXTRA_CFLAGS)
 LFLAGS=/NOLOGO
-LIBS=user32.lib gdi32.lib advapi32.lib comctl32.lib
+LIBS=user32.lib gdi32.lib advapi32.lib comctl32.lib shell32.lib shlwapi.lib
 LIBSDLL=pngdib.obj libpng.a zdll.lib $(LIBS)
 
 

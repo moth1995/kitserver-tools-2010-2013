@@ -2,11 +2,11 @@
 #define _LODCFG_H_
 
 #ifdef MYDLL_RELEASE_BUILD
-#define LODCFG_WINDOW_TITLE "Kitserver 12 Configuration"
+#define LODCFG_WINDOW_TITLE "Kitserver 13 Configuration"
 #else
-#define LODCFG_WINDOW_TITLE "Kitserver 12 Configuration (debug build)"
+#define LODCFG_WINDOW_TITLE "Kitserver 13 Configuration (debug build)"
 #endif
-#define CREDITS "Program info: v12.2.3 (May 2012) by Juce."
+#define CREDITS "Program info: v13.0.0 (Aug 2012) by Juce and Jenkey1002."
 
 typedef struct _LCM {
     WORD homeTeamId;

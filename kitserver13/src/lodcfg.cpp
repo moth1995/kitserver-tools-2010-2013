@@ -46,7 +46,7 @@ mode then the game will likely crash.\n\
 \n\
 About Free Sides Select:\n\
 In competition modes (League/Cup, UEFA Champions League, etc.)\n\
-PES 2012 doesn't allow human players to freely select which team\n\
+PES 2013 doesn't allow human players to freely select which team\n\
 to control. Now you can remove that limitation. So, even for\n\
 P1 vs. COM game, or P2 vs. COM - you can freely choose which\n\
 team you control with each controller. This also allows to\n\

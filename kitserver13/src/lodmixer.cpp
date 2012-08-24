@@ -237,7 +237,8 @@ void initLodMixer()
 
     getConfig("lodmixer", "picture.quality", DT_DWORD, 23, lodmixerConfig);
 
-    HookCallPoint(code[C_SETTINGS_READ], lodAtSettingsReadPoint, 3, 1, false);
+    HookCallPoint(code[C_SETTINGS_READ], lodAtSettingsReadPoint, 
+            DEFAULT_CODE_SHIFT, 1, false);
 
 
     LOG(L"Initialization complete.");

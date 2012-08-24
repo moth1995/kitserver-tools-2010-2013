@@ -465,7 +465,8 @@ void initModule2()
     InitializeFileNameCache();
     ZeroMemory(_fast_info_cache,sizeof(_fast_info_cache));
 
-    HookCallPoint(code[C_READ_BALLS], afsReadBallsCallPoint, 6, 2);
+    HookCallPoint(code[C_READ_BALLS], afsReadBallsCallPoint, 
+            DEFAULT_CODE_SHIFT, 2);
 	TRACE(L"Hooking done.");
 
     if (getPesInfo()->gameVersion >= gvPES2013demo1)
@@ -541,7 +542,8 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     InitializeFileNameCache();
     ZeroMemory(_fast_info_cache,sizeof(_fast_info_cache));
 
-    HookCallPoint(code[C_READ_BALLS], afsReadBallsCallPoint, 3, 2);
+    HookCallPoint(code[C_READ_BALLS], afsReadBallsCallPoint, 
+            DEFAULT_CODE_SHIFT, 2);
 	TRACE(L"Hooking done.");
 
     if (getPesInfo()->gameVersion >= gvPES2013demo1)

@@ -9,6 +9,9 @@
 #include "utf8.h"
 #include "lang.h"
 
+using namespace std;
+using namespace stdext;
+
 
 hash_map<string, wstring> g_transl;
 hash_map<string, wstring>::iterator g_translIt;

@@ -2,6 +2,8 @@
 #include <windows.h>
 #include <hash_map>
 
+using namespace stdext;
+
 typedef struct _SONG_STRUCT
 {
     WORD binId;

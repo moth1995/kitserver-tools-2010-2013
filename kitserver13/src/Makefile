@@ -20,7 +20,7 @@ EXTRA_CFLAGS=/DMYDLL_RELEASE_BUILD
 !endif
 
 # 4731: warning about ebp modification
-CFLAGS=/nologo /Od /EHsc /wd4731 $(EXTRA_CFLAGS)
+CFLAGS=/nologo /Od /EHsc /wd4731 $(EXTRA_CFLAGS) /DDEFAULT_CODE_SHIFT=6
 LFLAGS=/NOLOGO
 LIBS=user32.lib gdi32.lib advapi32.lib comctl32.lib shell32.lib shlwapi.lib
 LIBSDLL=pngdib.obj libpng.a zdll.lib $(LIBS)
@@ -59,7 +59,8 @@ pngdib:
 #apps: manager.exe config.exe zlibtool.exe
 #dlls: kload.dll kserv.dll afsio.dll afs2fs.dll speeder.dll sides.dll lodmixer.dll fserv.dll
 #apps: manager.exe zlibtool.exe config.exe krun.exe
-dlls: kload.dll afsio.dll afs2fs.dll speeder.dll lodmixer.dll sides.dll kserv.dll fserv.dll
+#dlls: kload.dll afsio.dll afs2fs.dll speeder.dll lodmixer.dll sides.dll kserv.dll fserv.dll
+dlls: kload.dll afsio.dll afs2fs.dll speeder.dll lodmixer.dll
 apps: manager.exe config.exe
 
 imageutil.obj: imageutil.cpp imageutil.h

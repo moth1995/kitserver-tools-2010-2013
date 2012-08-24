@@ -170,16 +170,26 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
 
 	unhookFunction(hk_D3D_CreateDevice, initModule);
 
-    HookCallPoint(code[C_AT_GET_SIZE1], afsioAtGetBinSizeCallPoint1, 3, 2);
-    HookCallPoint(code[C_AT_GET_SIZE2], afsioAtGetBinSizeCallPoint2, 3, 2);
-    HookCallPoint(code[C_AT_GET_BUFFERSIZE], afsioAtGetBufferSizeCallPoint, 3, 0);
-    HookCallPoint(code[C_AFTER_CREATE_EVENT], afsioAfterCreateEventCallPoint, 3, 3);
-    HookCallPoint(code[C_AT_GET_IMG_SIZE1], afsioAtGetImgSize1CallPoint, 3, 0);
-    HookCallPoint(code[C_AT_GET_IMG_SIZE2], afsioAtGetImgSize2CallPoint, 0, 1);
-    HookCallPoint(code[C_AT_CLOSE_HANDLE], afsioAtCloseHandleCallPoint, 3, 3);
-    HookCallPoint(code[C_AFTER_GET_OFFSET_PAGES], afsioAfterGetOffsetPagesCallPoint, 3, 1);
-    HookCallPoint(code[C_BEFORE_READ], afsioBeforeReadCallPoint, 6, 1);
-    HookCallPoint(code[C_BEFORE_READ2], afsioBeforeReadCallPoint, 6, 1);
+    HookCallPoint(code[C_AT_GET_SIZE1], afsioAtGetBinSizeCallPoint1, 
+            DEFAULT_CODE_SHIFT, 2);
+    HookCallPoint(code[C_AT_GET_SIZE2], afsioAtGetBinSizeCallPoint2, 
+            DEFAULT_CODE_SHIFT, 2);
+    HookCallPoint(code[C_AT_GET_BUFFERSIZE], afsioAtGetBufferSizeCallPoint, 
+            DEFAULT_CODE_SHIFT, 0);
+    HookCallPoint(code[C_AFTER_CREATE_EVENT], afsioAfterCreateEventCallPoint, 
+            DEFAULT_CODE_SHIFT, 3);
+    HookCallPoint(code[C_AT_GET_IMG_SIZE1], afsioAtGetImgSize1CallPoint, 
+            DEFAULT_CODE_SHIFT, 0);
+    HookCallPoint(code[C_AT_GET_IMG_SIZE2], afsioAtGetImgSize2CallPoint, 
+            DEFAULT_CODE_SHIFT-3, 1);
+    HookCallPoint(code[C_AT_CLOSE_HANDLE], afsioAtCloseHandleCallPoint, 
+            DEFAULT_CODE_SHIFT, 3);
+    HookCallPoint(code[C_AFTER_GET_OFFSET_PAGES], 
+            afsioAfterGetOffsetPagesCallPoint, DEFAULT_CODE_SHIFT, 1);
+    HookCallPoint(code[C_BEFORE_READ], afsioBeforeReadCallPoint, 
+            DEFAULT_CODE_SHIFT, 1);
+    HookCallPoint(code[C_BEFORE_READ2], afsioBeforeReadCallPoint, 
+            DEFAULT_CODE_SHIFT, 1);
     
 	TRACE(L"Hooking done.");
 
@@ -888,7 +898,7 @@ KEXPORT bool afsioExtendSlots(int afsId, int num_slots)
  * Hooking:
  *  HookCallPoint(
  *      code[C_AT_READFILE], 
- *      afsioAfsReadFileCallPoint, 6, 1);
+ *      afsioAfsReadFileCallPoint, DEFAULT_CODE_SHIFT, 1);
  *
  * code[C_AT_READFILE] = 0x4d0ba8 (for PES2011demo)
  *

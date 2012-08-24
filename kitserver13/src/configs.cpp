@@ -12,6 +12,9 @@
 #include <list>
 #include <string>
 
+using namespace std;
+using namespace stdext;
+
 multimap<string, wstring> g_knownConfigs;
 multimap<string, wstring>::iterator g_knownConfigsIt;
 

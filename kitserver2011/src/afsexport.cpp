@@ -15,6 +15,11 @@ void ExportFile(char* afsFileName, int id, const char* nameMask)
         return;
     }
 
+    if (itemInfo.dwSize == 0) {
+        printf("WARN: bin %d is empty. Skipping\n", id);
+        return;
+    }
+
     FILE* f = fopen(afsFileName,"rb");
     fseek(f, itemInfo.dwOffset, SEEK_SET);
     char szFileName[32];
@@ -59,9 +64,28 @@ void main(int argc, char* argv[])
 
     char* splitter = strchr(argv[1], '-');
     if (!splitter) {
-        // single file
-        int id = atoi(argv[1]);
-        ExportFile(afsFileName, id, nameMask);
+        if (strcmp(argv[1], "all")==0) {
+            // all files
+            AFSDIRHEADER header;
+            ZeroMemory(&header, sizeof(header));
+
+            FILE* f = fopen(afsFileName, "rb");
+            if (!f) {
+                printf("ERROR: unable to open file: %s\n", afsFileName);
+                return;
+            }
+            fread(&header, sizeof(header), 1, f);
+            fclose(f);
+
+            for (int id=0; id<header.dwNumFiles; id++) {
+                ExportFile(afsFileName, id, nameMask);
+            }
+        }
+        else {
+            // single file
+            int id = atoi(argv[1]);
+            ExportFile(afsFileName, id, nameMask);
+        }
 
     } else {
         // range of files

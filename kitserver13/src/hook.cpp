@@ -24,6 +24,10 @@
 //#include "d3d9.h"
 
 
+using namespace std;
+using namespace stdext;
+
+
 extern KMOD k_kload;
 extern PESINFO g_pesinfo;
 extern HINSTANCE hInst;
@@ -439,17 +443,19 @@ HRESULT STDMETHODCALLTYPE newCreateDevice(IDirect3D9* self, UINT Adapter,
 	}
 
     g_menuMode = data[MENU_MODE_IDX];
-    HookCallPoint(code[C_ADD_MENUMODE], hookAddMenuModeCallPoint, 6, 2);
-    HookCallPoint(code[C_SUB_MENUMODE], hookSubMenuModeCallPoint, 6, 2);
+    HookCallPoint(code[C_ADD_MENUMODE], hookAddMenuModeCallPoint, 
+            DEFAULT_CODE_SHIFT, 2);
+    HookCallPoint(code[C_SUB_MENUMODE], hookSubMenuModeCallPoint, 
+            DEFAULT_CODE_SHIFT, 2);
 
     //_writeFile = (WRITEFILE_PROC)HookIndirectCall(code[C_WRITE_FILE],
     //        hookWriteFile);
     //_readFile = (READFILE_PROC)HookIndirectCall(code[C_READ_FILE],
     //        hookReadFile);
     HookCallPoint(code[C_WRITE_DATA], 
-        hookPrepareDataToWriteCallPoint, 6, 1);
+        hookPrepareDataToWriteCallPoint, DEFAULT_CODE_SHIFT, 1);
     HookCallPoint(code[C_READ_DATA], 
-        hookAfterReadDataCallPoint, 6, 0);
+        hookAfterReadDataCallPoint, DEFAULT_CODE_SHIFT, 0);
     
     //HookIndirectCall2(code[C_WRITE_FILE], hookWriteFile);
     //HookIndirectCall2(code[C_READ_FILE], hookReadFile);
@@ -468,20 +474,22 @@ HRESULT STDMETHODCALLTYPE newCreateDevice(IDirect3D9* self, UINT Adapter,
     HookAPICalls( &Kernel32Hook );
     **/
     HookCallPoint(code[C_ENTER_UNIFORM_SELECT], 
-            enterUniformSelectCallPoint, 6, 2);
+            enterUniformSelectCallPoint, DEFAULT_CODE_SHIFT, 2);
     HookCallPoint(code[C_EXIT_UNIFORM_SELECT], 
-            exitUniformSelectCallPoint, 6, 0);
+            exitUniformSelectCallPoint, DEFAULT_CODE_SHIFT, 0);
 
     _org_copy = GetTargetAddress(code[C_COPY_DATA]);
     HookCallPoint(
-        code[C_COPY_DATA], hookAtCopyEditDataCallPoint1, 6, 0);
+        code[C_COPY_DATA], hookAtCopyEditDataCallPoint1, 
+        DEFAULT_CODE_SHIFT, 0);
     HookCallPoint(
-        code[C_COPY_DATA2], hookAtCopyEditDataCallPoint2, 6, 1);
+        code[C_COPY_DATA2], hookAtCopyEditDataCallPoint2, 
+        DEFAULT_CODE_SHIFT, 1);
 
     HookCallPoint(code[C_READ_NAMES], 
-            hookAfterReadNamesCallPoint, 6, 1);
+            hookAfterReadNamesCallPoint, DEFAULT_CODE_SHIFT, 1);
     //HookCallPoint(code[C_READ_NAMES2], 
-    //        hookAfterReadNamesCallPoint2, 6, 1);
+    //        hookAfterReadNamesCallPoint2, DEFAULT_CODE_SHIFT, 1);
 
 	CALLCHAIN_BEGIN(hk_D3D_CreateDevice, it) {
 		PFNCREATEDEVICEPROC NextCall = (PFNCREATEDEVICEPROC)*it;

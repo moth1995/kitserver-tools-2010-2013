@@ -21,6 +21,15 @@
 #include <windows.h>
 #include <stdio.h>
 #include <sys/stat.h>
+
+#include <map>
+#include <list>
+#include <hash_map>
+#include <wchar.h>
+
+using namespace std;
+using namespace stdext;
+
 #include "kload_exp.h"
 #include "afsio.h"
 #include "afsio_addr.h"
@@ -30,11 +39,6 @@
 #include "names.h"
 
 #define lang(s) getTransl("afsio",s)
-
-#include <map>
-#include <list>
-#include <hash_map>
-#include <wchar.h>
 
 #define SWAPBYTES(dw) \
     ((dw<<24 & 0xff000000) | (dw<<8  & 0x00ff0000) | \

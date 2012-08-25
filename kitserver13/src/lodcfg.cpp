@@ -17,6 +17,8 @@
 #include "configs.h"
 #include "lodmixer.h"
 
+#pragma comment(lib, "Comctl32.lib")
+
 #define UNDEFINED -1
 #define WM_APP_EXECHANGE WM_APP+1
 #define CFG_FILE L"config.txt"

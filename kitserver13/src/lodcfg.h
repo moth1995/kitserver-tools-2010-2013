@@ -1,6 +1,6 @@
 #ifndef _LODCFG_H_
 #define _LODCFG_H_
-
+#define MYDLL_RELEASE_BUILD 1
 #ifdef MYDLL_RELEASE_BUILD
 #define LODCFG_WINDOW_TITLE "Kitserver 13 Configuration"
 #else

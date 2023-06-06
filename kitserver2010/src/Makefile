@@ -5,6 +5,9 @@ CC=cl
 LINK=link
 RC=rc
 
+INCLUDE=$(INCLUDE);soft\dxsdk_jun2010\include
+LIB=$(LIB);soft\dxsdk_jun2010\lib\x86
+
 INCPNGDIB=soft\pngdib
 LPPNGDIB=soft\pngdib 
 LPLIBPNG=soft\libpng-1.2.8-lib\lib

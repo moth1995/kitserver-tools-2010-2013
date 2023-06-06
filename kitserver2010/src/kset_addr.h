@@ -75,7 +75,7 @@ enum {
 };
 
 #define NODATAADDR {0},
-DWORD dataArray[][DATALEN] = {
+DWORD dtaArray[][DATALEN] = {
   // PES2008 DEMO
   NODATAADDR
 	// [Settings] PES2008 PC DEMO
@@ -124,5 +124,5 @@ DWORD dataArray[][DATALEN] = {
 };
 
 DWORD code[CODELEN];
-DWORD data[DATALEN];
+DWORD dta[DATALEN];
 int gameVersion;

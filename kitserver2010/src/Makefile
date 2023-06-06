@@ -5,7 +5,7 @@ CC=cl
 LINK=link
 RC=rc
 
-INCLUDE=$(INCLUDE);soft\dxsdk_jun2010\include
+INCLUDE=$(INCLUDE);soft\dxsdk_jun2010\include;mfc
 LIB=$(LIB);soft\dxsdk_jun2010\lib\x86
 
 INCPNGDIB=soft\pngdib

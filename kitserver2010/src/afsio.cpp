@@ -379,7 +379,7 @@ KEXPORT void afsioAtGetSize(DWORD afsId, DWORD binId, DWORD* pSizeBytes, DWORD* 
 
 DWORD GetAfsIdByPathName(char* pathName)
 {
-    BIN_SIZE_INFO** ppBST = (BIN_SIZE_INFO**)data[BIN_SIZES_TABLE];
+    BIN_SIZE_INFO** ppBST = (BIN_SIZE_INFO**)dta[BIN_SIZES_TABLE];
     for (DWORD afsId=0; afsId<=MAX_AFSID; afsId++)
     {
         if (ppBST[afsId]==0) continue;
@@ -682,7 +682,7 @@ KEXPORT bool afsioExtendSlots_cv0(int num_slots)
         return true;
 
     // extend BIN-sizes table
-    BIN_SIZE_INFO** tabArray = (BIN_SIZE_INFO**)data[BIN_SIZES_TABLE];
+    BIN_SIZE_INFO** tabArray = (BIN_SIZE_INFO**)dta[BIN_SIZES_TABLE];
     if (!tabArray)
         return false;
     BIN_SIZE_INFO* table = tabArray[0];
@@ -707,7 +707,7 @@ KEXPORT bool afsioExtendSlots_cv0(int num_slots)
 KEXPORT bool afsioExtendSlots(int afsId, int num_slots)
 {
     // extend BIN-sizes table
-    BIN_SIZE_INFO** tabArray = (BIN_SIZE_INFO**)data[BIN_SIZES_TABLE];
+    BIN_SIZE_INFO** tabArray = (BIN_SIZE_INFO**)dta[BIN_SIZES_TABLE];
     if (!tabArray)
         return false;
     BIN_SIZE_INFO* table = tabArray[afsId];

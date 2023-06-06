@@ -48,7 +48,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 			return false;
 		
 		memcpy(code, codeArray[v], sizeof(code));
-    memcpy(data, dataArray[v], sizeof(data));
+    memcpy(dta, dtaArray[v], sizeof(dta));
     
     ZeroMemory(myDir, WBUFLEN);
 		GetModuleFileName(hInst, myDir, BUFLEN);
@@ -96,7 +96,7 @@ void hookFunctions() {
             DWORD* ptr = (DWORD*)(code[C_CONTROLLERADDED] + 1);
             ptr[0] = (DWORD)ksetControllerAdded - (DWORD)(code[C_CONTROLLERADDED] + 5);
         }
-        VirtualProtect((BYTE*)data[CONTROLLER_NUMBER], 1, newProtection, &protection);
+        VirtualProtect((BYTE*)dta[CONTROLLER_NUMBER], 1, newProtection, &protection);
 	}
 
 	if (allQualities && code[C_QUALITYCHECK] != 0) {
@@ -117,13 +117,13 @@ DWORD STDMETHODCALLTYPE ksetControllerAdded(DWORD p1) {
 	controllerCount++;
 	if (controllerCount < 4) {
 		// add another controller
-		*(BYTE*)data[CONTROLLER_NUMBER] = 0x31 + controllerCount;
+		*(BYTE*)dta[CONTROLLER_NUMBER] = 0x31 + controllerCount;
 		*(&p1 - 1) = code[C_BEFORECONTROLLERADD];		
 		return 0;
 	} else {
 		
 		controllerCount = 0;
-		*(BYTE*)data[CONTROLLER_NUMBER] = 0x31;
+		*(BYTE*)dta[CONTROLLER_NUMBER] = 0x31;
 		SOMEFUNCTION someFunction = (SOMEFUNCTION)code[C_SOMEFUNCTION];
 		return someFunction(p1);
 	}

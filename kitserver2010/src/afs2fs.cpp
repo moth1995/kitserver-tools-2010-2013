@@ -110,9 +110,9 @@ int GetNumItems(wstring& folder)
         // get number of files inside the corresponding AFS file
         wchar_t pesDir[MAX_PATH];
         ZeroMemory(pesDir,sizeof(pesDir));
-        if (data[PES_DIR])
+        if (dta[PES_DIR])
         {
-            char* pesDirUtf8 = *(char**)data[PES_DIR];
+            char* pesDirUtf8 = *(char**)dta[PES_DIR];
             if (pesDirUtf8)
                 Utf8::fUtf8ToUnicode(pesDir, pesDirUtf8);
             if (doOnce)
@@ -168,7 +168,7 @@ bool GetBinFileName(DWORD afsId, DWORD binId, wchar_t* filename, int maxLen)
     if (afsId < 0 || MAX_FOLDERS-1 < afsId) return false; // safety check
     if (!_fast_info_cache[afsId].initialized)
     {
-        BIN_SIZE_INFO* pBST = ((BIN_SIZE_INFO**)data[BIN_SIZES_TABLE])[afsId];
+        BIN_SIZE_INFO* pBST = ((BIN_SIZE_INFO**)dta[BIN_SIZES_TABLE])[afsId];
         if (pBST) 
         {
             unordered_map<string,BYTE*>::iterator it;
@@ -199,7 +199,7 @@ bool GetBinFileName(DWORD afsId, DWORD binId, wchar_t* filename, int maxLen)
     if (entry->fileName[0]==L'\0')
         return false;
 
-    BIN_SIZE_INFO* pBST = ((BIN_SIZE_INFO**)data[BIN_SIZES_TABLE])[afsId];
+    BIN_SIZE_INFO* pBST = ((BIN_SIZE_INFO**)dta[BIN_SIZES_TABLE])[afsId];
     wchar_t afsDir[MAX_AFSFILE_LEN];
     ZeroMemory(afsDir,sizeof(afsDir));
     ZeroMemory(relPath,sizeof(relPath));
@@ -416,7 +416,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
 
     if (getPesInfo()->gameVersion >= gvPES2010demo)
     {
-        BYTE* bptr = (BYTE*)data[SONGS_INFO_TABLE];
+        BYTE* bptr = (BYTE*)dta[SONGS_INFO_TABLE];
         if (bptr)
         {
             _songs = new song_map_t();
@@ -432,10 +432,10 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
             // apply songs info
             DWORD protection = 0;
             DWORD newProtection = PAGE_READWRITE;
-            int numSongs = data[NUM_SONGS];
+            int numSongs = dta[NUM_SONGS];
             if (VirtualProtect(bptr, numSongs*sizeof(SONG_STRUCT), newProtection, &protection)) 
             {
-                SONG_STRUCT* ss = (SONG_STRUCT*)data[SONGS_INFO_TABLE];
+                SONG_STRUCT* ss = (SONG_STRUCT*)dta[SONGS_INFO_TABLE];
                 for (int i=0; i<numSongs; i++)
                 {
                     unordered_map<WORD,SONG_STRUCT>::iterator it = _songs->_songMap.find(ss[i].binId);

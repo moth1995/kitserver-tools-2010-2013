@@ -56,8 +56,8 @@ bool IsBallFile(DWORD binId);
 void bservOverlayEvent(bool overlayOn, bool isExhibitionMode, int delta, DWORD menuMode);
 void bservKeyboardEvent(int code1, WPARAM wParam, LPARAM lParam);
 void bservPresent(IDirect3DDevice9* self, CONST RECT* src, CONST RECT* dest, HWND hWnd, LPVOID unused);
-void bservReadReplayData(LPCVOID data, DWORD size);
-void bservWriteReplayData(LPCVOID data, DWORD size);
+void bservReadReplayData(LPCVOID dta, DWORD size);
+void bservWriteReplayData(LPCVOID dta, DWORD size);
 void bservInitMaps();
 void bservGetBallNameCallPoint1();
 void bservGetBallNameCallPoint2();
@@ -519,11 +519,11 @@ void bservKeyboardEvent(int code1, WPARAM wParam, LPARAM lParam)
 /**
  * read data callback
  */
-void bservReadReplayData(LPCVOID data, DWORD size)
+void bservReadReplayData(LPCVOID dta, DWORD size)
 {
-    REPLAY_DATA* replay = (REPLAY_DATA*)data;
+    REPLAY_DATA* replay = (REPLAY_DATA*)dta;
 
-    wstring ballKey((wchar_t*)((BYTE*)data+0x377cf0));
+    wstring ballKey((wchar_t*)((BYTE*)dta+0x377cf0));
     LOG1S(L"read ballKey = {%s}", ballKey.c_str());
 
     _ball_iter = _balls.end();
@@ -538,12 +538,12 @@ void bservReadReplayData(LPCVOID data, DWORD size)
 /**
  * write data callback
  */
-void bservWriteReplayData(LPCVOID data, DWORD size)
+void bservWriteReplayData(LPCVOID dta, DWORD size)
 {
-    REPLAY_DATA* replay = (REPLAY_DATA*)data;
+    REPLAY_DATA* replay = (REPLAY_DATA*)dta;
     if (_ball_iter != _balls.end())
     {
-        wcsncpy((wchar_t*)((BYTE*)data+0x377cf0), 
+        wcsncpy((wchar_t*)((BYTE*)dta+0x377cf0), 
                 _ball_iter->first.c_str(),
                 0x30);
 
@@ -657,7 +657,7 @@ KEXPORT char* bservGetBallName(char* orgName)
 void GetCurrentTeams(WORD& home, WORD& away)
 {
     NEXT_MATCH_DATA_INFO* pNM = 
-        *(NEXT_MATCH_DATA_INFO**)data[NEXT_MATCH_DATA_PTR];
+        *(NEXT_MATCH_DATA_INFO**)dta[NEXT_MATCH_DATA_PTR];
     if (pNM && pNM->home) home = pNM->home->teamId;
     if (pNM && pNM->away) away = pNM->away->teamId;
 }

@@ -132,7 +132,7 @@ float inv_f(float y)
     {
         x = 0.5*(a+b);
         z = f(x);
-        if (abs(y-z) < PRECISION)
+        if (fabs(y-z) < PRECISION)
             return round(x);
         if (z>y) b=x;
         else if (z<y) a=x;
@@ -153,7 +153,7 @@ float inv_f2(float y)
     {
         x = 0.5*(a+b);
         z = f2(x);
-        if (abs(y-z) < PRECISION)
+        if (fabs(y-z) < PRECISION)
             return round(x);
         if (z>y) b=x;
         else if (z<y) a=x;

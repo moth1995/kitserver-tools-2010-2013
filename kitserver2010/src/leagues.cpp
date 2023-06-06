@@ -149,9 +149,9 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
     if (found)
     {
         _codeMakeLeague = code[C_MAKE_LEAGUE];
-		_offset = data[D_RELINKS_OFFSET];
-		_offsetl = data[D_LOGOS_OFFSET];
-		_offsetn = data[D_NAMES_OFFSET];
+		_offset = dta[D_RELINKS_OFFSET];
+		_offsetl = dta[D_LOGOS_OFFSET];
+		_offsetn = dta[D_NAMES_OFFSET];
 		HookCallPoint(code[C_READ_RELINK],
 			changerelink, 3, 2);
 		HookCallPoint(code[C_READ_NAMES],

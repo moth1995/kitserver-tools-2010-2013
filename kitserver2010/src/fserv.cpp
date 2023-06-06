@@ -89,9 +89,9 @@ bool OpenFileIfExists(const wchar_t* filename, HANDLE& handle, DWORD& size);
 void InitMaps();
 void fservCopyPlayerData(PLAYER_INFO* players, int place, bool writeList);
 
-void fservWriteEditData(LPCVOID data, DWORD size);
-void fservReadReplayData(LPCVOID data, DWORD size);
-void fservWriteReplayData(LPCVOID data, DWORD size);
+void fservWriteEditData(LPCVOID dta, DWORD size);
+void fservReadReplayData(LPCVOID dta, DWORD size);
+void fservWriteReplayData(LPCVOID dta, DWORD size);
 
 static void string_strip(wstring& s)
 {
@@ -322,7 +322,7 @@ void fservCopyPlayerData(PLAYER_INFO* players, int place, bool writeList)
 {
     if (place==2)
     {
-        DWORD menuMode = *(DWORD*)data[MENU_MODE_IDX];
+        DWORD menuMode = *(DWORD*)dta[MENU_MODE_IDX];
         if (menuMode==NETWORK_MODE && !_fserv_config._enable_online)
             return;
     }
@@ -424,7 +424,7 @@ void GetSlotsByPlayerIndex(DWORD idx, DWORD& faceSlot, DWORD& hairSlot)
     if (idx >= MAX_PLAYERS)
         return;
 
-    PLAYER_INFO* players = (PLAYER_INFO*)(*(DWORD**)data[EDIT_DATA_PTR] + 1);
+    PLAYER_INFO* players = (PLAYER_INFO*)(*(DWORD**)dta[EDIT_DATA_PTR] + 1);
     unordered_map<DWORD,WORD>::iterator sit;
     sit = _player_face_slot.find(players[idx].id);
     if (sit != _player_face_slot.end())
@@ -508,12 +508,12 @@ bool fservGetFileInfo(DWORD afsId, DWORD binId, HANDLE& hfile, DWORD& fsize)
 /**
  * write data callback
  */
-void fservWriteEditData(LPCVOID data, DWORD size)
+void fservWriteEditData(LPCVOID dta, DWORD size)
 {
     LOG(L"Restoring face/hair settings");
 
     // restore face/hair settings
-    PLAYER_INFO* players = (PLAYER_INFO*)((BYTE*)data + 0x120);
+    PLAYER_INFO* players = (PLAYER_INFO*)((BYTE*)dta + 0x120);
     for (list<DWORD>::iterator it = _non_unique_face.begin();
             it != _non_unique_face.end();
             it++)
@@ -543,12 +543,12 @@ void fservWriteEditData(LPCVOID data, DWORD size)
 /**
  * write data callback
  */
-void fservWriteReplayData(LPCVOID data, DWORD size)
+void fservWriteReplayData(LPCVOID dta, DWORD size)
 {
     LOG(L"Restoring face/hair settings");
 
     // restore face/hair settings
-    REPLAY_PLAYER_INFO* players = (REPLAY_PLAYER_INFO*)((BYTE*)data + 0x1c0);
+    REPLAY_PLAYER_INFO* players = (REPLAY_PLAYER_INFO*)((BYTE*)dta + 0x1c0);
     for (int i=0; i<22; i++)
     {
         wchar_t* name = Utf8::ansiToUnicode(players[i].name);
@@ -589,12 +589,12 @@ void fservWriteReplayData(LPCVOID data, DWORD size)
 /**
  * read data callback
  */
-void fservReadReplayData(LPCVOID data, DWORD size)
+void fservReadReplayData(LPCVOID dta, DWORD size)
 {
     LOG(L"Setting face/hair settings");
 
     // set face/hair settings
-    REPLAY_PLAYER_INFO* players = (REPLAY_PLAYER_INFO*)((BYTE*)data + 0x1c0);
+    REPLAY_PLAYER_INFO* players = (REPLAY_PLAYER_INFO*)((BYTE*)dta + 0x1c0);
     for (int i=0; i<22; i++)
     {
         wchar_t* name = Utf8::ansiToUnicode(players[i].name);

@@ -104,7 +104,7 @@ DWORD codeArray[][CODELEN] = {
     0,0,0,0,0,\
     0,0,0,0,0},
 
-DWORD dataArray[][DATALEN] = {
+DWORD dtaArray[][DATALEN] = {
     // PES2008 DEMO
 	NODATAADDR
 	// [Settings] PES2008 PC DEMO
@@ -324,4 +324,4 @@ enum {
 };
 
 DWORD code[CODELEN];
-DWORD data[DATALEN];
+DWORD dta[DATALEN];

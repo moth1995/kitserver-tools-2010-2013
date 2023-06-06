@@ -191,7 +191,7 @@ void timeReadCallPoint()
 DWORD timeRead(BYTE* dest, BYTE* src)
 {
     DBG(LOG2N(L"timeRead:: dest=%08x, src=%08x", (DWORD)dest, (DWORD)src));
-    if ((DWORD)dest == data[SETTINGS_ADDR])
+    if ((DWORD)dest == dta[SETTINGS_ADDR])
     {
         if (src[4]!=_time_config.match_time)
         {

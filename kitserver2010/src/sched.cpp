@@ -87,7 +87,7 @@ void initSched()
     for (int i=0; i<DATALEN/5; i++)
     {
         PATCH_INFO patchInfo;
-        memcpy(&patchInfo, &data[i*5], sizeof(PATCH_INFO));
+        memcpy(&patchInfo, &dta[i*5], sizeof(PATCH_INFO));
         if (patchInfo.addr == 0)
             continue;
 

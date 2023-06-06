@@ -291,10 +291,10 @@ void kservPresent(IDirect3DDevice9* self,
         HWND hWnd, LPVOID unused);
 void kservUniformSelectEvent(bool enter);
 void kservKeyboardEvent(int code1, WPARAM wParam, LPARAM lParam);
-void kservReadEditData(LPCVOID data, DWORD size);
-void kservWriteEditData(LPCVOID data, DWORD size);
-void kservReadReplayData(LPCVOID data, DWORD size);
-void kservWriteReplayData(LPCVOID data, DWORD size);
+void kservReadEditData(LPCVOID dta, DWORD size);
+void kservWriteEditData(LPCVOID dta, DWORD size);
+void kservReadReplayData(LPCVOID dta, DWORD size);
+void kservWriteReplayData(LPCVOID dta, DWORD size);
 void InitSlotMapInThread(TEAM_KIT_INFO* teamKitInfo=NULL);
 DWORD WINAPI InitSlotMap(LPCVOID param=NULL);
 void RelinkKit(WORD teamIndex, WORD slot, KIT_INFO& kitInfo);
@@ -371,8 +371,8 @@ WORD GetTeamIdByIndex(int index)
 {
     if (index < 0 || index >= NUM_TEAMS_TOTAL)
         return 0xffff; // invalid index
-    TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)data[PLAYERS_DATA] 
-            + data[TEAM_KIT_INFO_OFFSET]);
+    TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)dta[PLAYERS_DATA] 
+            + dta[TEAM_KIT_INFO_OFFSET]);
     return teamKitInfo[index].id;
 }
 
@@ -381,13 +381,13 @@ char* GetTeamNameByIndex(int index, TEAM_NAME* teamName)
     if (index < 0 || index >= NUM_TEAMS_TOTAL)
         return NULL; // invalid index
     if (!teamName)
-        teamName = **(TEAM_NAME***)data[TEAM_NAMES];
+        teamName = **(TEAM_NAME***)dta[TEAM_NAMES];
     return (char*)&(teamName[index].name);
 }
 
 char* GetTeamNameById(WORD id)
 {
-    TEAM_NAME* teamName = **(TEAM_NAME***)data[TEAM_NAMES];
+    TEAM_NAME* teamName = **(TEAM_NAME***)dta[TEAM_NAMES];
     for (int i=0; i<NUM_TEAMS_TOTAL; i++)
     {
         if (teamName[i].teamId == id)
@@ -398,8 +398,8 @@ char* GetTeamNameById(WORD id)
 
 WORD GetTeamIndexById(WORD id)
 {
-    TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)data[PLAYERS_DATA] 
-            + data[TEAM_KIT_INFO_OFFSET]);
+    TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)dta[PLAYERS_DATA] 
+            + dta[TEAM_KIT_INFO_OFFSET]);
     for (int i=0; i<NUM_TEAMS_TOTAL; i++)
     {
         if (teamKitInfo[i].id == id)
@@ -675,8 +675,8 @@ void DumpSlotsInfo(TEAM_KIT_INFO* teamKitInfo, TEAM_NAME* teamNames)
 {
     // team names are stored in Utf-8, so we write the bytes as is.
     if (!teamKitInfo)
-        teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)data[PLAYERS_DATA] 
-                + data[TEAM_KIT_INFO_OFFSET]);
+        teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)dta[PLAYERS_DATA] 
+                + dta[TEAM_KIT_INFO_OFFSET]);
     TRACE1N(L"teamKitInfo = %08x", (DWORD)teamKitInfo);
     TRACE1N(L"sizeof(KIT_INFO) = %08x", sizeof(KIT_INFO));
     TRACE1N(L"sizeof(TEAM_KIT_INFO) = %08x", sizeof(TEAM_KIT_INFO));
@@ -708,8 +708,8 @@ void DumpSlotsInfo(TEAM_KIT_INFO* teamKitInfo, TEAM_NAME* teamNames)
 void InitSlotMapInThread(TEAM_KIT_INFO* teamKitInfo)
 {
     if (!teamKitInfo)
-        teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)data[PLAYERS_DATA] 
-                + data[TEAM_KIT_INFO_OFFSET]);
+        teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)dta[PLAYERS_DATA] 
+                + dta[TEAM_KIT_INFO_OFFSET]);
 
     DWORD threadId;
     HANDLE initThread = CreateThread( 
@@ -750,8 +750,8 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
     EnterCriticalSection(&_cs);
     TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)param;
     if (!teamKitInfo)
-        teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)data[PLAYERS_DATA] 
-                + data[TEAM_KIT_INFO_OFFSET]);
+        teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)dta[PLAYERS_DATA] 
+                + dta[TEAM_KIT_INFO_OFFSET]);
 
     _slotMap.clear();
     _reverseSlotMap.clear();
@@ -971,8 +971,8 @@ void RestoreTeamKitInfos(TEAM_KIT_INFO* teamKitInfo)
 {
     if (!teamKitInfo)
         teamKitInfo = (TEAM_KIT_INFO*)(
-                *(DWORD*)data[PLAYERS_DATA] 
-                + data[TEAM_KIT_INFO_OFFSET]);
+                *(DWORD*)dta[PLAYERS_DATA] 
+                + dta[TEAM_KIT_INFO_OFFSET]);
 
     for (unordered_map<int,ORG_TEAM_KIT_INFO>::iterator it = _orgTeamKitInfo.begin();
             it != _orgTeamKitInfo.end();
@@ -999,8 +999,8 @@ void RestoreTeamKitInfo(WORD teamIndex, int which, TEAM_KIT_INFO* teamKitInfo)
 {
     if (!teamKitInfo)
         teamKitInfo = (TEAM_KIT_INFO*)(
-                *(DWORD*)data[PLAYERS_DATA] 
-                + data[TEAM_KIT_INFO_OFFSET]);
+                *(DWORD*)dta[PLAYERS_DATA] 
+                + dta[TEAM_KIT_INFO_OFFSET]);
 
     unordered_map<int,ORG_TEAM_KIT_INFO>::iterator it;
     it = _orgTeamKitInfo.find(teamIndex);
@@ -1036,8 +1036,8 @@ void ResetTeamKitInfo(WORD teamIndex, WORD slot, TEAM_KIT_INFO* teamKitInfo)
 {
     if (!teamKitInfo)
         teamKitInfo = (TEAM_KIT_INFO*)(
-                *(DWORD*)data[PLAYERS_DATA] 
-                + data[TEAM_KIT_INFO_OFFSET]);
+                *(DWORD*)dta[PLAYERS_DATA] 
+                + dta[TEAM_KIT_INFO_OFFSET]);
 
     KitCollection* kcol;
     if (FindTeamInGDB(teamIndex, kcol) && !kcol->disabled)
@@ -1089,7 +1089,7 @@ void kservPresent(
     */
 
     NEXT_MATCH_DATA_INFO* pNM = 
-            *(NEXT_MATCH_DATA_INFO**)data[NEXT_MATCH_DATA_PTR];
+            *(NEXT_MATCH_DATA_INFO**)dta[NEXT_MATCH_DATA_PTR];
     // safety checks
     if (!pNM || !pNM->home || !pNM->away)
         return;
@@ -1192,7 +1192,7 @@ void kservReadEditData(LPCVOID buf, DWORD size)
 {
     // initialize kit slots
     TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)((BYTE*)buf 
-            + 0x1a0 + data[TEAM_KIT_INFO_OFFSET] - 8);
+            + 0x1a0 + dta[TEAM_KIT_INFO_OFFSET] - 8);
     InitSlotMap(teamKitInfo);
 
     TEAM_NAME* teamNames = (TEAM_NAME*)((BYTE*)buf 
@@ -1211,7 +1211,7 @@ void kservWriteEditData(LPCVOID buf, DWORD size)
     // undo re-linking: we don't want dynamic relinking
     // to be saved in PES2009_EDIT01.bin
     TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)((BYTE*)buf 
-            + 0x1a0 + data[TEAM_KIT_INFO_OFFSET] - 8);
+            + 0x1a0 + dta[TEAM_KIT_INFO_OFFSET] - 8);
     RestoreTeamKitInfos(teamKitInfo);
 }
 
@@ -2160,7 +2160,7 @@ void kservReadNumSlotsCallPoint4()
 
 KEXPORT DWORD kservReadNumSlots(DWORD slot)
 {
-    DWORD* pNumSlots = (DWORD*)data[NUM_SLOTS_PTR];
+    DWORD* pNumSlots = (DWORD*)dta[NUM_SLOTS_PTR];
     if (slot >= XSLOT_FIRST)
         return XSLOT_LAST+1;
     return *pNumSlots;
@@ -2283,8 +2283,8 @@ void SwitchKit(SWITCH_KIT& sw, bool advanceIter)
 
     WORD paSlot=0, pbSlot=0;
     TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)(
-            *(DWORD*)data[PLAYERS_DATA] 
-            + data[TEAM_KIT_INFO_OFFSET]);
+            *(DWORD*)dta[PLAYERS_DATA] 
+            + dta[TEAM_KIT_INFO_OFFSET]);
     map<wstring,Kit>::iterator kiter;
 
     if (sw.iter != sw.iter_end)
@@ -2384,8 +2384,8 @@ void kservUniformSelectEvent(bool enter)
 		unhookFunction(hk_D3D_Present, kservPresent);
 
     // update widescreen flag
-    if (data[WIDESCREEN_FLAG])
-        _widescreenFlag = *(DWORD*)data[WIDESCREEN_FLAG];
+    if (dta[WIDESCREEN_FLAG])
+        _widescreenFlag = *(DWORD*)dta[WIDESCREEN_FLAG];
 }
 
 WORD GetTeamId(KIT_CHOICE* kc)
@@ -2587,8 +2587,8 @@ void ResetKit(SWITCH_KIT& sw)
 {
     // reset kit iterators
     TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)(
-            *(DWORD*)data[PLAYERS_DATA] 
-            + data[TEAM_KIT_INFO_OFFSET]);
+            *(DWORD*)dta[PLAYERS_DATA] 
+            + dta[TEAM_KIT_INFO_OFFSET]);
 
     // team index
     WORD teamIndex = GetTeamIndex(sw.kc);

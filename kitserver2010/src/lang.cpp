@@ -4,14 +4,14 @@
 #include <string.h>
 #include <stdio.h>
 #include <string>
-#include <hash_map>
+#include <unordered_map>
 
 #include "utf8.h"
 #include "lang.h"
 
 
-hash_map<string, wstring> g_transl;
-hash_map<string, wstring>::iterator g_translIt;
+unordered_map<string, wstring> g_transl;
+unordered_map<string, wstring>::iterator g_translIt;
 const wchar_t noTransl[] = L"(Translation missing)";
 
 void clearTransl() {

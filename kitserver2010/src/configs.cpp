@@ -8,7 +8,7 @@
 #include "configs.hpp"
 
 #include <map>
-#include <hash_map>
+#include <unordered_map>
 #include <list>
 #include <string>
 
@@ -263,6 +263,6 @@ void _setConfig(char* section, char* name, wstring& value, bool replace)
 
 void unitTest()
 {
-    hash_map<WORD,wstring> m1;
+    unordered_map<WORD,wstring> m1;
     readMap(L"map.txt", m1);
 }

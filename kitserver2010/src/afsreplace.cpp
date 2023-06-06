@@ -4,7 +4,7 @@
 #include "kload_exp.h"
 #include "afsreplace.h"
 
-//#include <hash_map>
+//#include <unordered_map>
 #include <map>
 
 extern KMOD k_kload;

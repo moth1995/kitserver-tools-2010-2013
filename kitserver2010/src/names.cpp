@@ -13,7 +13,7 @@ extern KMOD k_afs;
 
 song_map_t::~song_map_t()
 {
-    for (hash_map<WORD,SONG_STRUCT>::iterator it = _songMap.begin(); it != _songMap.end(); it++)
+    for (unordered_map<WORD,SONG_STRUCT>::iterator it = _songMap.begin(); it != _songMap.end(); it++)
     {
         Utf8::free(it->second.title);
         Utf8::free(it->second.author);
@@ -30,14 +30,14 @@ void song_map_t::update(const wstring& filename)
         return; // file cannot be accessed - looks like it's not there.
 
     // process kit map file
-    hash_map<WORD,wstring> mapFile;
+    unordered_map<WORD,wstring> mapFile;
     if (!readMap(filename.c_str(), mapFile))
     {
         LOG1S(L"Unable to read songs map (%s)",filename.c_str());
         return;
     }
 
-    for (hash_map<WORD,wstring>::iterator it = mapFile.begin(); it != mapFile.end(); it++)
+    for (unordered_map<WORD,wstring>::iterator it = mapFile.begin(); it != mapFile.end(); it++)
     {
         // determine song name, author name
         wstring title;
@@ -70,7 +70,7 @@ void song_map_t::update(const wstring& filename)
         ss.title = (char*)Utf8::unicodeToUtf8(title.c_str());
         ss.author = (char*)Utf8::unicodeToUtf8(author.c_str());
 
-        pair<hash_map<WORD,SONG_STRUCT>::iterator,bool> ires =
+        pair<unordered_map<WORD,SONG_STRUCT>::iterator,bool> ires =
             _songMap.insert(pair<WORD,SONG_STRUCT>(it->first,ss));
         if (!ires.second)
         {
@@ -90,7 +90,7 @@ void song_map_t::update(const wstring& filename)
 
 ball_map_t::~ball_map_t()
 {
-    for (hash_map<WORD,BALL_STRUCT>::iterator it = _ballMap.begin(); it != _ballMap.end(); it++)
+    for (unordered_map<WORD,BALL_STRUCT>::iterator it = _ballMap.begin(); it != _ballMap.end(); it++)
     {
         Utf8::free(it->second.name);
     }
@@ -106,14 +106,14 @@ void ball_map_t::update(const wstring& filename)
         return; // file cannot be accessed - looks like it's not there.
 
     // process kit map file
-    hash_map<WORD,wstring> mapFile;
+    unordered_map<WORD,wstring> mapFile;
     if (!readMap(filename.c_str(), mapFile))
     {
         LOG1S(L"Unable to read balls map (%s)",filename.c_str());
         return;
     }
 
-    for (hash_map<WORD,wstring>::iterator it = mapFile.begin(); it != mapFile.end(); it++)
+    for (unordered_map<WORD,wstring>::iterator it = mapFile.begin(); it != mapFile.end(); it++)
     {
         wstring& name = it->second;
 
@@ -126,7 +126,7 @@ void ball_map_t::update(const wstring& filename)
         bs.number = it->first;
         bs.name = (char*)Utf8::unicodeToUtf8(name.c_str());
 
-        pair<hash_map<WORD,BALL_STRUCT>::iterator,bool> ires =
+        pair<unordered_map<WORD,BALL_STRUCT>::iterator,bool> ires =
             _ballMap.insert(pair<WORD,BALL_STRUCT>(it->first,bs));
         if (!ires.second)
         {

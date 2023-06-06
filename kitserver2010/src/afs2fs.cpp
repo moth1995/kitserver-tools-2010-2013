@@ -19,7 +19,7 @@
 #define lang(s) getTransl("afs2fs",s)
 
 #include <map>
-#include <hash_map>
+#include <unordered_map>
 #include <wchar.h>
 
 #define SWAPBYTES(dw) \
@@ -66,8 +66,8 @@ public:
     int _fileNameLen;
 };
 
-hash_map<wstring,int> g_maxItems;
-hash_map<string,BYTE*> _info_cache;
+unordered_map<wstring,int> g_maxItems;
+unordered_map<string,BYTE*> _info_cache;
 FAST_INFO_CACHE_STRUCT _fast_info_cache[MAX_FOLDERS];
 
 #define MAX_IMGDIR_LEN 4096
@@ -104,7 +104,7 @@ int GetNumItems(wstring& folder)
 {
     static bool doOnce = true;
     int result = MAX_ITEMS;
-    hash_map<wstring,int>::iterator it = g_maxItems.find(folder);
+    unordered_map<wstring,int>::iterator it = g_maxItems.find(folder);
     if (it == g_maxItems.end())
     {
         // get number of files inside the corresponding AFS file
@@ -171,7 +171,7 @@ bool GetBinFileName(DWORD afsId, DWORD binId, wchar_t* filename, int maxLen)
         BIN_SIZE_INFO* pBST = ((BIN_SIZE_INFO**)data[BIN_SIZES_TABLE])[afsId];
         if (pBST) 
         {
-            hash_map<string,BYTE*>::iterator it;
+            unordered_map<string,BYTE*>::iterator it;
             for (it = _info_cache.begin(); it != _info_cache.end(); it++)
             {
                 ZeroMemory(relPath,sizeof(relPath));
@@ -265,7 +265,7 @@ void InitializeFileNameCache()
                                 if (binId >= 0)
                                 {
                                     BYTE* entries = NULL;
-                                    hash_map<string,BYTE*>::iterator cit = _info_cache.find(key);
+                                    unordered_map<string,BYTE*>::iterator cit = _info_cache.find(key);
                                     if (cit != _info_cache.end()) entries = cit->second;
                                     else 
                                     {
@@ -319,7 +319,7 @@ void InitializeFileNameCache()
     } // for roots
 
     // print cache
-    for (hash_map<wstring,int>::iterator it = g_maxItems.begin(); it != g_maxItems.end(); it++)
+    for (unordered_map<wstring,int>::iterator it = g_maxItems.begin(); it != g_maxItems.end(); it++)
         LOG1S1N(L"filename cache: {%s} : %d slots", it->first.c_str(), it->second);
 
     LOG(L"DONE initializing filename cache.");
@@ -348,7 +348,7 @@ EXTERN_C BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReser
 	else if (dwReason == DLL_PROCESS_DETACH)
 	{
         LOG(L"freeing up info_cache memory...");
-        for (hash_map<string,BYTE*>::iterator it = _info_cache.begin(); 
+        for (unordered_map<string,BYTE*>::iterator it = _info_cache.begin(); 
                 it != _info_cache.end();
                 it++)
             if (it->second) HeapFree(GetProcessHeap(), 0, it->second);
@@ -438,7 +438,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
                 SONG_STRUCT* ss = (SONG_STRUCT*)data[SONGS_INFO_TABLE];
                 for (int i=0; i<numSongs; i++)
                 {
-                    hash_map<WORD,SONG_STRUCT>::iterator it = _songs->_songMap.find(ss[i].binId);
+                    unordered_map<WORD,SONG_STRUCT>::iterator it = _songs->_songMap.find(ss[i].binId);
                     if (it != _songs->_songMap.end())
                     {
                         ss[i].title = it->second.title;
@@ -542,7 +542,7 @@ KEXPORT DWORD afsReadBalls(BALL_INFO* balls)
     {
         for (int i=0; i<NUM_BALLS; i++)
         {
-            hash_map<WORD,BALL_STRUCT>::iterator it = 
+            unordered_map<WORD,BALL_STRUCT>::iterator it = 
                     _balls->_ballMap.find(i+1);
             if (it != _balls->_ballMap.end())
             {

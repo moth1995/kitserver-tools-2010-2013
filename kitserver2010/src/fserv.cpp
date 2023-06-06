@@ -23,7 +23,7 @@
 
 #include <map>
 #include <list>
-#include <hash_map>
+#include <unordered_map>
 #include <wchar.h>
 
 #define SWAPBYTES(dw) \
@@ -60,10 +60,10 @@ public:
 fserv_config_t _fserv_config;
 
 // GLOBALS
-hash_map<DWORD,wstring> _player_face;
-hash_map<DWORD,wstring> _player_hair;
-hash_map<DWORD,WORD> _player_face_slot;
-hash_map<DWORD,WORD> _player_hair_slot;
+unordered_map<DWORD,wstring> _player_face;
+unordered_map<DWORD,wstring> _player_hair;
+unordered_map<DWORD,WORD> _player_face_slot;
+unordered_map<DWORD,WORD> _player_hair_slot;
 list<DWORD> _non_unique_face;
 list<DWORD> _non_unique_hair;
 list<DWORD> _scan_face;
@@ -189,7 +189,7 @@ void InitMaps()
     ZeroMemory(_fast_bin_table, sizeof(_fast_bin_table));
 
     // process face/hair map file
-    hash_map<DWORD,wstring> mapFile;
+    unordered_map<DWORD,wstring> mapFile;
     wstring mpath(getPesInfo()->gdbDir);
     mpath += L"GDB\\faces\\map.txt";
     if (!readMap(mpath.c_str(), mapFile))
@@ -198,7 +198,7 @@ void InitMaps()
     }
     else
     {
-        for (hash_map<DWORD,wstring>::iterator it = mapFile.begin(); it != mapFile.end(); it++)
+        for (unordered_map<DWORD,wstring>::iterator it = mapFile.begin(); it != mapFile.end(); it++)
         {
             wstring& line = it->second;
             int comma = line.find(',');
@@ -258,11 +258,11 @@ void InitMaps()
     DWORD nextSlotPair = FIRST_FACE_SLOT/2;
 
     // assign slots
-    for (hash_map<DWORD,wstring>::iterator it = _player_face.begin();
+    for (unordered_map<DWORD,wstring>::iterator it = _player_face.begin();
             it != _player_face.end();
             it++)
     {
-        hash_map<DWORD,WORD>::iterator sit = _player_face_slot.find(it->first);
+        unordered_map<DWORD,WORD>::iterator sit = _player_face_slot.find(it->first);
         if (sit != _player_face_slot.end())
             continue; // already has slot
         sit = _player_hair_slot.find(it->first);
@@ -285,11 +285,11 @@ void InitMaps()
         _fast_bin_table[slotId - FIRST_FACE_SLOT] = &it->second;
         _player_face_slot.insert(pair<DWORD,WORD>(it->first,slotId));
     }
-    for (hash_map<DWORD,wstring>::iterator it = _player_hair.begin();
+    for (unordered_map<DWORD,wstring>::iterator it = _player_hair.begin();
             it != _player_hair.end();
             it++)
     {
-        hash_map<DWORD,WORD>::iterator sit = _player_hair_slot.find(it->first);
+        unordered_map<DWORD,WORD>::iterator sit = _player_hair_slot.find(it->first);
         if (sit != _player_hair_slot.end())
             continue; // already has slot
         sit = _player_face_slot.find(it->first);
@@ -335,7 +335,7 @@ void fservCopyPlayerData(PLAYER_INFO* players, int place, bool writeList)
         //if (players[i].padding!=0)
         //    LOG2N(L"id=%d, padding=%d",players[i].id,players[i].padding);
 
-        hash_map<DWORD,WORD>::iterator it = 
+        unordered_map<DWORD,WORD>::iterator it = 
             _player_face_slot.find(players[i].id);
         if (it != _player_face_slot.end())
         {
@@ -425,7 +425,7 @@ void GetSlotsByPlayerIndex(DWORD idx, DWORD& faceSlot, DWORD& hairSlot)
         return;
 
     PLAYER_INFO* players = (PLAYER_INFO*)(*(DWORD**)data[EDIT_DATA_PTR] + 1);
-    hash_map<DWORD,WORD>::iterator sit;
+    unordered_map<DWORD,WORD>::iterator sit;
     sit = _player_face_slot.find(players[idx].id);
     if (sit != _player_face_slot.end())
         faceSlot = sit->second;

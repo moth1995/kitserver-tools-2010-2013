@@ -1,10 +1,11 @@
 #include <string>
 
 using namespace std;
+/*
 #if _CPPLIB_VER >= 503
 using namespace stdext;
 #endif
-
+*/
 #define MAP_FIND(map,key) (((*(map)).find(key) != (*(map)).end()) ? (*(map))[key] : NULL)
 #define MAP_CONTAINS(map,key) (map.find(key)!=map.end())
 

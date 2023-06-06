@@ -3,7 +3,7 @@
 
 #include <windows.h>
 #include <map>
-#include <hash_map>
+#include <unordered_map>
 #include <string>
 
 using namespace std;
@@ -122,7 +122,7 @@ public:
 class GDB {
 public:
     wstring dir;
-    hash_map<WORD,KitCollection> uni;
+    unordered_map<WORD,KitCollection> uni;
     KitCollection dummyHome;
     KitCollection dummyAway;
     bool readConfigs;

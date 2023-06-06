@@ -28,7 +28,7 @@
 #define lang(s) getTransl("kserv",s)
 
 #include <map>
-#include <hash_map>
+#include <unordered_map>
 #include <wchar.h>
 
 #define CREATE_FLAGS 0
@@ -210,10 +210,10 @@ bool _widescreenFlag = false;
 
 GDB* _gdb;
 kserv_config_t _kserv_config;
-hash_map<int,ORG_TEAM_KIT_INFO> _orgTeamKitInfo;
-hash_map<WORD,WORD> _slotMap;
-hash_map<WORD,WORD> _reverseSlotMap;
-typedef hash_map<WORD,KitCollection>::iterator kc_iter_t;
+unordered_map<int,ORG_TEAM_KIT_INFO> _orgTeamKitInfo;
+unordered_map<WORD,WORD> _slotMap;
+unordered_map<WORD,WORD> _reverseSlotMap;
+typedef unordered_map<WORD,KitCollection>::iterator kc_iter_t;
 CRITICAL_SECTION _cs;
 
 // kit iterators
@@ -257,9 +257,9 @@ struct
     KIT_CHOICE* away2nd;
 } _kitChoices;
 
-hash_map<WORD,KIT_PICK> _kitPicks; // map: slot -> KIT_PICK
-//hash_map<WORD,bool> _plKitPicks; // reverse map: teamIndex -> flag
-//hash_map<WORD,bool> _gkKitPicks; // reverse map: teamIndex -> flag
+unordered_map<WORD,KIT_PICK> _kitPicks; // map: slot -> KIT_PICK
+//unordered_map<WORD,bool> _plKitPicks; // reverse map: teamIndex -> flag
+//unordered_map<WORD,bool> _gkKitPicks; // reverse map: teamIndex -> flag
 
 // FUNCTIONS
 HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
@@ -771,11 +771,11 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
 
     // GDB teams
     WORD nextSlot = XSLOT_FIRST;
-    for (hash_map<WORD,KitCollection>::iterator git = _gdb->uni.begin();
+    for (unordered_map<WORD,KitCollection>::iterator git = _gdb->uni.begin();
             git != _gdb->uni.end();
             git++)
     {
-        hash_map<WORD,WORD>::iterator rit = _reverseSlotMap.find(git->first);
+        unordered_map<WORD,WORD>::iterator rit = _reverseSlotMap.find(git->first);
         bool toRelink = (rit == _reverseSlotMap.end());
 
         // store original attributes
@@ -792,7 +792,7 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         {
             // disable this kit collection
             // (maybe a to-do: make it work with only extra kits)
-            hash_map<WORD,WORD>::iterator sit;
+            unordered_map<WORD,WORD>::iterator sit;
             sit = _reverseSlotMap.find(git->first);
             if (sit == _reverseSlotMap.end())
             {
@@ -974,7 +974,7 @@ void RestoreTeamKitInfos(TEAM_KIT_INFO* teamKitInfo)
                 *(DWORD*)data[PLAYERS_DATA] 
                 + data[TEAM_KIT_INFO_OFFSET]);
 
-    for (hash_map<int,ORG_TEAM_KIT_INFO>::iterator it = _orgTeamKitInfo.begin();
+    for (unordered_map<int,ORG_TEAM_KIT_INFO>::iterator it = _orgTeamKitInfo.begin();
             it != _orgTeamKitInfo.end();
             it++)
     {
@@ -1002,7 +1002,7 @@ void RestoreTeamKitInfo(WORD teamIndex, int which, TEAM_KIT_INFO* teamKitInfo)
                 *(DWORD*)data[PLAYERS_DATA] 
                 + data[TEAM_KIT_INFO_OFFSET]);
 
-    hash_map<int,ORG_TEAM_KIT_INFO>::iterator it;
+    unordered_map<int,ORG_TEAM_KIT_INFO>::iterator it;
     it = _orgTeamKitInfo.find(teamIndex);
     if (it != _orgTeamKitInfo.end())
     {
@@ -1226,7 +1226,7 @@ void kservReadReplayData(LPCVOID buf, DWORD size)
     // kit/font/numbers bins, for GDB teams
     WORD homeId = *(WORD*)(replay + 0x1ac);
     WORD homeIndex = GetTeamIndexById(homeId);
-    hash_map<WORD,WORD>::iterator sit = _reverseSlotMap.find(homeIndex);
+    unordered_map<WORD,WORD>::iterator sit = _reverseSlotMap.find(homeIndex);
     if (sit != _reverseSlotMap.end())
     {
         if (replay[0x1d0]==0) // flag for edited vs. real kit
@@ -1382,11 +1382,11 @@ int GetBinType(DWORD afsId, DWORD id)
 
 WORD GetTeamIndexBySlot(WORD slot)
 {
-    hash_map<WORD,WORD>::iterator sit = _slotMap.find(slot);
+    unordered_map<WORD,WORD>::iterator sit = _slotMap.find(slot);
     if (sit != _slotMap.end())
         return sit->second;
     // check 
-    hash_map<WORD,KIT_PICK>::iterator zit = _kitPicks.find(slot);
+    unordered_map<WORD,KIT_PICK>::iterator zit = _kitPicks.find(slot);
     if (zit != _kitPicks.end())
         return zit->second.teamIndex;
     return 0xffff;
@@ -1394,7 +1394,7 @@ WORD GetTeamIndexBySlot(WORD slot)
 
 bool FindTeamInGDB(WORD teamIndex, KitCollection*& kcol)
 {
-    hash_map<WORD,KitCollection>::iterator it = _gdb->uni.find(teamIndex);
+    unordered_map<WORD,KitCollection>::iterator it = _gdb->uni.find(teamIndex);
     if (it != _gdb->uni.end())
     {
         kcol = &it->second;
@@ -1480,7 +1480,7 @@ bool CreatePipeForKitBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
     tcount++;
     TRACE1N(L"******** tcount = %d *******", tcount);
 
-    hash_map<WORD,KIT_PICK>::iterator zit;
+    unordered_map<WORD,KIT_PICK>::iterator zit;
     wstring files[2];
     for (int i=0; i<2; i++)
     {
@@ -1630,7 +1630,7 @@ bool CreatePipeForFontBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
     wstring filename(getPesInfo()->gdbDir);
     map<wstring,Kit>::iterator kkit;
     map<wstring,Kit>::iterator kkit_end;
-    hash_map<WORD,KIT_PICK>::iterator zit;
+    unordered_map<WORD,KIT_PICK>::iterator zit;
     switch (GetBinType(afsId, binId))
     {
         case BIN_FONT_GA:
@@ -1775,7 +1775,7 @@ bool CreatePipeForNumbersBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& si
     wstring dirname(getPesInfo()->gdbDir);
     map<wstring,Kit>::iterator kkit;
     map<wstring,Kit>::iterator kkit_end;
-    hash_map<WORD,KIT_PICK>::iterator zit;
+    unordered_map<WORD,KIT_PICK>::iterator zit;
     switch (GetBinType(afsId, binId))
     {
         case BIN_NUMS_GA:
@@ -2223,7 +2223,7 @@ bool SameTeams()
 
 WORD AcquireXslot(kit_iter_t& iter, WORD teamIndex)
 {
-    hash_map<WORD,KIT_PICK>::iterator kpit;
+    unordered_map<WORD,KIT_PICK>::iterator kpit;
     kpit = _kitPicks.find(iter->second.slot);
     if (kpit == _kitPicks.end() 
             || kpit->second.teamIndex != teamIndex
@@ -2405,14 +2405,14 @@ WORD GetTeamIndex(KIT_CHOICE* kc)
     if (kc->isEditedKit)
         return teamIndex;
 
-    hash_map<WORD,WORD>::iterator it;
+    unordered_map<WORD,WORD>::iterator it;
     it = _slotMap.find(kc->kitSlotIndex/2);
     if (it != _slotMap.end())
         teamIndex = it->second;
     else
     {
         // maybe an x-slot
-        hash_map<WORD,KIT_PICK>::iterator kpit;
+        unordered_map<WORD,KIT_PICK>::iterator kpit;
         kpit = _kitPicks.find(kc->kitSlotIndex/2);
         if (kpit != _kitPicks.end())
             teamIndex = kpit->second.teamIndex;
@@ -2599,7 +2599,7 @@ void ResetKit(SWITCH_KIT& sw)
         //DumpData(sw.kc, sizeof(KIT_CHOICE));
     }
     TRACE1N(L"sw.kc = %08x", (DWORD)sw.kc);
-    hash_map<WORD,KitCollection>::iterator it = _gdb->uni.find(teamIndex);
+    unordered_map<WORD,KitCollection>::iterator it = _gdb->uni.find(teamIndex);
     if (it != _gdb->uni.end())
     {
         if (!it->second.disabled 

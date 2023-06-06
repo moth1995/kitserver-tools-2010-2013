@@ -6,7 +6,7 @@
 #include "utf8.h"
 
 #include <map>
-#include <hash_map>
+#include <unordered_map>
 #include <list>
 #include <string>
 

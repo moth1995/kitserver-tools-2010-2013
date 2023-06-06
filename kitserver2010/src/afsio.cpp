@@ -30,7 +30,7 @@
 
 #include <map>
 #include <list>
-#include <hash_map>
+#include <unordered_map>
 #include <wchar.h>
 
 #define SWAPBYTES(dw) \
@@ -48,9 +48,9 @@ HINSTANCE hInst = NULL;
 KMOD k_afsio = {MODID, NAMELONG, NAMESHORT, DEFAULT_DEBUG};
 
 // GLOBALS
-hash_map<DWORD,FILE_STRUCT> g_file_map;
-hash_map<DWORD,DWORD> g_offset_map;
-hash_map<DWORD,FILE_STRUCT> g_event_map;
+unordered_map<DWORD,FILE_STRUCT> g_file_map;
+unordered_map<DWORD,DWORD> g_offset_map;
+unordered_map<DWORD,FILE_STRUCT> g_event_map;
 
 int _num_slots_cv0 = 8094;
 
@@ -252,7 +252,7 @@ KEXPORT DWORD afsioAfterGetBinBufferSize(GET_BIN_SIZE_STRUCT* gbss, DWORD orgSiz
         fs.offset = 0;
         fs.binKey = binKey;
 
-        pair<hash_map<DWORD,FILE_STRUCT>::iterator,bool> ires =
+        pair<unordered_map<DWORD,FILE_STRUCT>::iterator,bool> ires =
             g_file_map.insert(pair<DWORD,FILE_STRUCT>(binKey,fs));
         if (!ires.second)
         {
@@ -313,7 +313,7 @@ KEXPORT void afsioAtGetSize(DWORD afsId, DWORD binId, DWORD* pSizeBytes, DWORD* 
     TRACE4N(L"afsioAtGetSize: afsId=%d, binId=%d, sizeBytes=%08x, sizePages=%08x",
             afsId, binId, *pSizeBytes, *pSizePages);
     DWORD binKey = (afsId << 16) + binId;
-    hash_map<DWORD,FILE_STRUCT>::iterator it = g_file_map.find(binKey);
+    unordered_map<DWORD,FILE_STRUCT>::iterator it = g_file_map.find(binKey);
     if (it != g_file_map.end())
     {
         // modify size
@@ -354,7 +354,7 @@ KEXPORT void afsioAtGetSize(DWORD afsId, DWORD binId, DWORD* pSizeBytes, DWORD* 
             fs.offset = 0;
             fs.binKey = binKey;
 
-            pair<hash_map<DWORD,FILE_STRUCT>::iterator,bool> ires =
+            pair<unordered_map<DWORD,FILE_STRUCT>::iterator,bool> ires =
                 g_file_map.insert(pair<DWORD,FILE_STRUCT>(binKey,fs));
             if (!ires.second)
             {
@@ -482,7 +482,7 @@ KEXPORT void afsioAfterCreateEvent(DWORD eventId, READ_EVENT_STRUCT* res, char* 
     DWORD binKey = ((res->offsetPages << 0x0b)&0xfffff800) + afsId;
     TRACE1N(L"afsAfterCreateEvent:: binKey=%08x",binKey);
 
-    hash_map<DWORD,DWORD>::iterator it = g_offset_map.find(binKey);
+    unordered_map<DWORD,DWORD>::iterator it = g_offset_map.find(binKey);
     if (it != g_offset_map.end())
     {
         DWORD binId = it->second;
@@ -491,7 +491,7 @@ KEXPORT void afsioAfterCreateEvent(DWORD eventId, READ_EVENT_STRUCT* res, char* 
         DWORD binKey1 = (afsId << 16) + binId;
         TRACE3N(L"afsAfterCreateEvent:: looking for binKey1=%08x (afsId=%d, binId=%d)",
                 binKey1, afsId, binId);
-        hash_map<DWORD,FILE_STRUCT>::iterator fit = g_file_map.find(binKey1);
+        unordered_map<DWORD,FILE_STRUCT>::iterator fit = g_file_map.find(binKey1);
         if (fit != g_file_map.end())
         {
             // remember offset for later usage
@@ -591,7 +591,7 @@ KEXPORT void afsioBeforeRead(READ_STRUCT* rs)
     if (rs->pfrs->eventId == 0)
         return;
 
-    hash_map<DWORD,FILE_STRUCT>::iterator it = g_event_map.find(rs->pfrs->eventId);
+    unordered_map<DWORD,FILE_STRUCT>::iterator it = g_event_map.find(rs->pfrs->eventId);
     if (it != g_event_map.end())
     {
         TRACE3N(L"afsBeforeRead::(%08x) WAS: hfile=%08x, offset=%08x", 
@@ -653,14 +653,14 @@ KEXPORT void afsioAtCloseHandle(DWORD eventId)
     // from the event map
     TRACE1N(L"afsAtCloseHandle:: eventId=%08x",eventId);
 
-    hash_map<DWORD,FILE_STRUCT>::iterator it = g_event_map.find(eventId);
+    unordered_map<DWORD,FILE_STRUCT>::iterator it = g_event_map.find(eventId);
     if (it != g_event_map.end())
     {
         FILE_STRUCT& fs = it->second;
         HANDLE hfile = fs.hfile;
 
         // delete entry in file_map
-        hash_map<DWORD,FILE_STRUCT>::iterator fit = g_file_map.find(fs.binKey);
+        unordered_map<DWORD,FILE_STRUCT>::iterator fit = g_file_map.find(fs.binKey);
         if (fit != g_file_map.end())
         {
             if (k_afsio.debug)

@@ -24,7 +24,7 @@
 
 #include <map>
 #include <list>
-#include <hash_map>
+#include <unordered_map>
 #include <wchar.h>
 
 #define SWAPBYTES(dw) \
@@ -64,7 +64,7 @@ public:
 bootserv_config_t _bootserv_config;
 
 // GLOBALS
-hash_map<DWORD,WORD> _boot_slots;
+unordered_map<DWORD,WORD> _boot_slots;
 WORD _player_boot_slots[MAX_PLAYERS];
 wstring* _fast_bin_table[LAST_EXTRA_BOOT_SLOT - FIRST_EXTRA_BOOT_SLOT + 1];
 
@@ -243,10 +243,10 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
 
 void InitMaps()
 {
-    hash_map<wstring,WORD> slots;
+    unordered_map<wstring,WORD> slots;
 
     // process boots map file
-    hash_map<DWORD,wstring> mapFile;
+    unordered_map<DWORD,wstring> mapFile;
     wstring mpath(getPesInfo()->gdbDir);
     mpath += L"GDB\\boots\\map.txt";
     if (!readMap(mpath.c_str(), mapFile))
@@ -256,7 +256,7 @@ void InitMaps()
     else
     {
         int slot = 0;
-        for (hash_map<DWORD,wstring>::iterator it = mapFile.begin(); it != mapFile.end(); it++)
+        for (unordered_map<DWORD,wstring>::iterator it = mapFile.begin(); it != mapFile.end(); it++)
         {
             wstring boot(it->second);
             string_strip(boot);
@@ -280,7 +280,7 @@ void InitMaps()
                         break;
                     }
 
-                    hash_map<wstring,WORD>::iterator wit = slots.find(boot);
+                    unordered_map<wstring,WORD>::iterator wit = slots.find(boot);
                     if (wit != slots.end())
                     {
                         // boot already has an assigned slot
@@ -321,7 +321,7 @@ void InitMaps()
     }
 
     // initialize fast bin lookup table
-    for (hash_map<wstring,WORD>::iterator sit = slots.begin();
+    for (unordered_map<wstring,WORD>::iterator sit = slots.begin();
             sit != slots.end();
             sit++)
     {
@@ -413,7 +413,7 @@ void bootservCopyPlayerData(PLAYER_INFO* players, int place, bool writeList)
     {
         for (int i=0; i<MAX_PLAYERS; i++)
         {
-            hash_map<DWORD,WORD>::iterator it = _boot_slots.find(players[i].id);
+            unordered_map<DWORD,WORD>::iterator it = _boot_slots.find(players[i].id);
             if (it != _boot_slots.end())
                 _player_boot_slots[i] = it->second;
         }
@@ -468,7 +468,7 @@ void bootservCopyPlayerData(PLAYER_INFO* players, int place, bool writeList)
         //if (players[i].padding!=0)
         //    LOG2N(L"id=%d, padding=%d",players[i].id,players[i].padding);
 
-        //hash_map<DWORD,WORD>::iterator it = 
+        //unordered_map<DWORD,WORD>::iterator it = 
         //    _boot_slots.find(players[i].id);
         //if (it != _boot_slots.end())
         if (_player_boot_slots[i]!=0)
@@ -653,7 +653,7 @@ KEXPORT DWORD bootservGetBootId1(DWORD boot, BYTE* pPartialPlayerInfo)
                 // lookup player
                 /*
                 DWORD id = GetIdByPlayerIndex(idx);
-                hash_map<DWORD,WORD>::iterator sit = _boot_slots.find(id);
+                unordered_map<DWORD,WORD>::iterator sit = _boot_slots.find(id);
                 if (sit != _boot_slots.end())
                 {
                     return sit->second;
@@ -684,7 +684,7 @@ KEXPORT DWORD bootservGetBootId2(DWORD boot)
         // lookup player
         /*
         DWORD id = GetIdByPlayerIndex(idx);
-        hash_map<DWORD,WORD>::iterator sit = _boot_slots.find(id);
+        unordered_map<DWORD,WORD>::iterator sit = _boot_slots.find(id);
         if (sit != _boot_slots.end())
         {
             return sit->second;

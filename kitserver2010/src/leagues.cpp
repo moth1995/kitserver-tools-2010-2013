@@ -19,7 +19,7 @@
 
 #include <map>
 #include <list>
-#include <hash_map>
+#include <unordered_map>
 #include <string>
 
 #define SWAPBYTES(dw) \
@@ -39,7 +39,7 @@ DWORD _offset = 0;
 DWORD _offsetn = 0;
 DWORD _offsetl = 0;
 DWORD _relink = 0;
-hash_map<WORD,wstring> mapFile;
+unordered_map<WORD,wstring> mapFile;
 char* _thistex;
 _league *nationals, *clubs;
 DWORD customleague;

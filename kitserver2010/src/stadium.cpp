@@ -25,7 +25,7 @@
 #define lang(s) getTransl("stadium",s)
 
 #include <map>
-#include <hash_map>
+#include <unordered_map>
 #include <wchar.h>
 
 #define SWAPBYTES(dw) \
@@ -296,12 +296,12 @@ void stadInitMaps()
     }
 
     // read home-stadium map
-    hash_map<WORD,wstring> entries;
+    unordered_map<WORD,wstring> entries;
     wstring mapFile(getPesInfo()->gdbDir);
     mapFile += L"GDB\\stadiums\\map.txt";
     if (readMap(mapFile.c_str(), entries))
     {
-        for (hash_map<WORD,wstring>::iterator it = entries.begin();
+        for (unordered_map<WORD,wstring>::iterator it = entries.begin();
                 it != entries.end();
                 it++)
         {

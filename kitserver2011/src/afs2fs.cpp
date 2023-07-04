@@ -4,13 +4,10 @@
 
 #include <windows.h>
 #include <map>
-#include <hash_map>
+#include <unordered_map>
 #include <string>
 
 using namespace std;
-#if _CPPLIB_VER >= 503
-using namespace stdext;
-#endif
 
 #include <stdio.h>
 #include <sys/stat.h>
@@ -72,8 +69,8 @@ public:
     int _fileNameLen;
 };
 
-hash_map<wstring,int> g_maxItems;
-hash_map<string,BYTE*> _info_cache;
+unordered_map<wstring,int> g_maxItems;
+unordered_map<string,BYTE*> _info_cache;
 FAST_INFO_CACHE_STRUCT _fast_info_cache[MAX_FOLDERS];
 
 #define MAX_IMGDIR_LEN 4096
@@ -110,15 +107,15 @@ int GetNumItems(wstring& folder)
 {
     static bool doOnce = true;
     int result = MAX_ITEMS;
-    hash_map<wstring,int>::iterator it = g_maxItems.find(folder);
+    unordered_map<wstring,int>::iterator it = g_maxItems.find(folder);
     if (it == g_maxItems.end())
     {
         // get number of files inside the corresponding AFS file
         wchar_t pesDir[MAX_PATH];
         ZeroMemory(pesDir,sizeof(pesDir));
-        if (data[PES_DIR])
+        if (dta[PES_DIR])
         {
-            char* pesDirUtf8 = *(char**)data[PES_DIR];
+            char* pesDirUtf8 = *(char**)dta[PES_DIR];
             if (pesDirUtf8)
                 Utf8::fUtf8ToUnicode(pesDir, pesDirUtf8);
             if (doOnce)
@@ -174,10 +171,10 @@ bool GetBinFileName(DWORD afsId, DWORD binId, wchar_t* filename, int maxLen)
     if (afsId < 0 || MAX_FOLDERS-1 < afsId) return false; // safety check
     if (!_fast_info_cache[afsId].initialized)
     {
-        AFS_INFO* pBST = ((AFS_INFO**)data[BIN_SIZES_TABLE])[afsId];
+        AFS_INFO* pBST = ((AFS_INFO**)dta[BIN_SIZES_TABLE])[afsId];
         if (pBST) 
         {
-            hash_map<string,BYTE*>::iterator it;
+            unordered_map<string,BYTE*>::iterator it;
             for (it = _info_cache.begin(); it != _info_cache.end(); it++)
             {
                 ZeroMemory(relPath,sizeof(relPath));
@@ -205,7 +202,7 @@ bool GetBinFileName(DWORD afsId, DWORD binId, wchar_t* filename, int maxLen)
     if (entry->fileName[0]==L'\0')
         return false;
 
-    AFS_INFO* pBST = ((AFS_INFO**)data[BIN_SIZES_TABLE])[afsId];
+    AFS_INFO* pBST = ((AFS_INFO**)dta[BIN_SIZES_TABLE])[afsId];
     wchar_t afsDir[MAX_AFSFILE_LEN];
     ZeroMemory(afsDir,sizeof(afsDir));
     ZeroMemory(relPath,sizeof(relPath));
@@ -270,7 +267,7 @@ void InitializeFileNameCache()
                             if (binId >= 0)
                             {
                                 BYTE* entries = NULL;
-                                hash_map<string,BYTE*>::iterator cit;
+                                unordered_map<string,BYTE*>::iterator cit;
                                 cit = _info_cache.find(key);
                                 if (cit != _info_cache.end()) 
                                     entries = cit->second;
@@ -337,7 +334,7 @@ void InitializeFileNameCache()
     } // for roots
 
     // print cache
-    for (hash_map<wstring,int>::iterator it = g_maxItems.begin(); 
+    for (unordered_map<wstring,int>::iterator it = g_maxItems.begin(); 
             it != g_maxItems.end(); 
             it++)
         LOG(L"filename cache: {%s} : %d slots", it->first.c_str(), it->second);
@@ -369,7 +366,7 @@ EXTERN_C BOOL WINAPI DllMain(
 	else if (dwReason == DLL_PROCESS_DETACH)
 	{
         LOG(L"freeing up info_cache memory...");
-        for (hash_map<string,BYTE*>::iterator it = _info_cache.begin(); 
+        for (unordered_map<string,BYTE*>::iterator it = _info_cache.begin(); 
                 it != _info_cache.end();
                 it++)
             if (it->second) HeapFree(GetProcessHeap(), 0, it->second);
@@ -438,7 +435,7 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
 
     if (getPesInfo()->gameVersion >= gvPES2011demo)
     {
-        BYTE* bptr = (BYTE*)data[SONGS_INFO_TABLE];
+        BYTE* bptr = (BYTE*)dta[SONGS_INFO_TABLE];
         if (bptr)
         {
             _songs = new song_map_t();
@@ -454,15 +451,15 @@ HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
             // apply songs info
             DWORD protection = 0;
             DWORD newProtection = PAGE_READWRITE;
-            int numSongs = data[NUM_SONGS];
+            int numSongs = dta[NUM_SONGS];
             if (VirtualProtect(
                     bptr, numSongs*sizeof(SONG_STRUCT), 
                     newProtection, &protection)) 
             {
-                SONG_STRUCT* ss = (SONG_STRUCT*)data[SONGS_INFO_TABLE];
+                SONG_STRUCT* ss = (SONG_STRUCT*)dta[SONGS_INFO_TABLE];
                 for (int i=0; i<numSongs; i++)
                 {
-                    hash_map<WORD,SONG_STRUCT>::iterator it;
+                    unordered_map<WORD,SONG_STRUCT>::iterator it;
                     it = _songs->_songMap.find(ss[i].binId);
                     if (it != _songs->_songMap.end())
                     {
@@ -560,12 +557,12 @@ KEXPORT DWORD afsReadBalls(BALL_INFO* balls)
     BYTE* bptr = (BYTE*)balls;
     DWORD protection = 0;
     DWORD newProtection = PAGE_READWRITE;
-    if (VirtualProtect(bptr, data[NUM_BALLS]*sizeof(BALL_INFO), 
+    if (VirtualProtect(bptr, dta[NUM_BALLS]*sizeof(BALL_INFO), 
                 newProtection, &protection)) 
     {
-        for (int i=0; i<data[NUM_BALLS]; i++)
+        for (int i=0; i<dta[NUM_BALLS]; i++)
         {
-            hash_map<WORD,BALL_STRUCT>::iterator it = 
+            unordered_map<WORD,BALL_STRUCT>::iterator it = 
                     _balls->_ballMap.find(i+1);
             if (it != _balls->_ballMap.end())
             {
@@ -577,7 +574,7 @@ KEXPORT DWORD afsReadBalls(BALL_INFO* balls)
     }
 
     // print current balls info
-    for (int i=0; i<data[NUM_BALLS]; i++)
+    for (int i=0; i<dta[NUM_BALLS]; i++)
     {
         wchar_t* ballName = Utf8::utf8ToUnicode(balls[i].name);
         LOG(L"ball #%d: {%s}", i+1, ballName);

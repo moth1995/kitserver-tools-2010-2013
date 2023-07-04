@@ -1,6 +1,6 @@
 // names.h
 #include <windows.h>
-#include <hash_map>
+#include <unordered_map>
 
 typedef struct _SONG_STRUCT
 {
@@ -17,7 +17,7 @@ public:
     ~song_map_t();
     void update(const wstring& filename);
 
-    hash_map<WORD,SONG_STRUCT> _songMap;
+    unordered_map<WORD,SONG_STRUCT> _songMap;
 };
 
 typedef struct _BALL_STRUCT
@@ -33,6 +33,6 @@ public:
     ~ball_map_t();
     void update (const wstring& filename);
 
-    hash_map<WORD,BALL_STRUCT> _ballMap;
+    unordered_map<WORD,BALL_STRUCT> _ballMap;
 };
 

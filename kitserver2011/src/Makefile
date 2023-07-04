@@ -5,6 +5,9 @@ CC=cl
 LINK=link
 RC=rc
 
+INCLUDE=$(INCLUDE);soft\dxsdk_jun2010\include;mfc
+LIB=$(LIB);soft\dxsdk_jun2010\lib\x86
+
 INCPNGDIB=soft\pngdib
 LPPNGDIB=soft\pngdib 
 LPLIBPNG=soft\libpng-1.2.8-lib\lib
@@ -57,7 +60,7 @@ pngdib:
 
 #dlls: kload.dll kserv.dll lodmixer.dll kset.dll afsio.dll afs2fs.dll sched.dll fserv.dll rwdata.dll camera.dll time.dll speeder.dll stadium.dll bootserv.dll bserv.dll leagues.dll
 #apps: manager.exe config.exe zlibtool.exe
-dlls: kload.dll kserv.dll afsio.dll afs2fs.dll speeder.dll sides.dll lodmixer.dll fserv.dll
+dlls: kload.dll kserv.dll afsio.dll afs2fs.dll speeder.dll leagues.dll sides.dll lodmixer.dll fserv.dll
 apps: manager.exe zlibtool.exe config.exe krun.exe
 
 imageutil.obj: imageutil.cpp imageutil.h
@@ -88,6 +91,12 @@ afsio.lib: afsio.obj configs.obj apihijack.obj
 afsio.dll: afsio.lib afsio.res kload.lib
 	$(LINK) $(LFLAGS) /out:afsio.dll /DLL afsio.obj configs.obj afsio.res $(LIBS) $(D3DX9) kload.lib apihijack.obj
 afsio.obj: afsio.cpp afsio.h afsio_addr.h afsio.rc
+
+leagues.lib: leagues.obj configs.obj
+leagues.dll: leagues.lib leagues.res
+	$(LINK) $(LFLAGS) /out:leagues.dll /DLL leagues.obj configs.obj leagues.res $(LIBS) $(D3DX9) kload.lib
+leagues.obj: leagues.cpp leagues.h leagues_addr.h leagues.rc
+
 
 speeder.lib: speeder.obj configs.obj apihijack.obj
 speeder.dll: speeder.lib speeder.res

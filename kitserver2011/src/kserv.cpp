@@ -28,7 +28,7 @@
 #define lang(s) getTransl("kserv",s)
 
 #include <map>
-#include <hash_map>
+#include <unordered_map>
 #include <wchar.h>
 
 #define CREATE_FLAGS 0
@@ -209,13 +209,13 @@ bool _widescreenFlag = false;
 
 GDB* _gdb;
 kserv_config_t _kserv_config;
-hash_map<int,ORG_TEAM_KIT_INFO> _orgTeamKitInfo;
-hash_map<WORD,WORD> _slotMap;
-hash_map<WORD,WORD> _reverseSlotMap;
-typedef hash_map<WORD,KitCollection>::iterator kc_iter_t;
+unordered_map<int,ORG_TEAM_KIT_INFO> _orgTeamKitInfo;
+unordered_map<WORD,WORD> _slotMap;
+unordered_map<WORD,WORD> _reverseSlotMap;
+typedef unordered_map<WORD,KitCollection>::iterator kc_iter_t;
 CRITICAL_SECTION _cs;
 
-typedef hash_map<WORD,WORD> slot_map_t;
+typedef unordered_map<WORD,WORD> slot_map_t;
 class slot_maps_t 
 {
 public:
@@ -270,9 +270,9 @@ struct
     KIT_CHOICE* away2nd;
 } _kitChoices;
 
-hash_map<WORD,KIT_PICK> _kitPicks; // map: slot -> KIT_PICK
-//hash_map<WORD,bool> _plKitPicks; // reverse map: teamIndex -> flag
-//hash_map<WORD,bool> _gkKitPicks; // reverse map: teamIndex -> flag
+unordered_map<WORD,KIT_PICK> _kitPicks; // map: slot -> KIT_PICK
+//unordered_map<WORD,bool> _plKitPicks; // reverse map: teamIndex -> flag
+//unordered_map<WORD,bool> _gkKitPicks; // reverse map: teamIndex -> flag
 
 // FUNCTIONS
 HRESULT STDMETHODCALLTYPE initModule(IDirect3D9* self, UINT Adapter,
@@ -299,8 +299,8 @@ DWORD WINAPI kservAfterReadNamesDelayed(LPCVOID param=NULL);
 void kservAfterReadNamesAsync();
 void DumpSlotsInfo(TEAM_KIT_INFO* teamKitInfo=NULL, TEAM_NAME* teamNames=NULL);
 void kservKeyboardEvent(int code1, WPARAM wParam, LPARAM lParam);
-void kservReadEditData(LPCVOID data, DWORD size);
-void kservWriteEditData(LPCVOID data, DWORD size);
+void kservReadEditData(LPCVOID dta, DWORD size);
+void kservWriteEditData(LPCVOID dta, DWORD size);
 void InitSlotMapInThread(TEAM_KIT_INFO* teamKitInfo=NULL);
 DWORD WINAPI InitSlotMap(LPCVOID param=NULL);
 void RelinkKit(WORD teamIndex, WORD slot, KIT_INFO& kitInfo,
@@ -372,8 +372,8 @@ WORD GetTeamIdByIndex(int index)
 {
     if (index < 0 || index >= NUM_TEAMS_TOTAL)
         return 0xffff; // invalid index
-    TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)data[PLAYERS_DATA] 
-            + data[TEAM_KIT_INFO_OFFSET]);
+    TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)dta[PLAYERS_DATA] 
+            + dta[TEAM_KIT_INFO_OFFSET]);
     return teamKitInfo[index].id;
 }
 
@@ -382,16 +382,16 @@ char* GetTeamNameByIndex(int index, TEAM_NAME* teamNames)
     if (index < 0 || index >= NUM_TEAMS_TOTAL)
         return NULL; // invalid index
     if (!teamNames)
-        teamNames = (TEAM_NAME*)(*(DWORD*)data[PLAYERS_DATA] 
-            + data[TEAM_NAMES_OFFSET]);
+        teamNames = (TEAM_NAME*)(*(DWORD*)dta[PLAYERS_DATA] 
+            + dta[TEAM_NAMES_OFFSET]);
 
     return (char*)&(teamNames[index].name);
 }
 
 char* GetTeamNameById(WORD id)
 {
-    TEAM_NAME* teamNames = (TEAM_NAME*)(*(DWORD*)data[PLAYERS_DATA] 
-            + data[TEAM_NAMES_OFFSET]);
+    TEAM_NAME* teamNames = (TEAM_NAME*)(*(DWORD*)dta[PLAYERS_DATA] 
+            + dta[TEAM_NAMES_OFFSET]);
     for (int i=0; i<NUM_TEAMS_TOTAL; i++)
     {
         if (teamNames[i].teamId == id)
@@ -402,8 +402,8 @@ char* GetTeamNameById(WORD id)
 
 WORD GetTeamIndexById(WORD id)
 {
-    TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)data[PLAYERS_DATA] 
-            + data[TEAM_KIT_INFO_OFFSET]);
+    TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)dta[PLAYERS_DATA] 
+            + dta[TEAM_KIT_INFO_OFFSET]);
     for (int i=0; i<NUM_TEAMS_TOTAL; i++)
     {
         if (teamKitInfo[i].id == id)
@@ -646,8 +646,8 @@ void DumpSlotsInfo(TEAM_KIT_INFO* teamKitInfo, TEAM_NAME* teamNames)
 {
     // team names are stored in Utf-8, so we write the bytes as is.
     if (!teamKitInfo)
-        teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)data[PLAYERS_DATA] 
-                + data[TEAM_KIT_INFO_OFFSET]);
+        teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)dta[PLAYERS_DATA] 
+                + dta[TEAM_KIT_INFO_OFFSET]);
     TRACE(L"teamKitInfo = %08x", (DWORD)teamKitInfo);
     TRACE(L"teamNames = %08x", (DWORD)teamNames);
     TRACE(L"sizeof(KIT_INFO) = %08x", sizeof(KIT_INFO));
@@ -680,8 +680,8 @@ void DumpSlotsInfo(TEAM_KIT_INFO* teamKitInfo, TEAM_NAME* teamNames)
 void InitSlotMapInThread(TEAM_KIT_INFO* teamKitInfo)
 {
     if (!teamKitInfo)
-        teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)data[PLAYERS_DATA] 
-                + data[TEAM_KIT_INFO_OFFSET]);
+        teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)dta[PLAYERS_DATA] 
+                + dta[TEAM_KIT_INFO_OFFSET]);
 
     DWORD threadId;
     HANDLE initThread = CreateThread( 
@@ -722,8 +722,8 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
     EnterCriticalSection(&_cs);
     TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)param;
     if (!teamKitInfo)
-        teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)data[PLAYERS_DATA] 
-                + data[TEAM_KIT_INFO_OFFSET]);
+        teamKitInfo = (TEAM_KIT_INFO*)(*(DWORD*)dta[PLAYERS_DATA] 
+                + dta[TEAM_KIT_INFO_OFFSET]);
 
     //_slotMap.clear();
     //_reverseSlotMap.clear();
@@ -794,11 +794,11 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
 
     // GDB teams
     WORD nextSlot = XSLOT_FIRST;
-    for (hash_map<WORD,KitCollection>::iterator git = _gdb->uni.begin();
+    for (unordered_map<WORD,KitCollection>::iterator git = _gdb->uni.begin();
             git != _gdb->uni.end();
             git++)
     {
-        //hash_map<WORD,WORD>::iterator rit = _reverseSlotMap.find(git->first);
+        //unordered_map<WORD,WORD>::iterator rit = _reverseSlotMap.find(git->first);
         //bool toRelink = (rit == _reverseSlotMap.end());
         bool gaRelink(false);
         bool gbRelink(false);
@@ -817,7 +817,7 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         //DumpData(&o.tki, sizeof(TEAM_KIT_INFO));
         if (git->second.ga!=git->second.goalkeepers.end())
         {
-            hash_map<WORD,WORD>::iterator rit = 
+            unordered_map<WORD,WORD>::iterator rit = 
                 _reverseSlotMaps.ga.find(git->first);
             gaRelink = (rit == _reverseSlotMaps.ga.end());
 
@@ -828,7 +828,7 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         }
         if (git->second.gb!=git->second.goalkeepers.end())
         {
-            hash_map<WORD,WORD>::iterator rit = 
+            unordered_map<WORD,WORD>::iterator rit = 
                 _reverseSlotMaps.gb.find(git->first);
             gbRelink = (rit == _reverseSlotMaps.gb.end());
 
@@ -839,7 +839,7 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         }
         if (git->second.pa!=git->second.players.end())
         {
-            hash_map<WORD,WORD>::iterator rit = 
+            unordered_map<WORD,WORD>::iterator rit = 
                 _reverseSlotMaps.pa.find(git->first);
             paRelink = (rit == _reverseSlotMaps.pa.end());
 
@@ -850,7 +850,7 @@ DWORD WINAPI InitSlotMap(LPCVOID param)
         }
         if (git->second.pb!=git->second.players.end())
         {
-            hash_map<WORD,WORD>::iterator rit = 
+            unordered_map<WORD,WORD>::iterator rit = 
                 _reverseSlotMaps.pb.find(git->first);
             pbRelink = (rit == _reverseSlotMaps.pb.end());
 
@@ -1021,10 +1021,10 @@ void RestoreTeamKitInfos(TEAM_KIT_INFO* teamKitInfo)
 {
     if (!teamKitInfo)
         teamKitInfo = (TEAM_KIT_INFO*)(
-                *(DWORD*)data[PLAYERS_DATA] 
-                + data[TEAM_KIT_INFO_OFFSET]);
+                *(DWORD*)dta[PLAYERS_DATA] 
+                + dta[TEAM_KIT_INFO_OFFSET]);
 
-    for (hash_map<int,ORG_TEAM_KIT_INFO>::iterator it = _orgTeamKitInfo.begin();
+    for (unordered_map<int,ORG_TEAM_KIT_INFO>::iterator it = _orgTeamKitInfo.begin();
             it != _orgTeamKitInfo.end();
             it++)
     {
@@ -1049,10 +1049,10 @@ void RestoreTeamKitInfo(WORD teamIndex, int which, TEAM_KIT_INFO* teamKitInfo)
 {
     if (!teamKitInfo)
         teamKitInfo = (TEAM_KIT_INFO*)(
-                *(DWORD*)data[PLAYERS_DATA] 
-                + data[TEAM_KIT_INFO_OFFSET]);
+                *(DWORD*)dta[PLAYERS_DATA] 
+                + dta[TEAM_KIT_INFO_OFFSET]);
 
-    hash_map<int,ORG_TEAM_KIT_INFO>::iterator it;
+    unordered_map<int,ORG_TEAM_KIT_INFO>::iterator it;
     it = _orgTeamKitInfo.find(teamIndex);
     if (it != _orgTeamKitInfo.end())
     {
@@ -1086,8 +1086,8 @@ void ResetTeamKitInfo(WORD teamIndex, WORD slot, TEAM_KIT_INFO* teamKitInfo)
 {
     if (!teamKitInfo)
         teamKitInfo = (TEAM_KIT_INFO*)(
-                *(DWORD*)data[PLAYERS_DATA] 
-                + data[TEAM_KIT_INFO_OFFSET]);
+                *(DWORD*)dta[PLAYERS_DATA] 
+                + dta[TEAM_KIT_INFO_OFFSET]);
 
     KitCollection* kcol;
     if (FindTeamInGDB(teamIndex, kcol) && !kcol->disabled)
@@ -1130,12 +1130,12 @@ void kservReadEditData(LPCVOID buf, DWORD size)
 {
     // initialize kit slots
     TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)((BYTE*)buf 
-            + 0x1a0 + data[TEAM_KIT_INFO_OFFSET] - 8);
+            + 0x1a0 + dta[TEAM_KIT_INFO_OFFSET] - 8);
     LOG(L"teamKitInfo = %p", teamKitInfo);
     InitSlotMap(teamKitInfo);
 
     TEAM_NAME* teamNames = (TEAM_NAME*)((BYTE*)buf 
-            + 0x1a0 + data[TEAM_NAMES_OFFSET] - 8); 
+            + 0x1a0 + dta[TEAM_NAMES_OFFSET] - 8); 
 
     // dump slot information again
     if (k_kserv.debug)
@@ -1150,7 +1150,7 @@ void kservWriteEditData(LPCVOID buf, DWORD size)
     // undo re-linking: we don't want dynamic relinking
     // to be saved in Edit data
     TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)((BYTE*)buf 
-            + 0x1a0 + data[TEAM_KIT_INFO_OFFSET] - 8);
+            + 0x1a0 + dta[TEAM_KIT_INFO_OFFSET] - 8);
     RestoreTeamKitInfos(teamKitInfo);
 }
 
@@ -1278,7 +1278,7 @@ WORD GetTeamIndexBySlot(WORD slot, int binType)
             break;
     }
 
-    hash_map<WORD,KIT_PICK>::iterator zit = _kitPicks.find(slot);
+    unordered_map<WORD,KIT_PICK>::iterator zit = _kitPicks.find(slot);
     if (zit != _kitPicks.end()) {
         return zit->second.teamIndex;
     }
@@ -1314,7 +1314,7 @@ void GetTeamIndexesBySlot(WORD slot, int binType, WORD& teamA, WORD& teamB)
     }
 
     if (teamA == 0xffff && teamB == 0xffff) {
-        hash_map<WORD,KIT_PICK>::iterator zit = _kitPicks.find(slot);
+        unordered_map<WORD,KIT_PICK>::iterator zit = _kitPicks.find(slot);
         if (zit != _kitPicks.end()) {
             teamA = teamB = zit->second.teamIndex;
         }
@@ -1323,7 +1323,7 @@ void GetTeamIndexesBySlot(WORD slot, int binType, WORD& teamA, WORD& teamB)
 
 bool FindTeamInGDB(WORD teamIndex, KitCollection*& kcol)
 {
-    hash_map<WORD,KitCollection>::iterator it = _gdb->uni.find(teamIndex);
+    unordered_map<WORD,KitCollection>::iterator it = _gdb->uni.find(teamIndex);
     if (it != _gdb->uni.end())
     {
         kcol = &it->second;
@@ -1421,7 +1421,7 @@ bool CreatePipeForKitBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
     tcount++;
     TRACE(L"******** tcount = %d *******", tcount);
 
-    hash_map<WORD,KIT_PICK>::iterator zit;
+    unordered_map<WORD,KIT_PICK>::iterator zit;
     wstring files[2];
     KitCollection* kcols[2];
     kcols[0] = kcolA;
@@ -1579,7 +1579,7 @@ bool CreatePipeForFontBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& size)
     wstring filename(getPesInfo()->gdbDir);
     map<wstring,Kit>::iterator kkit;
     map<wstring,Kit>::iterator kkit_end;
-    hash_map<WORD,KIT_PICK>::iterator zit;
+    unordered_map<WORD,KIT_PICK>::iterator zit;
     switch (binType)
     {
         case BIN_FONT_GA:
@@ -1725,7 +1725,7 @@ bool CreatePipeForNumbersBin(DWORD afsId, DWORD binId, HANDLE& handle, DWORD& si
     wstring dirname(getPesInfo()->gdbDir);
     map<wstring,Kit>::iterator kkit;
     map<wstring,Kit>::iterator kkit_end;
-    hash_map<WORD,KIT_PICK>::iterator zit;
+    unordered_map<WORD,KIT_PICK>::iterator zit;
     switch (binType)
     {
         case BIN_NUMS_GA:
@@ -2058,7 +2058,7 @@ void kservReadNumSlotsCallPoint4()
 
 KEXPORT DWORD kservReadNumSlots(DWORD slot)
 {
-    DWORD* pNumSlots = (DWORD*)data[NUM_SLOTS_PTR];
+    DWORD* pNumSlots = (DWORD*)dta[NUM_SLOTS_PTR];
     if (slot >= XSLOT_FIRST)
         return XSLOT_LAST+1;
     return *pNumSlots;
@@ -2123,7 +2123,7 @@ bool SameTeams()
 
 WORD AcquireXslot(kit_iter_t& iter, WORD teamIndex)
 {
-    hash_map<WORD,KIT_PICK>::iterator kpit;
+    unordered_map<WORD,KIT_PICK>::iterator kpit;
     kpit = _kitPicks.find(iter->second.slot);
     if (kpit == _kitPicks.end() 
             || kpit->second.teamIndex != teamIndex
@@ -2183,8 +2183,8 @@ void SwitchKit(SWITCH_KIT& sw, bool advanceIter)
 
     WORD paSlot=0, pbSlot=0;
     TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)(
-            *(DWORD*)data[PLAYERS_DATA] 
-            + data[TEAM_KIT_INFO_OFFSET]);
+            *(DWORD*)dta[PLAYERS_DATA] 
+            + dta[TEAM_KIT_INFO_OFFSET]);
     map<wstring,Kit>::iterator kiter;
 
     if (sw.iter != sw.iter_end)
@@ -2293,14 +2293,14 @@ WORD GetTeamIndex(KIT_CHOICE* kc)
     if (kc->isEditedKit)
         return teamIndex;
 
-    hash_map<WORD,WORD>::iterator it;
+    unordered_map<WORD,WORD>::iterator it;
     it = _slotMap.find(kc->kitSlotIndex/2);
     if (it != _slotMap.end())
         teamIndex = it->second;
     else
     {
         // maybe an x-slot
-        hash_map<WORD,KIT_PICK>::iterator kpit;
+        unordered_map<WORD,KIT_PICK>::iterator kpit;
         kpit = _kitPicks.find(kc->kitSlotIndex/2);
         if (kpit != _kitPicks.end())
             teamIndex = kpit->second.teamIndex;
@@ -2342,8 +2342,8 @@ void ResetKit(SWITCH_KIT& sw)
 {
     // reset kit iterators
     TEAM_KIT_INFO* teamKitInfo = (TEAM_KIT_INFO*)(
-            *(DWORD*)data[PLAYERS_DATA] 
-            + data[TEAM_KIT_INFO_OFFSET]);
+            *(DWORD*)dta[PLAYERS_DATA] 
+            + dta[TEAM_KIT_INFO_OFFSET]);
 
     // team index
     WORD teamIndex = GetTeamIndex(sw.kc);
@@ -2354,7 +2354,7 @@ void ResetKit(SWITCH_KIT& sw)
         //DumpData(sw.kc, sizeof(KIT_CHOICE));
     }
     TRACE(L"sw.kc = %08x", (DWORD)sw.kc);
-    hash_map<WORD,KitCollection>::iterator it = _gdb->uni.find(teamIndex);
+    unordered_map<WORD,KitCollection>::iterator it = _gdb->uni.find(teamIndex);
     if (it != _gdb->uni.end())
     {
         if (!it->second.disabled 

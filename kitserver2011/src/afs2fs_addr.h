@@ -42,7 +42,7 @@ enum {
 };
 
 #define NODATAADDR {0,0,0,0,0},
-DWORD dataArray[][DATALEN] = {
+DWORD dtaArray[][DATALEN] = {
     // PES2011 demo
     {
         0x1910e80, 0x12a03c0, 50, 28, 0,
@@ -66,4 +66,4 @@ DWORD dataArray[][DATALEN] = {
 };
 
 DWORD code[CODELEN];
-DWORD data[DATALEN];
+DWORD dta[DATALEN];

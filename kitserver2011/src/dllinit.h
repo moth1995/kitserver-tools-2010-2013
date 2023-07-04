@@ -22,18 +22,18 @@
 	};
 	
 	#define DATALEN yyy
-	DWORD dataArray[][DATALEN] = {
+	DWORD dtaArray[][DATALEN] = {
 		...
 	};
 
 	DWORD code[CODELEN];
-	DWORD data[DATALEN];
+	DWORD dta[DATALEN];
 	//int gameVersion;		// only for dlls which don't have access to getPesInfo()
 	
 	---
 	
 	Setting CODELEN (DATALEN) to 0 and/or using
-	DWORD* codeArray(dataArray) = NULL;
+	DWORD* codeArray(dtaArray) = NULL;
 	is allowed, if no code (data) addresses are needed. However, the variables
 	have to be defined even in that case.
 	
@@ -77,10 +77,10 @@ inline void copyAdresses()
 	else
 		ZeroMemory(code, sizeof(code));
 		
-	if (dataArray)
-		memcpy(data, dataArray[gameVersion], sizeof(data));
+	if (dtaArray)
+		memcpy(dta, dtaArray[gameVersion], sizeof(dta));
 	else
-		ZeroMemory(data, sizeof(data));
+		ZeroMemory(dta, sizeof(dta));
 
 	return;
 }

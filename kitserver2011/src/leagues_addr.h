@@ -1,0 +1,69 @@
+// ADDRESSES for camera module
+BYTE allowedGames[] = {
+    gvPES2011,
+    gvPES2011v101,
+    gvPES2011v102,
+    gvPES2011v103,
+};
+
+/*
+
+C_MAKE_LEAGUE= 005086d0
+C_READ_RELINK= 00508700
+C_READ_NAMES=  0050871a    
+C_READ_NATIONALS=  00508f8e - 00508f90
+C_READ_CLUBS= 00508951
+ 
+D_RELINKS_OFFSET= 012e3a0c
+D_NAMES_OFFSET= 012e3a40
+D_LOGOS_OFFSET= 014e3088
+
+*/
+
+
+#define CODELEN 5
+enum { 
+    C_READ_NATIONALS, C_READ_CLUBS, C_MAKE_LEAGUE, C_READ_RELINK, C_READ_NAMES
+};
+
+#define NOCODEADDR {0,0,0,0,0}
+DWORD codeArray[][CODELEN] = { 
+    // PES2011 demo
+    NOCODEADDR,
+    // PES2011 
+    {
+		0x508f8e, 0x508951, 0x5086d0, 0x508700, 0x50871a,
+	},
+    // PES2011 v1.01
+    NOCODEADDR,
+    // PES2011 v1.02
+    NOCODEADDR,
+    // PES2011 v1.03
+    NOCODEADDR,
+
+};
+
+#define DATALEN 3 
+enum {
+    D_RELINKS_OFFSET, D_NAMES_OFFSET, D_LOGOS_OFFSET
+};
+
+#define NODATAADDR {0,0,0}
+DWORD dtaArray[][DATALEN] = {
+    // PES2011 demo
+    NODATAADDR,
+    // PES2011 
+    {
+		0x12e3a0c, 0x12e3a40, 0x14e3088
+	},
+    // PES2011 v1.01
+    NODATAADDR,
+    // PES2011 v1.02
+    NODATAADDR,
+    // PES2011 v1.03
+    NODATAADDR,
+
+};
+
+DWORD code[CODELEN];
+DWORD dta[DATALEN];

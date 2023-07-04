@@ -33,7 +33,7 @@
 
 #include <map>
 #include <list>
-#include <hash_map>
+#include <unordered_map>
 #include <wchar.h>
 
 #define SWAPBYTES(dw) \
@@ -48,9 +48,9 @@ HINSTANCE hInst = NULL;
 KMOD k_afsio = {MODID, NAMELONG, NAMESHORT, DEFAULT_DEBUG};
 
 // GLOBALS
-hash_map<DWORD,FILE_STRUCT> g_file_map;
-hash_map<DWORD,DWORD> g_offset_map;
-hash_map<DWORD,FILE_STRUCT> g_event_map;
+unordered_map<DWORD,FILE_STRUCT> g_file_map;
+unordered_map<DWORD,DWORD> g_offset_map;
+unordered_map<DWORD,FILE_STRUCT> g_event_map;
 bool _initialized(false);
 
 static char _imgExt1[] = ".img";
@@ -322,7 +322,7 @@ DWORD GetBinSize(DWORD afsId, DWORD fileId, DWORD orgSize)
         fs.offset = 0;
         fs.binKey = binKey;
 
-        pair<hash_map<DWORD,FILE_STRUCT>::iterator,bool> ires =
+        pair<unordered_map<DWORD,FILE_STRUCT>::iterator,bool> ires =
             g_file_map.insert(pair<DWORD,FILE_STRUCT>(binKey,fs));
         if (!ires.second)
         {
@@ -388,7 +388,7 @@ DWORD GetAfsIdByPathName(const char* pathName)
 
 DWORD GetAfsIdByPathNameOld(const char* pathName)
 {
-    AFS_INFO** ppBST = (AFS_INFO**)data[BIN_SIZES_TABLE];
+    AFS_INFO** ppBST = (AFS_INFO**)dta[BIN_SIZES_TABLE];
     for (DWORD afsId=0; afsId<=MAX_AFSID; afsId++)
     {
         if (ppBST[afsId]==0) continue;
@@ -443,7 +443,7 @@ DWORD GetAfsIdByPathNameFast(const char* pathName)
 
 KEXPORT DWORD GetAfsIdByBase(DWORD base)
 {
-    DWORD* binSizesTable = (DWORD*)data[BIN_SIZES_TABLE];
+    DWORD* binSizesTable = (DWORD*)dta[BIN_SIZES_TABLE];
     for (DWORD i=0; i<MAX_AFSID+1; i++)
         if (binSizesTable[i]==base)
             return i;
@@ -454,7 +454,7 @@ KEXPORT DWORD GetAfsIdByReadEvent(READ_EVENT_STRUCT* res, const char* pathName)
 {
     TRACE(L"GetAfsIdByReadEvent:: res->binSizesTableAddr = %p",
             res->binSizesTableAddr);
-    DWORD* binSizesTable = (DWORD*)data[BIN_SIZES_TABLE];
+    DWORD* binSizesTable = (DWORD*)dta[BIN_SIZES_TABLE];
     for (DWORD i=0; i<MAX_AFSID+1; i++)
         if (binSizesTable[i]==res->binSizesTableAddr-0x10)
             return i;
@@ -556,7 +556,7 @@ KEXPORT void afsioAfterCreateEvent(DWORD eventId, READ_EVENT_STRUCT* res, char* 
     DWORD binKey = ((res->offsetPages << 0x0b)&0xfffff800) + afsId;
     TRACE(L"afsAfterCreateEvent:: binKey=%08x",binKey);
 
-    hash_map<DWORD,DWORD>::iterator it = g_offset_map.find(binKey);
+    unordered_map<DWORD,DWORD>::iterator it = g_offset_map.find(binKey);
     if (it != g_offset_map.end())
     {
         DWORD binId = it->second;
@@ -577,7 +577,7 @@ KEXPORT void afsioAfterCreateEvent(DWORD eventId, READ_EVENT_STRUCT* res, char* 
         DWORD binKey1 = (afsId << 16) + binId;
         TRACE(L"afsAfterCreateEvent:: looking for binKey1=%08x (afsId=%d, binId=%d)",
                 binKey1, afsId, binId);
-        hash_map<DWORD,FILE_STRUCT>::iterator fit = g_file_map.find(binKey1);
+        unordered_map<DWORD,FILE_STRUCT>::iterator fit = g_file_map.find(binKey1);
         if (fit != g_file_map.end())
         {
             // remember offset for later usage
@@ -711,7 +711,7 @@ KEXPORT void afsioBeforeRead(READ_STRUCT* rs)
     if (rs->pfrs->eventId == 0)
         return;
 
-    hash_map<DWORD,FILE_STRUCT>::iterator it = g_event_map.find(rs->pfrs->eventId);
+    unordered_map<DWORD,FILE_STRUCT>::iterator it = g_event_map.find(rs->pfrs->eventId);
     if (it != g_event_map.end())
     {
         TRACE(L"afsBeforeRead::(%08x) WAS: hfile=%08x, offset=%08x", 
@@ -776,14 +776,14 @@ KEXPORT void afsioAtCloseHandle(DWORD eventId)
     // from the event map
     TRACE(L"afsAtCloseHandle:: eventId=%08x",eventId);
 
-    hash_map<DWORD,FILE_STRUCT>::iterator it = g_event_map.find(eventId);
+    unordered_map<DWORD,FILE_STRUCT>::iterator it = g_event_map.find(eventId);
     if (it != g_event_map.end())
     {
         FILE_STRUCT& fs = it->second;
         HANDLE hfile = fs.hfile;
 
         // delete entry in file_map
-        hash_map<DWORD,FILE_STRUCT>::iterator fit = g_file_map.find(fs.binKey);
+        unordered_map<DWORD,FILE_STRUCT>::iterator fit = g_file_map.find(fs.binKey);
         if (fit != g_file_map.end())
         {
             TRACE(L"Finished read-event for afsId=0x%02x, binId=%d",
@@ -801,7 +801,7 @@ KEXPORT void afsioAtCloseHandle(DWORD eventId)
 KEXPORT bool afsioExtendSlots(int afsId, int num_slots)
 {
     // extend BIN-sizes table
-    AFS_INFO** tabArray = (AFS_INFO**)data[BIN_SIZES_TABLE];
+    AFS_INFO** tabArray = (AFS_INFO**)dta[BIN_SIZES_TABLE];
     if (!tabArray)
         return false;
     AFS_INFO* table = tabArray[afsId];
@@ -854,7 +854,7 @@ KEXPORT BOOL AfsReadFile(
     if (pfrs->eventId != 0)
     {
         TRACE(L"eventId = %04x", pfrs->eventId);
-        hash_map<DWORD,FILE_STRUCT>::iterator it;
+        unordered_map<DWORD,FILE_STRUCT>::iterator it;
         it = g_event_map.find(pfrs->eventId);
         if (it != g_event_map.end())
         {

@@ -30,6 +30,20 @@ DWORD codeArray[][CODELEN] = {
         0,0,//0x11a8e2c, 0x12cc24c, //0x11a67fc, 0x12c9a5c,
         0,//0xd40e4b, //0xd3e3fb,
   },
+  // PES2013 v1.04
+ {
+       0, //CALL JMP d3d9 direct3Dcreate9
+       0, 0,
+       0, 0,
+       0, 0,
+       0, 0,
+       0, 0,
+       0, 0,
+       0, 0,
+       0,//0x12cb548, //0x12c8d58, 
+       0,0,//0x11a8e2c, 0x12cc24c, //0x11a67fc, 0x12c9a5c,
+       0,//0xd40e4b, //0xd3e3fb,
+ },
 };
 
 #define DATALEN 13
@@ -42,8 +56,16 @@ enum {
 };
 
 #define NODATAADDR {0,0,0,0,0,0,0,0,0,0,0,0,0},
-DWORD dataArray[][DATALEN] = {    
+DWORD dtaArray[][DATALEN] = {    
     //  PES2013 demo 1
+    {
+        0, 0,
+        0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        123, 456, 789,
+    },
+    //  PES2013 v1.04
     {
         0, 0,
         0, 0,
@@ -60,5 +82,5 @@ BYTE ltfpPatchArray[][LTFPLEN] = {
 };
 
 DWORD code[CODELEN];
-DWORD data[DATALEN];
+DWORD dta[DATALEN];
 BYTE ltfpPatch[LTFPLEN];

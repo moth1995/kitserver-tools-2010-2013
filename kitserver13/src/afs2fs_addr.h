@@ -1,6 +1,7 @@
 // ADDRESSES for afs2fs.cpp
 BYTE allowedGames[] = {
     gvPES2013demo1,
+    gvPES2013v104,
 };
 
 #define CODELEN 1
@@ -14,6 +15,11 @@ DWORD codeArray[][CODELEN] = {
     {
         0x431553,
     },
+    // PES2013 v1.04
+    {
+        0,
+    },
+
 };
 
 #define DATALEN 5 
@@ -22,12 +28,17 @@ enum {
 };
 
 #define NODATAADDR {0,0,0,0,0},
-DWORD dataArray[][DATALEN] = {
+DWORD dtaArray[][DATALEN] = {
     // PES2013 demo 1
     {
         0x19972E0,0x13A91D0,28, 30, 0,
     },
+    // PES2013 v1.04
+    {
+        0,0,28, 30, 0,
+    },
+
 };
 
 DWORD code[CODELEN];
-DWORD data[DATALEN];
+DWORD dta[DATALEN];

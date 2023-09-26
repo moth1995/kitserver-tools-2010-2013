@@ -1,6 +1,7 @@
 // ADDRESSES for afsio.cpp
 BYTE allowedGames[] = {
     gvPES2013demo1,
+    gvPES2013v104,
 };
 
 #define CODELEN 10
@@ -20,6 +21,13 @@ DWORD codeArray[][CODELEN] = {
         0x4f2a95, 0x4f2ac5,
         0x4f521c, 0x4f4aca
     }, 
+    // PES2013 v1.04
+    {
+        0, 0, 0,
+        0, 0, 0,
+        0, 0,
+        0, 0
+    },
 };
 
 #define DATALEN 1 
@@ -28,12 +36,16 @@ enum {
 };
 
 #define NODATAADDR {0},
-DWORD dataArray[][DATALEN] = {
+DWORD dtaArray[][DATALEN] = {
     // PES2013 demo 1
     {
         0x19972E0,
     }, 
+    // PES2013 v1.04
+    {
+        0,
+    },
 };
 
 DWORD code[CODELEN];
-DWORD data[DATALEN];
+DWORD dta[DATALEN];

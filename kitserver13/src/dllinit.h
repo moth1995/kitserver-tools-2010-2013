@@ -77,10 +77,10 @@ inline void copyAdresses()
 	else
 		ZeroMemory(code, sizeof(code));
 		
-	if (dataArray)
-		memcpy(data, dataArray[gameVersion], sizeof(data));
+	if (dtaArray)
+		memcpy(dta, dtaArray[gameVersion], sizeof(dta));
 	else
-		ZeroMemory(data, sizeof(data));
+		ZeroMemory(dta, sizeof(dta));
 
 	return;
 }

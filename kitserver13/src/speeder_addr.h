@@ -1,6 +1,7 @@
 // ADDRESSES for speeder module
 BYTE allowedGames[] = {
-    gvPES2013demo1
+    gvPES2013demo1,
+    gvPES2013v104,
 };
 
 #define CODELEN 1
@@ -13,6 +14,10 @@ DWORD codeArray[][CODELEN] = {
 	// PES2013 demo 1
     {
         0x10A3099,
+    },
+    // PES2013 v1.04
+    {
+        0x10A3099,
     }
 };
 
@@ -22,10 +27,12 @@ enum {
 };
 
 #define NODATAADDR {0}
-DWORD dataArray[][DATALEN] = {
+DWORD dtaArray[][DATALEN] = {
     // PES2013 demo 1
+    NODATAADDR,
+    // PES2013 v1.04
     NODATAADDR
 };
 
 DWORD code[CODELEN];
-DWORD data[DATALEN];
+DWORD dta[DATALEN];

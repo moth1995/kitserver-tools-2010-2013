@@ -1,6 +1,7 @@
 // ADDRESSES for lodmixer.cpp
 BYTE allowedGames[] = {
     gvPES2013demo1,
+    gvPES2013v104,
 };
 
 #define CODELEN 3
@@ -25,7 +26,7 @@ enum {
 };
 
 #define NODATAADDR {0,0,0,0,0,0,0,0,0}
-DWORD dataArray[][DATALEN] = {
+DWORD dtaArray[][DATALEN] = {
     // PES2013 demo 1
     {
         0x1931EB0, 0x1931EB4, 0x1931EB8,
@@ -36,4 +37,4 @@ DWORD dataArray[][DATALEN] = {
 };
 
 DWORD code[CODELEN];
-DWORD data[DATALEN];
+DWORD dta[DATALEN];

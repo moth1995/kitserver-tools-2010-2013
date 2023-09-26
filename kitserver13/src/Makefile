@@ -5,6 +5,9 @@ CC=cl
 LINK=link
 RC=rc
 
+INCLUDE=$(INCLUDE);soft\dxsdk_jun2010\include;mfc
+LIB=$(LIB);soft\dxsdk_jun2010\lib\x86
+
 INCPNGDIB=soft\pngdib
 LPPNGDIB=soft\pngdib 
 LPLIBPNG=soft\libpng-1.2.8-lib\lib
@@ -16,7 +19,7 @@ D3DX9=d3dx9.lib
 !if "$(debug)"=="1"
 EXTRA_CFLAGS=/DDEBUG
 !else
-EXTRA_CFLAGS=/DMYDLL_RELEASE_BUILD
+EXTRA_CFLAGS=/DMYDLL_RELEASE_BUILD /D_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
 !endif
 
 # 4731: warning about ebp modification
@@ -60,7 +63,7 @@ pngdib:
 #dlls: kload.dll kserv.dll afsio.dll afs2fs.dll speeder.dll sides.dll lodmixer.dll fserv.dll
 #apps: manager.exe zlibtool.exe config.exe krun.exe
 #dlls: kload.dll afsio.dll afs2fs.dll speeder.dll lodmixer.dll sides.dll kserv.dll fserv.dll
-dlls: kload.dll afsio.dll afs2fs.dll speeder.dll lodmixer.dll
+dlls: kload.dll afsio.dll afs2fs.dll speeder.dll lodmixer.dll bserv.dll
 apps: manager.exe config.exe
 
 imageutil.obj: imageutil.cpp imageutil.h
@@ -128,6 +131,12 @@ fserv.dll: fserv.lib fserv.res
 fserv.obj: fserv.cpp fserv.h fserv_addr.h fserv.rc replay.h player.h bal.h
 fserv.res: 
 	$(RC) -r -fo fserv.res fserv.rc
+
+bserv.lib: bserv.obj configs.obj
+bserv.dll: bserv.lib afsio.lib bserv.res
+	$(LINK) $(LFLAGS) /out:bserv.dll /DLL bserv.obj configs.obj bserv.res $(LIBS) $(D3DX9) kload.lib afsio.lib
+bserv.obj: bserv.cpp bserv.h bserv_addr.h bserv.rc dllinit.h replay.h teaminfo.h
+
 	
 kserv.lib: kserv.obj gdb.obj configs.obj crc32.obj afsio.dll kload.dll pngdib
 kserv.dll: kserv.lib kserv.res

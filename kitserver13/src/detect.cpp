@@ -9,27 +9,33 @@
 
 wchar_t* GAME[] = {
     L"PES2013 demo 1",
+    L"PES2013 v1.04",
 };
 
 char* GAME_GUID[] = {
    // "Pro Evolution Soccer 2013 DEMO",
 	"1.00",
+    "ee6f5b82-32a5-47b4-b4ca-171b19b4e324",
 };
 
 DWORD GAME_GUID_OFFSETS[] = { 
     0x1072EA8,
+    0x1115710,
 };
 
 DWORD GAME_GUID_MEMORY[] = { 
-    0x14746A8, 
+    0x14746A8,
+    0x1515710,
 };
 
 BYTE BASE_GAME[] = {
     gvPES2013demo1,
+    gvPES2013v104,
 };
 
 bool ISGAME[] = {
     true,   // PES2013 demo 1
+    true, //PES2013 v1.04
 };
 
 // Returns the game real version id

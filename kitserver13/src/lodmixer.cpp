@@ -113,9 +113,9 @@ void modifySettings()
     }
 
 
-    if (_lmconfig.pictureQuality != -1 && data[WIDESCREEN_FLAG]) {
+    if (_lmconfig.pictureQuality != -1 && dta[WIDESCREEN_FLAG]) {
         // Enforce picture quality
-        DWORD* pPictureQuality = (DWORD*)(data[WIDESCREEN_FLAG]+4);
+        DWORD* pPictureQuality = (DWORD*)(dta[WIDESCREEN_FLAG]+4);
         *pPictureQuality = _lmconfig.pictureQuality;
 
         // disable quality check 1
@@ -149,7 +149,7 @@ void modifySettings()
 
     // LOD modifications
     {
-        float* fptr =(float*)data[LOD_PLAYERS_TABLE1];
+        float* fptr =(float*)dta[LOD_PLAYERS_TABLE1];
         if (fptr)
         {
             SET(fptr+0, _lmconfig.lod.lodPlayersMiscS1);
@@ -168,7 +168,7 @@ void modifySettings()
             SET(fptr+11, _lmconfig.lod.lodActivePlayerFKs3); 
         }
 
-        fptr = (float*)data[LOD_PLAYERS_TABLE2];
+        fptr = (float*)dta[LOD_PLAYERS_TABLE2];
         if (fptr)
         {
             SET(fptr-3, _lmconfig.lod.lodPlayersEntranceS1);
@@ -183,9 +183,9 @@ void modifySettings()
             SET(fptr+5, _lmconfig.lod.lodPlayersInplayS3);
         }
 
-        fptr = (float*)data[LOD_REF_TABLE1];
+        fptr = (float*)dta[LOD_REF_TABLE1];
         if (fptr) SET(fptr, _lmconfig.lod.lodRefReplay);
-        fptr = (float*)data[LOD_REF_TABLE2];
+        fptr = (float*)dta[LOD_REF_TABLE2];
         if (fptr) SET(fptr, _lmconfig.lod.lodRefInplay);
 
         LOG(L"LOD levels set");
@@ -384,7 +384,7 @@ void lodmixerConfig(char* pName, const void* pValue, DWORD a)
 
 BYTE getLB() 
 {
-    DWORD addr = data[SCREEN_WIDTH];
+    DWORD addr = dta[SCREEN_WIDTH];
     if (addr) {
         return *(BYTE*)(addr-1);
     }
@@ -397,10 +397,10 @@ void getResolution(DWORD& width, DWORD& height)
     DWORD newProtection = PAGE_EXECUTE_READWRITE;
 
     // get resolution
-    if (VirtualProtect((BYTE*)data[SCREEN_WIDTH], 4, newProtection, &protection))
-        width = *(DWORD*)data[SCREEN_WIDTH]; 
-    if (VirtualProtect((BYTE*)data[SCREEN_HEIGHT], 4, newProtection, &protection))
-        height = *(DWORD*)data[SCREEN_HEIGHT];
+    if (VirtualProtect((BYTE*)dta[SCREEN_WIDTH], 4, newProtection, &protection))
+        width = *(DWORD*)dta[SCREEN_WIDTH]; 
+    if (VirtualProtect((BYTE*)dta[SCREEN_HEIGHT], 4, newProtection, &protection))
+        height = *(DWORD*)dta[SCREEN_HEIGHT];
 }
 
 void setResolution(DWORD width, DWORD height)
@@ -411,10 +411,10 @@ void setResolution(DWORD width, DWORD height)
     // set resolution
     if (width>0 && height>0)
     {
-        if (VirtualProtect((BYTE*)data[SCREEN_WIDTH], 4, newProtection, &protection))
-            *(DWORD*)data[SCREEN_WIDTH] = width;
-        if (VirtualProtect((BYTE*)data[SCREEN_HEIGHT], 4, newProtection, &protection))
-            *(DWORD*)data[SCREEN_HEIGHT] = height;
+        if (VirtualProtect((BYTE*)dta[SCREEN_WIDTH], 4, newProtection, &protection))
+            *(DWORD*)dta[SCREEN_WIDTH] = width;
+        if (VirtualProtect((BYTE*)dta[SCREEN_HEIGHT], 4, newProtection, &protection))
+            *(DWORD*)dta[SCREEN_HEIGHT] = height;
 
         LOG(L"Resolution set: %dx%d", width, height);
     }
@@ -430,31 +430,31 @@ void setAspectRatio(float aspectRatio, bool manual)
 
     if (fabs(aspectRatio - 1.33333) < fabs(aspectRatio - 1.77777)) {
         // closer to 4:3
-        *(DWORD*)data[WIDESCREEN_FLAG] = 0;
+        *(DWORD*)dta[WIDESCREEN_FLAG] = 0;
         if (VirtualProtect(
-                (BYTE*)data[RATIO_4on3], 4, newProtection, &protection)) {
-            *(float*)data[RATIO_4on3] = aspectRatio;
+                (BYTE*)dta[RATIO_4on3], 4, newProtection, &protection)) {
+            *(float*)dta[RATIO_4on3] = aspectRatio;
         }
         LOG(L"Widescreen mode: no");
     } 
     else {
         // closer to 16:9
-        *(DWORD*)data[WIDESCREEN_FLAG] = 1;
+        *(DWORD*)dta[WIDESCREEN_FLAG] = 1;
         if (VirtualProtect(
-                (BYTE*)data[RATIO_16on9], 4, newProtection, &protection)) {
-            *(float*)data[RATIO_16on9] = aspectRatio;
+                (BYTE*)dta[RATIO_16on9], 4, newProtection, &protection)) {
+            *(float*)dta[RATIO_16on9] = aspectRatio;
         }
         LOG(L"Widescreen mode: yes");
     }
 
     /*
     if (VirtualProtect(
-            (BYTE*)data[RATIO_4on3], 4, newProtection, &protection)) {
-        *(float*)data[RATIO_4on3] = aspectRatio;
+            (BYTE*)dta[RATIO_4on3], 4, newProtection, &protection)) {
+        *(float*)dta[RATIO_4on3] = aspectRatio;
     }
     if (VirtualProtect(
-            (BYTE*)data[RATIO_16on9], 4, newProtection, &protection)) {
-        *(float*)data[RATIO_16on9] = aspectRatio;
+            (BYTE*)dta[RATIO_16on9], 4, newProtection, &protection)) {
+        *(float*)dta[RATIO_16on9] = aspectRatio;
     }
     */
 

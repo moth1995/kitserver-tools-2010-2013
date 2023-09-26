@@ -441,7 +441,7 @@ DWORD GetAfsIdByPathName(const char* pathName)
 
 DWORD GetAfsIdByPathNameOld(const char* pathName)
 {
-    AFS_INFO** ppBST = (AFS_INFO**)data[BIN_SIZES_TABLE];
+    AFS_INFO** ppBST = (AFS_INFO**)dta[BIN_SIZES_TABLE];
     for (DWORD afsId=0; afsId<=MAX_AFSID; afsId++)
     {
         if (ppBST[afsId]==0) continue;
@@ -496,7 +496,7 @@ DWORD GetAfsIdByPathNameFast(const char* pathName)
 
 KEXPORT DWORD GetAfsIdByBase(DWORD base)
 {
-    DWORD* binSizesTable = (DWORD*)data[BIN_SIZES_TABLE];
+    DWORD* binSizesTable = (DWORD*)dta[BIN_SIZES_TABLE];
     for (DWORD i=0; i<MAX_AFSID+1; i++)
         if (binSizesTable[i]==base)
             return i;
@@ -507,7 +507,7 @@ KEXPORT DWORD GetAfsIdByReadEvent(READ_EVENT_STRUCT* res, const char* pathName)
 {
     TRACE(L"GetAfsIdByReadEvent:: res->binSizesTableAddr = %p",
             res->binSizesTableAddr);
-    DWORD* binSizesTable = (DWORD*)data[BIN_SIZES_TABLE];
+    DWORD* binSizesTable = (DWORD*)dta[BIN_SIZES_TABLE];
     for (DWORD i=0; i<MAX_AFSID+1; i++)
         if (binSizesTable[i]==res->binSizesTableAddr-0x10)
             return i;
@@ -866,7 +866,7 @@ KEXPORT void afsioAtCloseHandle(DWORD eventId)
 KEXPORT bool afsioExtendSlots(int afsId, int num_slots)
 {
     // extend BIN-sizes table
-    AFS_INFO** tabArray = (AFS_INFO**)data[BIN_SIZES_TABLE];
+    AFS_INFO** tabArray = (AFS_INFO**)dta[BIN_SIZES_TABLE];
     if (!tabArray)
         return false;
     AFS_INFO* table = tabArray[afsId];

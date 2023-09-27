@@ -28,8 +28,18 @@ typedef struct _PESINFO {
 } PESINFO;
 
 enum {
-    gvPES2013demo1,   // PES2013 PC DEMO 1
-    gvPES2013v104, // PES2013 v1.04
+    // PES2013 PC DEMO 1
+    gvPES2013demo1,
+    // PES2013 v1.00
+    gvPES2013v100,
+    // PES2013 v1.01
+    gvPES2013v101,
+    // PES2013 v1.02
+    gvPES2013v102,
+    // PES2013 v1.03
+    gvPES2013v103,
+    // PES2013 v1.04
+    gvPES2013v104,
 };
 
 #endif

@@ -9,33 +9,80 @@
 
 wchar_t* GAME[] = {
     L"PES2013 demo 1",
+    L"PES2013 v1.00",
+    L"PES2013 v1.01",
+    L"PES2013 v1.02",
+    L"PES2013 v1.03",
     L"PES2013 v1.04",
 };
 
 char* GAME_GUID[] = {
-   // "Pro Evolution Soccer 2013 DEMO",
+   // "Pro Evolution Soccer 2013 DEMO"
 	"1.00",
+    // Pro Evolution Soccer 2013 1.00
+    "ee6f5b82-32a5-47b4-b4ca-171b19b4e324",
+    // Pro Evolution Soccer 2013 1.01
+    "ee6f5b82-32a5-47b4-b4ca-171b19b4e324",
+    // Pro Evolution Soccer 2013 1.02
+    "ee6f5b82-32a5-47b4-b4ca-171b19b4e324",
+    // Pro Evolution Soccer 2013 1.03
+    "ee6f5b82-32a5-47b4-b4ca-171b19b4e324",
+    // Pro Evolution Soccer 2013 1.04
     "ee6f5b82-32a5-47b4-b4ca-171b19b4e324",
 };
 
 DWORD GAME_GUID_OFFSETS[] = { 
+    // PES2013 demo 1
     0x1072EA8,
+    //PES2013 v1.00
+    0x17746784,
+    //PES2013 v1.01
+    0x17879288,
+    //PES2013 v1.02
+    0x17876216,
+    //PES2013 v1.03
+    0x1107DA8,
+    //PES2013 v1.04
     0x1115710,
 };
 
 DWORD GAME_GUID_MEMORY[] = { 
+    // PES2013 demo 1
     0x14746A8,
+    //PES2013 v1.00
+    0x14ee760,
+    //PES2013 v1.01
+    0x150e4f8,
+    //PES2013 v1.02
+    0x150d4f8,
+    //PES2013 v1.03
+    0x15093A8,
+    //PES2013 v1.04
     0x1516510,
 };
 
 BYTE BASE_GAME[] = {
     gvPES2013demo1,
+    gvPES2013v100,
+    gvPES2013v101,
+    gvPES2013v102,
+    gvPES2013v103,
     gvPES2013v104,
 };
 
 bool ISGAME[] = {
-    true,   // PES2013 demo 1
-    true, //PES2013 v1.04
+    //PES2013 demo 1
+    true,
+    //PES2013 v1.00
+    true,
+    //PES2013 v1.01
+    true,
+    //PES2013 v1.02
+    true,
+    //PES2013 v1.03
+    true,
+    //PES2013 v1.04
+    true,
 };
 
 // Returns the game real version id

@@ -35,11 +35,11 @@ DWORD GAME_GUID_OFFSETS[] = {
     // PES2013 demo 1
     0x1072EA8,
     //PES2013 v1.00
-    0x17746784,
+    0x10ECB60,
     //PES2013 v1.01
-    0x17879288,
+    0x110D0F8,
     //PES2013 v1.02
-    0x17876216,
+    0x110C4F8,
     //PES2013 v1.03
     0x1107DA8,
     //PES2013 v1.04
